@@ -1,11 +1,20 @@
+----------------------------------------------------
+   MongoDB slow operation profiler and visualizer
+----------------------------------------------------
+
 This java web application collects slow operations from a mongoDB system in order to visualize and analyze them.
 The software has been presented during the [MongoDB User Group Berlin on 4th of June 2013](http://www.meetup.com/MUGBerlin/events/119503502/).
 Slides of the presentation can be found [here](http://www.slideshare.net/Kay1A/slow-ops).
 
+---------------------------------------
+   Screenshot of the User-Interface
+---------------------------------------
 
----------------
+![Screenshot](slowOpsGui.png "Screenhot of the GUI")
+
+-----------
    Setup
----------------
+-----------
 
 Preconditions:
 
