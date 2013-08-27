@@ -49,7 +49,7 @@ dygraph: MIT License [http://opensource.org/licenses/MIT]
 --------------
 
 This software is licensed under AGPL 3.0 [http://www.gnu.org/licenses/agpl-3.0.html].
-For details about the license, please see file "license.txt", located in the same folder as this "readme.txt" file.
+For details about the license, please see file "LICENSE", located in the same folder as this "README.md" file.
 
 
 
