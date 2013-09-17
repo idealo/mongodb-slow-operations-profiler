@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+ 
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <layout class="ch.qos.logback.classic.PatternLayout">
+      <Pattern>%d [%thread] %-5level %logger{35} - %msg%n</Pattern>
+    </layout>
+  </appender>
+
+  <appender name="FILE_ALL" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>slow-operations-profiler.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>slow-operations-profiler.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>10</maxHistory>
+		</rollingPolicy>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<Pattern>%d [%thread] %-5level %logger{25} - %msg%n</Pattern>
+		</encoder>
+	</appender>
+
+  <root level="INFO">
+    <appender-ref ref="FILE_ALL" />
+  </root>
+</configuration>
