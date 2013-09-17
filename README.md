@@ -37,7 +37,9 @@ Starting up:
    Version history
 ---------------------
 
-
+* v0.0.2
+    + logback configuration file
+    + maven-war plugin update
 * v0.0.1
     + initial release
 
