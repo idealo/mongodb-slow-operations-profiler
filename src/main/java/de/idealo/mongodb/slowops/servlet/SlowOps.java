@@ -26,8 +26,9 @@ public class SlowOps extends HttpServlet {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(SlowOps.class);
 
+	private static final String DATE_PATTERN = "yyyy/MM/dd";
+
 	private final Grapher grapher;
-	final SimpleDateFormat DATEFORMAT = new SimpleDateFormat("yyyy/MM/dd");
 	
     /**
      * Default constructor. 
@@ -113,8 +114,8 @@ public class SlowOps extends HttpServlet {
             final Date fromDate = new Date(toDate.getTime() - (1000*60*60*24*2));
             params.add(fromDate);
             params.add(toDate);
-            request.setAttribute("fromDate", DATEFORMAT.format(fromDate));
-            request.setAttribute("toDate", DATEFORMAT.format(toDate));
+            addDateToRequest(fromDate, request, "fromDate");
+            addDateToRequest(toDate, request, "toDate");
         }else {
             pipeline.deleteCharAt(pipeline.length()-1);//delete last comma
         }
@@ -134,6 +135,10 @@ public class SlowOps extends HttpServlet {
 	    return request.getParameter(param) == null || request.getParameter(param).trim().length() == 0; 
 	}
 	
+    private void addDateToRequest(Date date, HttpServletRequest request, String attributeName) {
+        final String dateAsString = createDateFormat().format(date);
+        request.setAttribute(attributeName, dateAsString);
+    }
 	
 	/**
      * @param parameter
@@ -141,11 +146,15 @@ public class SlowOps extends HttpServlet {
      */
     private Date getDate(String param) {
         try {
-            return DATEFORMAT.parse(param);
+            return createDateFormat().parse(param);
         } catch (ParseException e) {
             LOG.error("can't parse date: " + param, e);
         }
         return null;
+    }
+
+    private SimpleDateFormat createDateFormat() {
+        return new SimpleDateFormat(DATE_PATTERN);
     }
 
     /**
