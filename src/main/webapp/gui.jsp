@@ -7,8 +7,11 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 	<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7; IE=EmulateIE9">
 	<script type="text/javascript" src="js/dygraph-combined.js"></script>
-	<script type="text/javascript" src="js/datepickr.min.js"></script>	
-	<link rel="stylesheet" type="text/css" href="css/datepickr.css" />
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="js/bootstrap-datetimepicker.min.js"></script>
+	<link href="css/bootstrap-combined.css" rel="stylesheet">
+	<link href="css/bootstrap-datetimepicker.min.css" rel="stylesheet" type="text/css" media="screen" >
 	<title>slow operations</title>
 </head>
 <%! 
@@ -25,13 +28,14 @@ final SlowOpsDto slowOpsDto = (SlowOpsDto)request.getAttribute("slowOpsDto");
 		<tr>
 			<td valign="top"><strong>Filter by</strong>
 				<table>
-					<tr><td>Earliest date</td><td><input type="text" id="fromDate" name="fromDate" size="20" readonly <% 	if(!isEmpty(request,"fromDate")){out.print("value=\""+request.getParameter("fromDate")+"\"");}else{out.print("value=\""+request.getAttribute("fromDate")+"\"");}%> ></td></tr>
-					<tr><td>Latest date</td><td><input type="text" id="toDate" name="toDate" size="20" readonly <% 			if(!isEmpty(request,"toDate")){out.print("value=\""+request.getParameter("toDate")+"\"");}else{out.print("value=\""+request.getAttribute("toDate")+"\"");}%> ></td></tr>
+					<tr><td>Earliest date</td><td><div id="datetimepickerFrom" class="date"><input type="text" id="fromDate" name="fromDate" size="20" readonly <% if(!isEmpty(request,"fromDate")){out.print("value=\""+request.getParameter("fromDate")+"\"");}else{out.print("value=\""+request.getAttribute("fromDate")+"\"");}%> ><span class="add-on"><i data-time-icon="icon-time" data-date-icon="icon-calendar"></i></span></div></td></tr>
+					<tr><td>Latest date</td><td><div id="datetimepickerTo" class="date"><input type="text" id="toDate" name="toDate" size="20" readonly <% if(!isEmpty(request,"toDate")){out.print("value=\""+request.getParameter("toDate")+"\"");}else{out.print("value=\""+request.getAttribute("toDate")+"\"");}%> ><span class="add-on"><i data-time-icon="icon-time" data-date-icon="icon-calendar"></i></span></div></td></tr>
 					<tr><td>Server address</td><td><input type="text" name="adr" size="20" <% 								if(!isEmpty(request,"adr")){out.print("value=\""+request.getParameter("adr")+"\"");}%> >(or)</td></tr>
 					<tr><td>User</td><td><input type="text" name="user" size="20" <% 										if(!isEmpty(request,"user")){out.print("value=\""+request.getParameter("user")+"\"");}%> >(or)</td></tr>
 					<tr><td>Operation</td><td><input type="text" name="op" size="20" <% 									if(!isEmpty(request,"op")){out.print("value=\""+request.getParameter("op")+"\"");}%> >(or)</td></tr>
 					<tr><td>Queried fields</td><td><input type="text" name="fields" size="20" <% 							if(!isEmpty(request,"fields")){out.print("value=\""+request.getParameter("fields")+"\"");}%> >(and)</td></tr>
 					<tr><td>Sorted fields</td><td><input type="text" name="sort" size="20" <% 								if(!isEmpty(request,"sort")){out.print("value=\""+request.getParameter("sort")+"\"");}%> >(and)</td></tr>
+					<tr><td>Millis from</td><td><input type="text" name="fromMs" size="6" <% if(!isEmpty(request,"fromMs")){out.print("value=\""+request.getParameter("fromMs")+"\"");}%> > to <input type="text" name="toMs" size="6" <% if(!isEmpty(request,"toMs")){out.print("value=\""+request.getParameter("toMs")+"\"");}%> ></td></tr>
 				</table>
 			</td>
 			<td valign="top"><strong>Group by</strong>
@@ -56,32 +60,43 @@ final SlowOpsDto slowOpsDto = (SlowOpsDto)request.getAttribute("slowOpsDto");
 			<td valign="top"><strong>Options</strong>
 				<table>
 					<tr><td><input type="checkbox" name="exclude" value="exclude" <% if(request.getParameter("exclude")!=null){out.print("checked=\"checked\"");}%> >exclude 14-days-operations</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td><a href="status">collector status</a></td></tr>
+					<tr><td><input type="submit" value="Submit"></td></tr>
 				</table>
 			</td>
 		</tr>
-		<tr>
-			<td>&nbsp;</td>
-			<td>&nbsp;</td>
-			<td>&nbsp;</td>
-			<td><input type="submit" value="Submit"></td>
-		</tr>
 	</table>	
 </form>
-<a href="status">collector status</a>
 <%
 final String errorMsg = slowOpsDto.getErrorMessage(); 
 if(errorMsg!=null){%>
 	<div style="color:red; padding-top:5px;">An error occurred. <%=errorMsg.contains("\"code\" : 16389")?"Filter more and/or group less to decrease size of result document! ":""%><br/><%=errorMsg%></div>
 <%}else{%>	
 
-  <table><tr><td>
+	<table><tr><td>
 		<div id="graph"></div>
 	</td>
 	<td valign="top">
 		<div id="status" style="max-height:480px; overflow-y:scroll; font-size:0.8em; padding-top:5px;"></div>
 	</td></tr>
-  </table>
-  
+	</table>
+
+<script type="text/javascript">
+			$('#datetimepickerFrom').datetimepicker({
+				format: 'yyyy/MM/dd hh:mm:ss',
+				weekStart: 1
+			});
+			$('#datetimepickerTo').datetimepicker({
+				format: 'yyyy/MM/dd hh:mm:ss',
+				weekStart: 1
+			});
+</script>
+
 <script type="text/javascript">
 var currentRow=0;
 var lastSeries;
@@ -173,17 +188,5 @@ g = new Dygraph(document.getElementById("graph"),
 </script>
 <%}%>
 
-<script type="text/javascript">
-var dateConfig = {
-	    fullCurrentMonth: true,
-	    dateFormat: 'Y/m/j',
-	    weekdays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-	    months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-	    suffix: { 1: 'st', 2: 'nd', 3: 'rd', 21: 'st', 22: 'nd', 23: 'rd', 31: 'st' },
-	    defaultSuffix: 'th'
-	};
-var fromDate = new datepickr('fromDate', dateConfig);
-var toDate = new datepickr('toDate', dateConfig);
-</script>
 </body>
 </html>

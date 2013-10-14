@@ -119,6 +119,8 @@ public class AggregatedProfilingId {
     
     public Calendar getCalendar() {
         final Calendar result = new GregorianCalendar();
+        final int offset = (result.get(Calendar.ZONE_OFFSET) + result.get(Calendar.DST_OFFSET));
+        
         result.setTimeInMillis(0);//reset
         
         if(year != null) {
@@ -185,6 +187,8 @@ public class AggregatedProfilingId {
                 e.printStackTrace();
             }
         }
+        
+        result.add(Calendar.MILLISECOND, offset);
         
         return result;
     }

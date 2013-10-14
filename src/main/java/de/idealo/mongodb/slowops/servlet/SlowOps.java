@@ -26,7 +26,7 @@ public class SlowOps extends HttpServlet {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(SlowOps.class);
 
-	private static final String DATE_PATTERN = "yyyy/MM/dd";
+	private static final String DATE_PATTERN = "yyyy/MM/dd hh:mm:ss";
 
 	private final Grapher grapher;
 	
@@ -82,8 +82,18 @@ public class SlowOps extends HttpServlet {
             pipeline.append("sort:{$all:[").append(getStringArray(request.getParameter("sort"))).append("]},");
         }
 
-        if (!isEmpty(request, "exclude")) {
-            pipeline.append("millis:{$lt: 1270000000 },");
+        if (!isEmpty(request, "fromMs") || !isEmpty(request, "toMs") || !isEmpty(request, "exclude")) {
+            pipeline.append("millis:{");
+            if (!isEmpty(request, "fromMs")) {
+                pipeline.append("$gte:").append(request.getParameter("fromMs")).append(",");
+            }
+            if (!isEmpty(request, "toMs")) {
+                pipeline.append("$lt:").append(request.getParameter("toMs")).append(",");
+            } else if (!isEmpty(request, "exclude")) {
+                pipeline.append("$lt:1270000000,");
+            }
+            pipeline.deleteCharAt(pipeline.length() - 1);// delete last comma
+            pipeline.append("},");
         }
 
         if(!isEmpty(request, "fromDate") && !isEmpty(request, "toDate")) {
@@ -110,8 +120,8 @@ public class SlowOps extends HttpServlet {
         
         if(pipeline.length() == PREFIX.length()) {//default
             pipeline.append("ts:{$gt: #, $lt: # }");
-            final Date toDate = new Date(System.currentTimeMillis() + (1000*60*60*24));
-            final Date fromDate = new Date(toDate.getTime() - (1000*60*60*24*2));
+            final Date toDate = new Date();
+            final Date fromDate = new Date(toDate.getTime() - (1000*60*60*24));
             params.add(fromDate);
             params.add(toDate);
             addDateToRequest(fromDate, request, "fromDate");

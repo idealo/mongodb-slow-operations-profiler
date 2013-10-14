@@ -6,11 +6,14 @@ This java web application collects slow operations from a mongoDB system in orde
 The software has been presented during the [MongoDB User Group Berlin on 4th of June 2013](http://www.meetup.com/MUGBerlin/events/119503502/).
 Slides of the presentation can be found [here](http://www.slideshare.net/Kay1A/slow-ops).
 
+The screenshot below demonstrates how slow operations are visualized: The higher a point or circle on the y-axis, the slower was the execution time of this operation. The greater the diameter of the circle, the more slow operations of this type were executed at this time. While the mouse hovers over the graph, the corresponding slow operations are shown in bold and details of them are displayed on the right-hand side.
+
 ---------------------------------------
    Screenshot of the User-Interface
 ---------------------------------------
 
 ![Screenshot](slowOpsGui.png "Screenhot of the GUI")
+
 
 -----------
    Setup
@@ -37,6 +40,13 @@ Starting up:
    Version history
 ---------------------
 
+* v0.1.0
+    + new: filter by date/time
+    + new: filter by millis
+    + change: deprecated tags removed from logback configuration
+    + bugfix: respect time zone and day light saving time (data are still saved in GMT but now displayed dependent on time zone and day light saving time)
+    + bugfix: zoom into graph could have resulted in a blank graph due to conflict with the previous date picker javascript library
+    + bugfix: date formatting is now thread safe
 * v0.0.2
     + logback configuration file
     + maven-war plugin update
@@ -56,6 +66,7 @@ Starting up:
 * jackson: [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
 * bson4jackson: [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
 * dygraph: [MIT License](http://opensource.org/licenses/MIT)
+* bootstrap-datetimepicker: [Apache License 2.0](https://github.com/tarruda/bootstrap-datetimepicker)
 
 
 --------------
