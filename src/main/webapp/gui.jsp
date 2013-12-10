@@ -20,7 +20,8 @@ boolean isEmpty(HttpServletRequest request, String param) {
 }
 %>
 <%
-final SlowOpsDto slowOpsDto = (SlowOpsDto)request.getAttribute("slowOpsDto");
+  final SlowOpsDto slowOpsDto = (SlowOpsDto)request.getAttribute("slowOpsDto");
+  final String sortLegend = request.getParameter("sortLegend");
 %>
 <body>
 <form name="input" action="gui" method="get">
@@ -60,8 +61,8 @@ final SlowOpsDto slowOpsDto = (SlowOpsDto)request.getAttribute("slowOpsDto");
 			<td valign="top"><strong>Options</strong>
 				<table>
 					<tr><td><input type="checkbox" name="exclude" value="exclude" <% if(request.getParameter("exclude")!=null){out.print("checked=\"checked\"");}%> >exclude 14-days-operations</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td>&nbsp;</td></tr>
+					<tr><td><input type="radio" name="sortLegend" value="y" onclick="sortLegendBy(this);" <% if(sortLegend==null || "y".equals(sortLegend)){out.print("checked=\"checked\"");}%> >sort legend by y-value</td></tr>
+					<tr><td><input type="radio" name="sortLegend" value="count" onclick="sortLegendBy(this);" <% if("count".equals(sortLegend)){out.print("checked=\"checked\"");}%> >sort legend by count-value</td></tr>
 					<tr><td>&nbsp;</td></tr>
 					<tr><td>&nbsp;</td></tr>
 					<tr><td>&nbsp;</td></tr>
@@ -100,6 +101,15 @@ if(errorMsg!=null){%>
 <script type="text/javascript">
 var currentRow=0;
 var lastSeries;
+var sortByCount = <%="count".equals(sortLegend)%>;
+
+function sortLegendBy(radioButton){
+	if(radioButton.value == "count"){
+		sortByCount = true;
+	}else{
+		sortByCount = false;
+	}
+}
 g = new Dygraph(document.getElementById("graph"),
 	<%= slowOpsDto.getDataGrid()%>
 	{
@@ -157,7 +167,11 @@ g = new Dygraph(document.getElementById("graph"),
 				}
 			}
 		}
-		legend.sort(function(a,b){return b[1].yval-a[1].yval});//sort by y-values
+		if(sortByCount){
+			legend.sort(function(a,b){return b[2]-a[2]});//sort by count-values
+		}else{
+			legend.sort(function(a,b){return b[1].yval-a[1].yval});//sort by y-values
+		}
 		for (var i = 0; i < legend.length; i++) {
 			text += "<span style='font-weight: bold; color: "+legend[i][0]+";'> "+legend[i][1].name + "</span><br/><span>"+Dygraph.dateString_(legend[i][1].xval)+" count:" + legend[i][2] +" min:" + legend[i][3] +" max:" + legend[i][4] + " avg:"+legend[i][1].yval+"</span><br/>";
 		}

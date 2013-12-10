@@ -134,6 +134,9 @@ public class SlowOps extends HttpServlet {
         
         System.out.println(pipeline);
         LOG.debug("pipeline: " + pipeline);
+        LOG.debug("fromDate: " + request.getParameter("fromDate"));
+        LOG.debug("toDate: " + request.getParameter("toDate"));
+        
         
         result.setPipeline(pipeline);
         result.setParameters(params.toArray(new Date[params.size()]));

@@ -40,6 +40,9 @@ Starting up:
    Version history
 ---------------------
 
+* v0.1.1
+    + new: sort legend by count or y-value
+    + update: Eclipse's Dynamic Web Module facet changed from v2.5 to v3.0 (changes web-app tag in web.xml)
 * v0.1.0
     + new: filter by date/time
     + new: filter by millis
