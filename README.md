@@ -80,7 +80,7 @@ By clicking on `analyse`, the above mentioned analysis page will show the slow o
 `mvn package`
 4. Deploy the resulted war file (e.g. "`mongodb-slow-operations-profiler-1.0.3.war`") on a java webserver (e.g. tomcat). Dependent on the above mentionned `config.json`, it may automatically start collecting slow operations. If no slow operations exist yet on the mongod's, the collector(s) will sleep 1 hour before retrying.
 5. The application can be accessed through a web browser by the URL `http://your-server:your-port/mongodb-slow-operations-profiler-[your-version]/app`
-6. To visualize and analyze slow operations either select on or more entries and click "analyse" or use the following URL `http://your-server:your-port/mongodb-slow-operations-profiler-[your-version]/gui`
+6. To visualize and analyze slow operations either select one or more entries and click "analyse" or use the following URL `http://your-server:your-port/mongodb-slow-operations-profiler-[your-version]/gui`
 
 ### <a name="config"></a> Configuration
 
