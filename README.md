@@ -120,7 +120,7 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
   "yAxisScale":"milliseconds"
 }
 ```
-This example configuration defines first the `collector` running as a replica set consisting of 3 members on hosts "myCollectorHost_member[1|2|3]" on port 27017, using the collection "slowops" of database "profiling". Both "adminUser" and "adminPw" are empty because the mongodb instance runs without authentication. If mongod runs with authentication, the user must exist for the admin database with role "root".
+This example configuration defines first the `collector` running as a replica set consisting of 3 members on hosts "myCollectorHost_member[1|2|3]" on port 27017, using the collection "slowops" of database "profiling". Both `adminUser` and `adminPw` are empty because the mongodb instance runs without authentication. If mongod runs with authentication, the user must exist for the admin database with role "root".
 
 After the definition of the collector follow the databases to be profiled. In this example, there are only two entries. However, keep in mind that the application will **resolve all members** of a replica set (even if only 1 member has been defined) respectively all shards and its replica set members of a whole cluster.
 
