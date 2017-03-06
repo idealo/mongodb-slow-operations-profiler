@@ -14,8 +14,12 @@ import java.util.*;
  * @copyright idealo internet GmbH
  */
 public class AggregatedProfilingId {
-    
+
+    private String lbl;
     private String adr;
+    private String rs;
+    private String db;
+    private String col;
     private String op;
     private String user;
     private Set<String> fields;
@@ -32,7 +36,15 @@ public class AggregatedProfilingId {
     public AggregatedProfilingId(){      
     }
 
-        
+    /**
+     * @return the lbl
+     */
+    public String getLbl() {
+        return lbl;
+    }
+
+
+
     /**
      * @return the adr
      */
@@ -41,6 +53,28 @@ public class AggregatedProfilingId {
     }
 
 
+    /**
+     * @return the rs
+     */
+    public String getRs() {
+        return rs;
+    }
+
+
+    /**
+     * @return the db
+     */
+    public String getDb() {
+        return db;
+    }
+
+
+    /**
+     * @return the col
+     */
+    public String getCol() {
+        return col;
+    }
 
 
     /**
@@ -91,16 +125,24 @@ public class AggregatedProfilingId {
     }
 
 
-    public String getLabel() {
+    public String getLabel(boolean isHtml) {
         final StringBuffer result = new StringBuffer();
-        result.append(getField("adr", adr));
-        result.append(getField("op", op));
-        result.append(getField("user", user));
-        result.append(getField("fields", fields!=null?fields.toString():null));
-        result.append(getField("sort", sort!=null?sort.toString():null));
+        result.append(getField("lbl", lbl, isHtml));
+        result.append(getField("adr", adr, isHtml));
+        result.append(getField("rs", rs, isHtml));
+        result.append(getField("db", db, isHtml));
+        result.append(getField("col", col, isHtml));
+        result.append(getField("op", op, isHtml));
+        result.append(getField("user", user, isHtml));
+        result.append(getField("fields", fields!=null?fields.toString():null, isHtml));
+        result.append(getField("sort", sort!=null?sort.toString():null, isHtml));
         
         if(result.length() > 0) {
-            result.deleteCharAt(result.length()-1);//remove last char
+            if(isHtml) {
+                result.delete(result.length() - 4, result.length());//remove last <br>
+            }else {
+                result.deleteCharAt(result.length() - 1);//remove last ;
+            }
         }else {
             result.append("empty");
         }
@@ -108,10 +150,14 @@ public class AggregatedProfilingId {
         return result.toString();
     }
     
-    private String getField(String name, String field) {
+    private String getField(String name, String field, boolean isHtml) {
         if(field != null && field.length() > 0) {
             final StringBuffer result = new StringBuffer();
-            result.append(name).append("=").append(field.replace(',', ';')).append(";");
+            if(isHtml){
+                result.append(name).append("=").append(field.replace(',', ';')).append("<br>");
+            }else {
+                result.append(name).append("=").append(field.replace(',', ';')).append(";");
+            }
             return result.toString();
         }
         return "";

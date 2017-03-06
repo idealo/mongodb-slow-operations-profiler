@@ -3,9 +3,11 @@
  */
 package de.idealo.mongodb.slowops.collector;
 
-import java.util.*;
+import com.mongodb.ServerAddress;
+import org.bson.Document;
 
-import com.mongodb.*;
+import java.util.Date;
+import java.util.Set;
 
 /**
  * 
@@ -20,6 +22,8 @@ public class ProfilingEntry {
     
     final Date ts;
     final ServerAddress adr;
+    final String db;
+    final String col;
     final String op;
     final String user;
     final Set<String> fields;
@@ -27,13 +31,18 @@ public class ProfilingEntry {
     final Integer nret;
     final Integer respLen;
     final Integer millis;
+    final Long cId;//cursorId
+    String label;
+    String replSet;
     
     
     
-    public ProfilingEntry(Date ts, ServerAddress adr, String op, String user, Set<String> fields, Set<String> sort, Integer nret, Integer respLen, Integer millis) {
+    public ProfilingEntry(Date ts, ServerAddress adr, String db, String col, String op, String user, Set<String> fields, Set<String> sort, Integer nret, Integer respLen, Integer millis, Long cId) {
         super();
         this.ts = ts;
         this.adr = adr;
+        this.db = db;
+        this.col = col;
         this.op = op;
         this.user = user;
         this.fields = fields;
@@ -41,20 +50,37 @@ public class ProfilingEntry {
         this.nret= nret;
         this.respLen = respLen;
         this.millis = millis;
-        
+        this.cId = cId;
     }
 
-    public DBObject getDBObject() {
-        final DBObject obj = new BasicDBObject();
-        obj.put("ts", ts);
-        obj.put("adr", adr.getHost() + ":" + adr.getPort());
-        obj.put("op", op);
-        obj.put("user", user);
-        obj.put("fields", fields);
-        obj.put("sort", sort);
-        obj.put("nret", nret);
-        obj.put("resplen", respLen);
-        obj.put("millis", millis);
+    public void setLabel(String label){
+        this.label = label;
+    }
+
+    public void setReplSet(String replSet){
+        this.replSet = replSet;
+    }
+
+
+    /**
+     * @return
+     */
+    public Document getDocument() {
+        final Document obj = new Document();
+        if(label!=null && !label.isEmpty()) obj.put("lbl", label);
+        if(ts!=null) obj.put("ts", ts);
+        if(adr!=null) obj.put("adr", adr.getHost() + ":" + adr.getPort());
+        if(replSet!=null && !replSet.isEmpty()) obj.put("rs", replSet);
+        if(db!=null && !db.isEmpty()) obj.put("db", db);
+        if(col!=null && !col.isEmpty()) obj.put("col", col);
+        if(op!=null && !op.isEmpty()) obj.put("op", op);
+        if(user!=null && !user.isEmpty()) obj.put("user", user);
+        if(fields!=null && !fields.isEmpty()) obj.put("fields", fields);
+        if(sort!=null && !sort.isEmpty()) obj.put("sort", sort);
+        if(nret!=null) obj.put("nret", nret);
+        if(respLen!=null) obj.put("resplen", respLen);
+        if(millis!=null) obj.put("millis", millis);
+        if(cId!=null) obj.put("cId", cId);
         
         return obj;
     }

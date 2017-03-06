@@ -3,15 +3,25 @@
  */
 package de.idealo.mongodb.slowops.collector;
 
+import com.google.common.collect.Lists;
+import com.mongodb.*;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+import de.idealo.mongodb.slowops.dto.CollectorStatusDto;
+import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
+import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.slf4j.*;
-
-import com.mongodb.*;
-
-import de.idealo.mongodb.slowops.util.Util;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 
@@ -22,83 +32,175 @@ import de.idealo.mongodb.slowops.util.Util;
  * @copyright idealo internet GmbH
  */
 
-public class ProfilingReader extends Thread{
-    
+public class ProfilingReader extends Thread implements Callable{
+
     private static final Logger LOG = LoggerFactory.getLogger(ProfilingReader.class);
     private static final int RETRY_AFTER_SECONDS = 60*60;//1 hour
+    private static final int MAX_LOG_LINE_LENGTH = 1000;
+
+    private static AtomicInteger instances = new AtomicInteger(1);
+
     
     private final ServerAddress serverAddress;
-    private final String country;
+    private final ProfiledServerDto profiledServerDto;
     private final String database;
-    private final String collection;
-    private AtomicLong doneJobs = new AtomicLong(0);
+    private final List<String> collections;
+    private final AtomicLong doneJobs;
+    private long slowMs;
+    private boolean isProfiling;
+    private ReplicaStatus replSetStatus;
     private boolean stop = false;
-    
+
     private final BlockingQueue<ProfilingEntry> jobQueue;
-    private DBCollection profileCollection;
-    private Mongo mongo;
+    private MongoCollection<Document> profileCollection;
+    private MongoDbAccessor mongo;
     private Date lastTs;
     private ServerChecker restarter;
-    private DBCursor profileCursor;
-     
-    
-    public ProfilingReader(BlockingQueue<ProfilingEntry> jobQueue, ServerAddress adr, Date lastTs, String country, ServerChecker restarter) {
+    private MongoCursor<Document> profileCursor;
+    private final ProfiledDocumentHandler profiledDocumentHandler;
+    private String replSet;
+    private final int instanceId;
+    private final ScheduledExecutorService scheduler;
+    private final LinkedList<Long> doneJobsHistory;
+    private final int schedulePeriodInSeconds;
+    private final ReadWriteLock globalLock = new ReentrantReadWriteLock();
+    private final Lock readLock;
+    private final Lock writeLock;
+
+
+    //https://docs.mongodb.com/v2.6/reference/replica-states/
+    public enum ReplicaStatus {
+        STARTUP(0),
+        PRIMARY(1),
+        SECONDARY(2),
+        RECOVERING(3),
+        STARTUP2(5),
+        UNKNOWN(6),
+        ARBITER(7),
+        DOWN(8),
+        ROLLBACK(9),
+        REMOVED(10);
+
+        private int value;
+
+        private ReplicaStatus(int value) {
+            this.value = value;
+        }
+
+        static ReplicaStatus getReplicaState(int value){
+            switch (value) {
+                case 0:
+                    return STARTUP;
+                case 1:
+                    return PRIMARY;
+                case 2:
+                    return SECONDARY;
+                case 3:
+                    return RECOVERING;
+                case 5:
+                    return STARTUP2;
+                case 6:
+                    return UNKNOWN;
+                case 7:
+                    return ARBITER;
+                case 8:
+                    return DOWN;
+                case 9:
+                    return ROLLBACK;
+                case 10:
+                    return REMOVED;
+            }
+            return UNKNOWN;
+        }
+    };
+
+
+
+
+    public ProfilingReader(int id, BlockingQueue<ProfilingEntry> jobQueue, ServerAddress adr, Date lastTs, ProfiledServerDto profiledServerDto, String dbName, List<String> collNames, boolean stop, long doneJobs, long slowMs, ServerChecker restarter) {
         this.jobQueue = jobQueue;
         this.serverAddress = adr;
-        this.country = country;
+        this.profiledServerDto = profiledServerDto;
         this.restarter = restarter;
         if(lastTs == null) {
             this.lastTs = new Date(0);
         }else {
             this.lastTs = lastTs;
         }
-        database = Util.getProperty(Util.PROFILED_DATABASE, null);
-        collection = Util.getProperty(Util.PROFILED_COLLECTION, null);
-        
+        this.replSet = null;
+        this.database = dbName;
+        this.collections = collNames;
+        this.doneJobs = new AtomicLong(doneJobs);
+        this.slowMs = slowMs;
+        this.profiledDocumentHandler = new ProfiledDocumentHandler(serverAddress);
+        this.stop = stop;
+        this.isProfiling = false;
+        this.replSetStatus = ReplicaStatus.UNKNOWN;
+        this.instanceId = id==0?instances.getAndIncrement():id;
+
+        readLock = globalLock.readLock();
+        writeLock = globalLock.writeLock();
+        schedulePeriodInSeconds = 10;
+        doneJobsHistory = new LinkedList<Long>(Collections.nCopies(24*60*60/schedulePeriodInSeconds, 0l));
+
+
+        scheduler = Executors.newScheduledThreadPool( 1 );
+        scheduler.scheduleAtFixedRate(
+                new Runnable() {
+                    long runs=0;
+                    @Override public void run() {
+                        writeLock.lock();
+                        try{
+                            doneJobsHistory.addFirst(getDoneJobs());
+                            doneJobsHistory.removeLast();
+                        }finally{
+                            writeLock.unlock();
+                        }
+                    }
+                },
+                schedulePeriodInSeconds,
+                schedulePeriodInSeconds,
+                TimeUnit.SECONDS );
+
+        init();
+
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
                 closeConnections();
+                shutdownScheduler();
             }
         });
     }
     
     private void init() {
-        LOG.info(">>> init");
+        LOG.info(">>> init for {}", serverAddress);
         
         try {
-            mongo = new Mongo(serverAddress);
-            final DB db = mongo.getDB(database);
-            
-            final String login = Util.getProperty(Util.PROFILED_USER_LOGIN, null);
-            final String pw = Util.getProperty(Util.PROFILED_USER_PASSWORD, null);
-            if(login!= null && pw != null) {
-                boolean ok = db.authenticate(login, pw.toCharArray());
-                LOG.info("auth on " + serverAddress + " ok: " + ok);
-            }
-            
-            final CommandResult cr = db.command("isMaster");
-            final Object ismaster = cr.get("ismaster");
-            if(ismaster != null && !((Boolean)(ismaster)).booleanValue()) {
-                mongo.setReadPreference(ReadPreference.secondary());
-            }
-            
-            profileCollection = db.getCollection("system.profile");
-            if(profileCollection == null) {
-                throw new IllegalArgumentException("Can't continue without profile collection for " + getServerAddress());
+            if(mongo == null) {
+                mongo = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), serverAddress);
+
+                MongoDatabase db = mongo.getMongoDatabase(database);
+                profileCollection = db.getCollection("system.profile");
+                if (profileCollection == null) {
+                    throw new IllegalArgumentException("Can't continue without profile collection for " + serverAddress);
+                }
+            }else{
+                LOG.info("already inititialized for {}", serverAddress);
             }
         } catch (MongoException e) {
-            LOG.error("Error while initializing mongo at address " + serverAddress, e);
+            LOG.error("Error while initializing mongo at address {}", serverAddress, e);
             closeConnections();
             if(restarter != null) {
-                restarter.checkForNewOrRemovedMongods(this);
+                //commented out because might loop endlessly
+                //restarter.checkForNewOrRemovedMongods(this);
             }
         }
-        LOG.info("<<< init");
+        LOG.info("<<< init for {}", serverAddress);
     }
     
     private void closeConnections() {
-        LOG.info(">>> closeConnections " + getServerAddress());
+        LOG.info(">>> closeConnections {}", serverAddress);
         
         try {
             if(profileCursor != null) {
@@ -110,169 +212,258 @@ public class ProfilingReader extends Thread{
         
         try {
             if(mongo != null) {
-                mongo.close();
+                mongo.closeConnections();
                 mongo = null;
             }
         } catch (Throwable e) {
             LOG.error("Error while closing mongo ", e);
         }
         
-        LOG.info("<<< closeConnections " + getServerAddress());
+        LOG.info("<<< closeConnections {}", serverAddress);
     }
 
-    private DBCursor getProfileCursor(int limit) {
-        LOG.info(">>> getProfileCursor for " + getServerAddress() + ", limit: " + limit + ", lastTs: " + lastTs);
+    private void shutdownScheduler(){
+        if(scheduler!=null){
+            scheduler.shutdown();
+            scheduler.shutdownNow();
+            try {
+                scheduler.awaitTermination(schedulePeriodInSeconds+1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                LOG.error("InterruptedException while shuting down scheduler", e );
+            }
+        }
+    }
+
+    private MongoCursor<Document> getProfileCursor() {
+        LOG.info(">>> getProfileCursor for {} lastTs: {}", serverAddress, lastTs);
         final BasicDBObject query = new BasicDBObject();
         final BasicDBObject orderBy = new BasicDBObject();
-        
-        query.put("ns", database + "." + collection);
+        //search namespaces "database.collection" and also "database.$cmd" because count() is treated as command
+        List<String> namesspaces = Lists.newArrayList(database + ".$cmd");
+        for(String col : collections){
+            namesspaces.add(database + "." + col);
+        }
+
+        query.put("ns", new BasicDBObject( "$in", namesspaces));
         query.put("ts",  new BasicDBObject( "$gt" , lastTs ));
-        orderBy.put("$natural", Long.valueOf(1));//asc from old to new
+        orderBy.put("$natural", Long.valueOf(1));//aufsteigend von alt zu neu
         
-        return profileCollection.find(query).limit(limit).sort(orderBy);
+        return profileCollection.find(query).sort(orderBy).cursorType(CursorType.TailableAwait).iterator();
 
     }
     
     private void readSystemProfile() {
         
         if(mongo == null) {
-            LOG.error("Can't read entries from "+serverAddress+" since mongo is not initialized.");
+            LOG.error("Can't read entries from {}/{} since mongo is not initialized.", serverAddress, database );
             return;
         }
         
-        profileCursor = getProfileCursor(1);
+        profileCursor = getProfileCursor();//get tailable cursor from oldest to newest profile entry
         
         try {
         
             if(profileCursor.hasNext()) {
-                final DBObject doc = profileCursor.next();
-                lastTs = (Date)doc.get("ts");
-                LOG.info("last profile entry for " + getServerAddress() + " from: " + lastTs);
-                LOG.info(""+doc);
-                filterDoc(doc);
-                profileCursor.close();
-            }else {
-                LOG.info("No newer profile entry found for " + getServerAddress());
-                return;
-            }
-
-            while(!stop) {
-                profileCursor = getProfileCursor(0);//get tailable cursor from oldest to newest profile entry
-                profileCursor.addOption(Bytes.QUERYOPTION_TAILABLE);
-                profileCursor.addOption(Bytes.QUERYOPTION_AWAITDATA);
-                
-             
                 while(!stop && profileCursor.hasNext()) {
-            
-                    final DBObject doc = profileCursor.next();
+                    
+                    final Document doc = profileCursor.next();
                     lastTs = (Date)doc.get("ts");
                     filterDoc(doc);
-                    LOG.info(""+doc);
+                    LOG.debug(getShrinkedLogLine(doc));
                 }
-                
+            }else {
+                LOG.info("No newer profile entry found for {}", serverAddress);
+                return;
             }
         }catch(Exception e) {
-            LOG.error("Exception occurred on " + getServerAddress() + " , will return and try again.", e);
+            LOG.error("Exception occurred on {}/{} , will return and try again.", new Object[]{serverAddress, database}, e);
         }finally {
+            LOG.info("profileCursor being closed for {}", serverAddress);
             if(profileCursor != null) {
                 profileCursor.close();
             }
         }
     }
-    
-    //3 examples of how the field "query" may be formatted:
-    //query:
-    //{ "query" : { "shopId" : 279073, "onlineProductIds" : { "$ne" : null } }, "user" : "" }
-    //query.query:
-    //{ "query" : { "query" : { "shopId" : 275417 }, "orderby" : { "_id" : NumberLong(1) } }, "user" : "pl-updMetaData" }
-    //query.$query:
-    //{ "query" : { "$query" : { "shopId" : 275418 }, "$comment" : "profiling comment" }, "user" : "profiling" }
-    //{ "query" : { "$query" : { "shopId" : 283036, "smallPicture" : { "$ne" : null } }, "$orderby" : { "lastShopDataChange" : -1 } }, "user" : "" }
-    private void filterDoc(DBObject doc) {
-        
-        final Object query = doc.get("query");
-        Set<String> fields = null;
-        Set<String> sort = null;
-        if(query != null  && query instanceof DBObject) {
-            final DBObject queryObj = (DBObject)query;
-            final Object innerQuery = queryObj.get("query");//test if "query.query"
-            if(innerQuery != null) {//format is "query.query"
-                fields = getFields(innerQuery);
-                final Object orderbyObj = queryObj.get("orderby");
-                if(orderbyObj != null) {
-                    sort = getFields(orderbyObj);
-                }
-            }else {//format is "query.$query" or "query"
-                final Object innerDollarQuery = queryObj.get("$query");
-                if(innerDollarQuery != null) {
-                    fields = getFields(innerDollarQuery);
-                    final Object orderbyObj = queryObj.get("$orderby");
-                    if(orderbyObj != null) {
-                        sort = getFields(orderbyObj);
-                    }
-                }else {//format is "query"
-                    fields = getFields(query);
-                    sort = null;
-                }
-            }
-        }
-        
-        final ProfilingEntry entry = new ProfilingEntry((Date)doc.get("ts"), serverAddress, 
-                "" + doc.get("op"), "" + doc.get("user"), fields, sort, getInteger(doc, "nreturned"), 
-                getInteger(doc, "responseLength"), getInteger(doc, "millis"));
-        
+
+
+    private void filterDoc(Document doc) {
+
+        ProfilingEntry entry = profiledDocumentHandler.filterDoc(doc);
+        entry.setLabel(profiledServerDto.getLabel());
+        entry.setReplSet(replSet);
         try {
-            
+
             jobQueue.put(entry);
             doneJobs.incrementAndGet();
-            
+
         } catch (InterruptedException e) {
             LOG.error("InterruptedException while waiting to put entry into jobQueue", e);
         }
-        
-    }
-    
-    private Integer getInteger(DBObject dbObj, String name) {
-        if(dbObj != null) {
-            final Object obj = dbObj.get(name);
-            if(obj != null) {
-                return (Integer)(obj);
-            }
-        }
-        return null;
-    }
-    
-    private Set<String> getFields(Object obj) {
-        if(obj != null && obj instanceof DBObject) {
-            final DBObject dbObj = (DBObject)obj;
-            return dbObj.keySet();
-        }
-        return new HashSet<String>();
-    }
-    
-    public long getDoneJobs() {
-        return doneJobs.get();
+
     }
 
-    
+
+    private String getShrinkedLogLine(Document doc) {
+        String result = ""+doc;
+        final int lineLength = result.length(); 
+        if(lineLength > MAX_LOG_LINE_LENGTH) {
+            final int region = MAX_LOG_LINE_LENGTH/2;
+            final int commas = result.substring(region, result.length()-region).split(",").length;
+            final StringBuilder newLogLine = new StringBuilder(result.substring(0, region));
+            newLogLine.append(" [original document is ").append(lineLength).append(" bytes big, so only first and last ")
+            .append(region).append(" bytes are shown, ").append(commas).append(" comma separated values have been cut-out] ")
+            .append(result.substring(result.length()-region));
+            result = newLogLine.toString();
+        }
+        return result;
+    }
+
+    public void setSlowMs(int profile, long ms) {
+
+        boolean wasNull = false;
+        if (mongo == null) {
+            wasNull = true;
+            init();
+        }
+
+        try {
+            if(ms < 0){
+                profile = 0; //profiling off
+                ms = Math.abs(ms);
+            }
+            Document doc = mongo.runCommand(database, new BasicDBObject("profile", profile).append("slowms", ms));
+            Object ok = doc.get("ok");
+            if (ok != null && ok instanceof Double && Double.valueOf(ok.toString()).doubleValue()==1.0) {
+                slowMs = ms;
+                LOG.info("setSlowMs successfully set to {} ms on {}/{}", new Object[]{ms, serverAddress, database});
+            }else{
+                LOG.error("setSlowMs failed on {}/{}", serverAddress, database);
+            }
+        } catch (MongoCommandException e) {
+            LOG.error("Could not setSlowMs on {}/{}", new Object[]{serverAddress, database}, e);
+        }
+
+        if(wasNull){
+            closeConnections();
+        }
+    }
+
+    public boolean isProfiling(){
+        return isProfiling;
+    }
+
+
+    public void updateServerStatusVariables(){
+        LOG.debug(">>> updateServerStatusVariables");
+
+        boolean wasNull = false;
+        if (mongo == null) {
+            wasNull = true;
+            init();
+        }
+
+        try {
+            Document doc = mongo.runCommand(database, new BasicDBObject("profile", -1));
+            Object was = doc.get("was");
+            LOG.debug("isProfiling was: {}", was);
+            if (was != null && was instanceof Integer) {
+                int wasInt = (Integer)was;
+                LOG.debug("isProfiling wasInt: {}", wasInt);
+                if(wasInt==0){
+                    isProfiling = false;
+                }else{//either 2 (profile all) or 1 (profile slow ops)
+                    isProfiling = true;
+                }
+            }
+            Object ms = doc.get("slowms");
+            if (ms != null && ms instanceof Integer) {
+                slowMs = (long)(Integer)ms;
+            }
+
+            try {
+                doc = mongo.runCommand("admin", new BasicDBObject("replSetGetStatus", 1));
+                Object rs = doc.get("set");
+                if (rs != null && rs instanceof String) {
+                    replSet = rs.toString();
+                }
+                Object myState = doc.get("myState");
+                if (myState != null && myState instanceof Integer) {
+                    replSetStatus = ReplicaStatus.getReplicaState((Integer)myState);
+                }
+            } catch (MongoCommandException e) {
+                LOG.info("this mongod seems not to be a replSet member {}", serverAddress);
+            }
+
+        } catch (MongoCommandException e) {
+            LOG.info("Could not determine status on {}", serverAddress);
+        }
+
+        if(wasNull){
+            closeConnections();
+        }
+        LOG.debug("<<< updateServerStatusVariables");
+    }
+
+
+    public long getDoneJobs() { return doneJobs.get(); }
+
+    public long getSlowMs() { return slowMs; }
+
+    public ReplicaStatus getReplicaStatus() { return replSetStatus; }
+
     public ServerAddress getServerAddress() {
         return serverAddress;
     }
-    
-    public String getCountry() {
-        return country;
+
+    public String getDatabase() {
+        return database;
+    }
+
+    public List<String> getCollections() {
+        return collections;
     }
     
-    
+    public String getLabel() { return profiledServerDto.getLabel(); }
+
+    public ProfiledServerDto getProfiledServerDto() { return profiledServerDto; }
+
+    public Date getLastTs() { return lastTs; }
+
+    public String getReplSet() { return replSet; }
+
+    public int getIntanceId() { return instanceId; }
+
+    public ArrayList<Long> getDoneJobsHistory() {
+        ArrayList<Long> result = Lists.newArrayList();
+
+        readLock.lock();
+        try{
+            long newest = doneJobsHistory.get(0);
+            result.add(getDoneJobs());//now
+            result.add(newest - doneJobsHistory.get(1));//last 10 sec
+            result.add(newest - doneJobsHistory.get(5));//last 1min
+            result.add(newest - doneJobsHistory.get(59));//last 10min
+            result.add(newest - doneJobsHistory.get(179));//last 30min
+            result.add(newest - doneJobsHistory.get(359));//last 1hour
+            result.add(newest - doneJobsHistory.get(4319));//last 12hours
+            result.add(newest - doneJobsHistory.get(8639));//last 1day
+        }finally{
+            readLock.unlock();
+        }
+        return result;
+    }
+
     public void terminate() {
         stop = true;
         interrupt(); //need to interrupt when sleeping or waiting on tailable cursor data
         closeConnections();
+        shutdownScheduler();
     }
     
     public boolean isStopped() {
         return stop;
     }
+
 
     
     /* (non-Javadoc)
@@ -280,7 +471,7 @@ public class ProfilingReader extends Thread{
      */
     @Override
     public void run() {
-        LOG.info("Run started " + getServerAddress());
+        LOG.info("Run started {}", serverAddress);
         try {
             while(!stop) {
                 init();
@@ -288,7 +479,7 @@ public class ProfilingReader extends Thread{
                 closeConnections();
                 if(!stop) {
                     try {
-                        LOG.info("sleeping..." + getServerAddress());
+                        LOG.info("{} sleeping...", serverAddress);
                         Thread.sleep(1000*RETRY_AFTER_SECONDS);
                         
                     } catch (InterruptedException e) {
@@ -299,17 +490,20 @@ public class ProfilingReader extends Thread{
         }finally {
             terminate();
         }
-        LOG.info("Run terminated " + getServerAddress());
+        LOG.info("Run terminated {}", serverAddress);
     }
-    
+
 
 
     public static void main(String[] args) throws Exception {
-        final ServerAddress address =  new ServerAddress("localhost",27002);
+        final ServerAddress address =  new ServerAddress("localhost",27017);
         
         BlockingQueue<ProfilingEntry> jobQueue = new LinkedBlockingQueue<ProfilingEntry>();
-        ProfilingReader reader = new ProfilingReader(jobQueue, address, null, "it", null);
+        ProfiledServerDto dto = new ProfiledServerDto(true, "some label", new ServerAddress[]{new ServerAddress("127.0.0.1:27017")}, new String[]{"offerStore.offer"}, null, null, 100);
+        ProfilingReader reader = new ProfilingReader(0, jobQueue, address, null, dto, "offerStore", Lists.newArrayList("offers"), false, 0, 100, null);
         reader.start();
+        reader.setSlowMs(1, 3);
+        reader.terminate();
         //Thread.sleep(5000);
         //reader.stop();
         
@@ -318,7 +512,22 @@ public class ProfilingReader extends Thread{
         
     }
 
-    
 
-    
+    @Override
+    public CollectorStatusDto call() {
+        updateServerStatusVariables();
+        return new CollectorStatusDto(getIntanceId(),
+                getLabel(),
+                getReplSet(),
+                getServerAddress(),
+                getDatabase(),
+                getCollections(),
+                isStopped(),
+                isProfiling(),
+                getSlowMs(),
+                getReplicaStatus().name(),
+                getLastTs(),
+                getDoneJobsHistory()
+        );
+    }
 }

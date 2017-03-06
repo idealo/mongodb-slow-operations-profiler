@@ -3,26 +3,26 @@
  */
 package de.idealo.mongodb.slowops.servlet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import javax.servlet.*;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.*;
-
-import de.idealo.mongodb.slowops.collector.*;
-import de.idealo.mongodb.slowops.dto.CollectorDto;
-
-/**
- * Servlet implementation class Collector
- */
-@WebServlet("/status")
-public class Collector extends HttpServlet {
+@WebServlet("/app")
+public class ApplicationStatus extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-	
+	private static final Logger LOG = LoggerFactory.getLogger(ApplicationStatus.class);
+
 	/**
      * @see HttpServlet#HttpServlet()
      */
-    public Collector() {
+    public ApplicationStatus() {
         super();
     }
 
@@ -30,14 +30,11 @@ public class Collector extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		final CollectorDto profilerDto = new CollectorDto(CollectorManagerInstance.getNumberOfReads(), CollectorManagerInstance.getNumberOfWrites()); 
-	    
-		request.setAttribute("collectorDto", profilerDto);
-		
-		
-        RequestDispatcher view = request.getRequestDispatcher("/collectorStatus.jsp");
-        view.forward(request, response);
-		
+		LOG.debug(">>> doGet");
+		RequestDispatcher view = request.getRequestDispatcher("/applicationStatus.jsp");
+		LOG.debug("doGet");
+		view.forward(request, response);
+		LOG.debug("<<< doGet");
 	}
 
 	/**

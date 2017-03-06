@@ -3,7 +3,7 @@
  */
 package de.idealo.mongodb.slowops.jmx;
 
-import java.util.*;
+import java.util.Date;
 
 /**
  * 
@@ -15,8 +15,12 @@ import java.util.*;
  */
 public interface CollectorManagerMBean {
     
-    Map<String, Long> getNumberOfReads();
+    long getNumberOfReads();
     
     long getNumberOfWrites();
+
+    long getNumberOfReadsOfRemovedReaders();
+
+    Date getRunningSince();
 
 }

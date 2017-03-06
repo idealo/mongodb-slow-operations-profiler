@@ -3,18 +3,24 @@
  */
 package de.idealo.mongodb.slowops.servlet;
 
-import java.io.IOException;
-import java.text.*;
-import java.util.*;
-
-import javax.servlet.*;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.*;
-
-import org.slf4j.*;
-
-import de.idealo.mongodb.slowops.dto.*;
+import de.idealo.mongodb.slowops.dto.SlowOpsDto;
+import de.idealo.mongodb.slowops.dto.SlowOpsFilterDto;
 import de.idealo.mongodb.slowops.grapher.Grapher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 
 /**
@@ -26,9 +32,8 @@ public class SlowOps extends HttpServlet {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(SlowOps.class);
 
-	private static final String DATE_PATTERN = "yyyy/MM/dd hh:mm:ss";
-
 	private final Grapher grapher;
+	private final String DATEFORMAT = ("yyyy/MM/dd HH:mm:ss");
 	
     /**
      * Default constructor. 
@@ -44,8 +49,8 @@ public class SlowOps extends HttpServlet {
 	    
 	    final SlowOpsFilterDto filter = getFilter(request);
 	    
-	    final SlowOpsDto slowQueriesDto = grapher.aggregateSlowQueries(filter.getPipeline(), filter.getParameters(), getGroupExp(request), getGroupTime(request));
-        request.setAttribute("slowOpsDto", slowQueriesDto);
+	    final SlowOpsDto slowOpsDto = grapher.aggregateSlowQueries(filter.getPipeline(), filter.getParameters(), getGroupExp(request), getGroupTime(request));
+        request.setAttribute("slowOpsDto", slowOpsDto);
         
         RequestDispatcher view = request.getRequestDispatcher("/gui.jsp");
         view.forward(request, response);
@@ -64,10 +69,21 @@ public class SlowOps extends HttpServlet {
 	    final String PREFIX = "{$match:{";
 	    final StringBuffer pipeline = new StringBuffer(PREFIX);
 	    final List<Date> params = new LinkedList<Date>();
-        
-        
+
+        if(!isEmpty(request, "lbl")) {
+            pipeline.append("lbl:{$in:[").append(getStringArray(request.getParameter("lbl"))).append("]},");
+        }
         if(!isEmpty(request, "adr")) {
             pipeline.append("adr:{$in:[").append(getStringArray(request.getParameter("adr"))).append("]},");
+        }
+        if(!isEmpty(request, "rs")) {
+            pipeline.append("rs:{$in:[").append(getStringArray(request.getParameter("rs"))).append("]},");
+        }
+        if(!isEmpty(request, "db")) {
+            pipeline.append("db:{$in:[").append(getStringArray(request.getParameter("db"))).append("]},");
+        }
+        if(!isEmpty(request, "col")) {
+            pipeline.append("col:{$in:[").append(getStringArray(request.getParameter("col"))).append("]},");
         }
         if(!isEmpty(request, "user")) {
             pipeline.append("user:{$in:[").append(getStringArray(request.getParameter("user"))).append("]},");
@@ -81,24 +97,24 @@ public class SlowOps extends HttpServlet {
         if(!isEmpty(request, "sort")) {
             pipeline.append("sort:{$all:[").append(getStringArray(request.getParameter("sort"))).append("]},");
         }
-
-        if (!isEmpty(request, "fromMs") || !isEmpty(request, "toMs") || !isEmpty(request, "exclude")) {
+        if(!isEmpty(request, "fromMs") || !isEmpty(request, "toMs") || !isEmpty(request, "exclude")) {
             pipeline.append("millis:{");
-            if (!isEmpty(request, "fromMs")) {
+            if(!isEmpty(request, "fromMs")){
                 pipeline.append("$gte:").append(request.getParameter("fromMs")).append(",");
             }
-            if (!isEmpty(request, "toMs")) {
+            if(!isEmpty(request, "toMs")){
                 pipeline.append("$lt:").append(request.getParameter("toMs")).append(",");
-            } else if (!isEmpty(request, "exclude")) {
+            }else if (!isEmpty(request, "exclude")) {
                 pipeline.append("$lt:1270000000,");
             }
-            pipeline.deleteCharAt(pipeline.length() - 1);// delete last comma
+            pipeline.deleteCharAt(pipeline.length()-1);//delete last comma
             pipeline.append("},");
         }
 
         if(!isEmpty(request, "fromDate") && !isEmpty(request, "toDate")) {
             final Date fromDate = getDate(request.getParameter("fromDate"));
             final Date toDate = getDate(request.getParameter("toDate"));
+            
             if(fromDate != null && toDate != null) {
                 pipeline.append("ts:{$gt: #, $lt: # },");
                 params.add(fromDate);
@@ -122,10 +138,11 @@ public class SlowOps extends HttpServlet {
             pipeline.append("ts:{$gt: #, $lt: # }");
             final Date toDate = new Date();
             final Date fromDate = new Date(toDate.getTime() - (1000*60*60*24));
+            final SimpleDateFormat df = new SimpleDateFormat(DATEFORMAT);
             params.add(fromDate);
             params.add(toDate);
-            addDateToRequest(fromDate, request, "fromDate");
-            addDateToRequest(toDate, request, "toDate");
+            request.setAttribute("fromDate", df.format(fromDate));
+            request.setAttribute("toDate", df.format(toDate));
         }else {
             pipeline.deleteCharAt(pipeline.length()-1);//delete last comma
         }
@@ -133,10 +150,9 @@ public class SlowOps extends HttpServlet {
         pipeline.append("}}");
         
         System.out.println(pipeline);
-        LOG.debug("pipeline: " + pipeline);
-        LOG.debug("fromDate: " + request.getParameter("fromDate"));
-        LOG.debug("toDate: " + request.getParameter("toDate"));
-        
+        LOG.debug("pipeline: {}", pipeline);
+        LOG.debug("fromDate: {}", request.getParameter("fromDate"));
+        LOG.debug("toDate: {}", request.getParameter("toDate"));
         
         result.setPipeline(pipeline);
         result.setParameters(params.toArray(new Date[params.size()]));
@@ -144,30 +160,25 @@ public class SlowOps extends HttpServlet {
         return result;
 	}
 	
+	
 	boolean isEmpty(HttpServletRequest request, String param) {
 	    return request.getParameter(param) == null || request.getParameter(param).trim().length() == 0; 
 	}
 	
-    private void addDateToRequest(Date date, HttpServletRequest request, String attributeName) {
-        final String dateAsString = createDateFormat().format(date);
-        request.setAttribute(attributeName, dateAsString);
-    }
 	
 	/**
-     * @param parameter
+     * @param param
      * @return
      */
     private Date getDate(String param) {
+        final SimpleDateFormat df = new SimpleDateFormat(DATEFORMAT);
+        
         try {
-            return createDateFormat().parse(param);
+            return df.parse(param);
         } catch (ParseException e) {
-            LOG.error("can't parse date: " + param, e);
+            LOG.error("can't parse date: {}", param, e);
         }
         return null;
-    }
-
-    private SimpleDateFormat createDateFormat() {
-        return new SimpleDateFormat(DATE_PATTERN);
     }
 
     /**
@@ -186,9 +197,21 @@ public class SlowOps extends HttpServlet {
 
     private StringBuffer getGroupExp(HttpServletRequest request) {
 	    final StringBuffer result = new StringBuffer();
-        
+
+        if(!isEmpty(request, "byLbl")) {
+            result.append("lbl:'$lbl',");
+        }
         if(!isEmpty(request, "byAdr")) {
             result.append("adr:'$adr',");
+        }
+        if(!isEmpty(request, "byRs")) {
+            result.append("rs:'$rs',");
+        }
+        if(!isEmpty(request, "byDb")) {
+            result.append("db:'$db',");
+        }
+        if(!isEmpty(request, "byCol")) {
+            result.append("col:'$col',");
         }
         if(!isEmpty(request, "byOp")) {
             result.append("op:'$op',");

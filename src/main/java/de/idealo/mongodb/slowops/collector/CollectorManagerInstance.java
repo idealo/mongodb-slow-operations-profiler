@@ -3,7 +3,9 @@
  */
 package de.idealo.mongodb.slowops.collector;
 
-import java.util.Map;
+import de.idealo.mongodb.slowops.dto.ApplicationStatusDto;
+
+import java.util.List;
 
 /**
  * 
@@ -27,13 +29,14 @@ public final class CollectorManagerInstance {
         INSTANCE.terminate();
     }
 
-    public static long getNumberOfWrites(){
-        return  INSTANCE.getNumberOfWrites();
-    }
+    public static ApplicationStatusDto getApplicationStatus(){ return  INSTANCE.getApplicationStatus();   }
 
-    public static Map<String, Long> getNumberOfReads(){
-        return  INSTANCE.getNumberOfReads();
-    }
+    public static ApplicationStatusDto getApplicationStatus(List<Integer> idList){ return  INSTANCE.getApplicationStatus(idList);   }
 
-    
+    public static void startStopProfilingReaders(List<Integer> idList, boolean stop){ INSTANCE.startStopProfilingReaders(idList, stop); };
+
+    public static void removeProfilingReaders(List<Integer> idList){ INSTANCE.removeProfilingReaders(idList); };
+
+    public static void setSlowMs(List<Integer> idList, String ms){ INSTANCE.setSlowMs(idList, ms); };
+
 }
