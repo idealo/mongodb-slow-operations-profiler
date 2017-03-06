@@ -3,7 +3,11 @@
  */
 package de.idealo.mongodb.slowops.dto;
 
+import de.idealo.mongodb.slowops.grapher.AggregatedProfiling;
+import de.idealo.mongodb.slowops.util.ConfigReader;
 import de.idealo.mongodb.slowops.util.Util;
+
+import java.util.HashMap;
 
 
 /**
@@ -19,14 +23,14 @@ public class SlowOpsDto {
     private boolean[] visibilityValues;
     private StringBuffer dataGrid;
     private String errorMessage;
-    
+    private HashMap<String, AggregatedProfiling> labelSeries;
     private final String scale;
-    
+
+
     public SlowOpsDto() {
-        scale = Util.getProperty(Util.Y_AXIS_SCALE, Util.Y_AXIS_SECONDS);
+        scale = ConfigReader.getString(ConfigReader.CONFIG, Util.Y_AXIS_SCALE,  Util.Y_AXIS_MILLISECONDS);
     }
-    
-    
+
     /**
      * @return the visibilityValues
      */
@@ -64,6 +68,16 @@ public class SlowOpsDto {
         return errorMessage;
     }
     
+    /**
+     * @param labelSeries
+     */
+    public void setLabelSeries(HashMap<String, AggregatedProfiling> labelSeries) {
+        this.labelSeries = labelSeries;
+    }
+    
+    public HashMap<String, AggregatedProfiling> getLabelSeries() {
+        return labelSeries;
+    }
     /**
      * @return the scale
      */

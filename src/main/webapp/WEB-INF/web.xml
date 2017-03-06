@@ -3,33 +3,46 @@
   <display-name>mongodb-slow-operations-profiler</display-name>
   <welcome-file-list>
     <welcome-file>index.html</welcome-file>
-    <welcome-file>index.htm</welcome-file>
-    <welcome-file>index.jsp</welcome-file>
-    <welcome-file>default.html</welcome-file>
-    <welcome-file>default.htm</welcome-file>
-    <welcome-file>default.jsp</welcome-file>
   </welcome-file-list>
   <listener>
     <listener-class>de.idealo.mongodb.slowops.collector.StartStopHook</listener-class>
   </listener>
   <servlet>
-    <description></description>
     <display-name>SlowOps</display-name>
     <servlet-name>SlowOps</servlet-name>
     <servlet-class>de.idealo.mongodb.slowops.servlet.SlowOps</servlet-class>
   </servlet>
   <servlet>
-    <description></description>
-    <display-name>Collector</display-name>
-    <servlet-name>Collector</servlet-name>
-    <servlet-class>de.idealo.mongodb.slowops.servlet.Collector</servlet-class>
+    <display-name>ApplicationStatus</display-name>
+    <servlet-name>ApplicationStatus</servlet-name>
+    <servlet-class>de.idealo.mongodb.slowops.servlet.ApplicationStatus</servlet-class>
   </servlet>
+
+  <servlet>
+    <servlet-name>Jersey REST Service</servlet-name>
+    <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+    <init-param>
+      <param-name>com.sun.jersey.config.property.packages</param-name>
+      <param-value>de.idealo.mongodb.slowops.servlet</param-value>
+    </init-param>
+    <init-param>
+      <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+      <param-value>true</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>Jersey REST Service</servlet-name>
+    <url-pattern>/rest/*</url-pattern>
+  </servlet-mapping>
+
   <servlet-mapping>
     <servlet-name>SlowOps</servlet-name>
     <url-pattern>/gui/*</url-pattern>
   </servlet-mapping>
   <servlet-mapping>
-    <servlet-name>Collector</servlet-name>
-    <url-pattern>/status/*</url-pattern>
+    <servlet-name>ApplicationStatus</servlet-name>
+    <url-pattern>/app/*</url-pattern>
   </servlet-mapping>
+
 </web-app>
