@@ -47,7 +47,7 @@ Here is a reduced screenshot of the table where all columns are shown, sorted by
 
 ## Applicaton status page
 
-Since v1.0.3 there is also a page to show the application status. Besides showing the status of the collector, means where and how many slow operations have been collected (read and written) since application restart, it shows also every database to be profiled in a table. Since profiling works per database, each database is in one row.
+Since v1.0.3 there is also a page to show the application status. Besides showing the status of the collector, means where and how many slow operations have been collected (read and written) since application restart, it shows also every database to be profiled in a table. Since profiling works per database, each database to be profiled is in one row.
 
 The table is filterable. Columns are sortable and selectable to be hidden or shown. The sum over the values of columns, where it makes sense, is shown at the bottom of the columns. The table is by default sorted by the columns `Label`, `ReplSet` and `Status` which gives a very good overview over a whole bunch of clusters. **Hint:** Hold shift key pressed while clicking the column headers in order to sort multiple columns.
 
@@ -55,7 +55,7 @@ Here is a reduced screenshot of the 7 first rows of the table, ordered by column
 
 ![Screenshot](img/slow_operations_app_status_5_slowest_last_day.jpg "Screenshot of the application status page")
 
-The table has a bunch of time slot columns (10 sec, 1 min, 10 min, 30 min, 1 hour, 12 hours, 1 day). These shows the number of slow operations collected during these last time periods, so you can see already here which databases may behave abnormally. In such case, you may either analyse those databases or switching off collecting  or lower their `slowMs` threshold in order to profile less slow operations.
+The table has a bunch of time slot columns (10 sec, 1 min, 10 min, 30 min, 1 hour, 12 hours, 1 day). These show the number of slow operations collected during these last time periods, so you can see already here which databases may behave abnormally. In such case, you may either analyse those databases or switching off collecting  or lower their `slowMs` threshold in order to profile less slow operations.
 
 Below the table is the **Actions panel** in order to switch collecting on/off, to change the slowMs threshold or to analyse  the selected databases with one click on the fly:
 
