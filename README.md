@@ -2,7 +2,7 @@
 
 This java web application collects slow operations from a mongoDB system in order to visualize and analyze them.
 The software has been presented during the [MongoDB User Group Berlin on 4th of June 2013](http://www.meetup.com/MUGBerlin/events/119503502/).
-Slides of the presentation can be found [here](http://www.slideshare.n ceet/Kay1A/slow-ops).
+Slides of the presentation can be found [here](http://www.slideshare.net/Kay1A/slow-ops).
 
 The following first screenshot demonstrates how slow operations are visualized in the diagram: The higher a point or circle on the y-axis, the slower was the execution time of this operation. The greater the diameter of the circle, the more slow operations of this type were executed at this time. 
 
