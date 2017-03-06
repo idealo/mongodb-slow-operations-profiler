@@ -8,9 +8,9 @@
   </appender>
 
   <appender name="FILE_ALL" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<file>slow-operations-profiler.log</file>
+		<file>${catalina.base}/logs/slow-operations-profiler.log</file>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>slow-operations-profiler.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<fileNamePattern>${catalina.base}/logs/slow-operations-profiler.%d{yyyy-MM-dd}.log</fileNamePattern>
 			<maxHistory>10</maxHistory>
 		</rollingPolicy>
 		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
@@ -18,7 +18,11 @@
 		</encoder>
 	</appender>
 
-  <root level="INFO">
+    <logger name="de.idealo.mongodb.slowops" level="debug"  additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>
+
+  <root level="info">
     <appender-ref ref="FILE_ALL" />
     <appender-ref ref="STDOUT" />
   </root>

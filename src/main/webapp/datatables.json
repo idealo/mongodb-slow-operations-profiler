@@ -1,0 +1,121 @@
+{
+  "collectorStatuses": [
+    {
+      "collections": [
+        "offer"
+      ],
+      "collectionsAsString": "offer",
+      "database": "offerStore",
+      "doneJobsHistory": [
+        8910,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "replSetName": null,
+      "replSetStatus": "UNKNOWN",
+      "instanceId": 1,
+      "label": "localhost-kay",
+      "lastTs": 1478249811610,
+      "lastTsFormatted": "2016-11-04 09:56:51",
+      "profiling": false,
+      "serverAddress": {
+        "host": "localhost",
+        "port": 27017,
+        "socketAddress": {
+          "address": "localhost",
+          "hostName": "localhost",
+          "hostString": "localhost",
+          "port": 27017,
+          "unresolved": false
+        }
+      },
+      "serverAddressAsString": "localhost:27017",
+      "slowMs": 3000,
+      "stopped": true
+    },
+    {
+      "collections": [
+        "first"
+      ],
+      "collectionsAsString": "first",
+      "database": "kay",
+      "doneJobsHistory": [
+        123,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "replSetName": null,
+      "replSetStatus": "UNKNOWN",
+      "instanceId": 1,
+      "label": "localhost-kay",
+      "lastTs": 1478249811610,
+      "lastTsFormatted": "2016-11-04 09:56:51",
+      "profiling": false,
+      "serverAddress": {
+        "host": "localhost",
+        "port": 27017,
+        "socketAddress": {
+          "address": "localhost",
+          "hostName": "localhost",
+          "hostString": "localhost",
+          "port": 27017,
+          "unresolved": false
+        }
+      },
+      "serverAddressAsString": "localhost:27017",
+      "slowMs": 3000,
+      "stopped": true
+    },
+    {
+      "collections": [
+        "first", "second"
+      ],
+      "collectionsAsString": "first",
+      "database": "kay",
+      "doneJobsHistory": [
+        123,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "replSetName": null,
+      "replSetStatus": "UNKNOWN",
+      "instanceId": 1,
+      "label": "localhost-test",
+      "lastTs": 1478249811610,
+      "lastTsFormatted": "2016-11-04 09:56:51",
+      "profiling": false,
+      "serverAddress": {
+        "host": "localhost",
+        "port": 27017,
+        "socketAddress": {
+          "address": "localhost",
+          "hostName": "localhost",
+          "hostString": "localhost",
+          "port": 27017,
+          "unresolved": false
+        }
+      },
+      "serverAddressAsString": "localhost:27017",
+      "slowMs": 3000,
+      "stopped": true
+    }
+  ],
+  "numberOfReads": 0,
+  "numberOfReadsOfRemovedReaders": 0,
+  "numberOfWrites": 0
+}

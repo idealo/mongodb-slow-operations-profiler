@@ -3,17 +3,25 @@
  */
 package de.idealo.mongodb.slowops.grapher;
 
-import java.text.*;
-import java.util.*;
-
-import org.jongo.*;
-import org.slf4j.*;
-
-import com.google.common.collect.*;
-import com.mongodb.*;
-
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.mongodb.DB;
+import com.mongodb.MongoException;
+import de.idealo.mongodb.slowops.dto.CollectorServerDto;
 import de.idealo.mongodb.slowops.dto.SlowOpsDto;
+import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
+import de.idealo.mongodb.slowops.util.ConfigReader;
 import de.idealo.mongodb.slowops.util.Util;
+import org.jongo.Aggregate.ResultsIterator;
+import org.jongo.Jongo;
+import org.jongo.MongoCollection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 
 /**
@@ -38,37 +46,32 @@ public class Grapher {
     
     public Grapher() {
         coll = getProfilingCollection();
-        final String scaleStr = Util.getProperty(Util.Y_AXIS_SCALE, Util.Y_AXIS_SECONDS);
+        final String scaleStr = ConfigReader.getString(ConfigReader.CONFIG, Util.Y_AXIS_SCALE,  Util.Y_AXIS_MILLISECONDS);
 
         if(scaleStr.equals(Util.Y_AXIS_MILLISECONDS)){
             scale = 1;
         }else {
             scale = 1000;//default
         }
-        LOG.info("scaleStr: " + scaleStr + " scale: " + scale);
+        LOG.info("scaleStr: {} scale: {}",  scaleStr, scale);
     }
     
     private MongoCollection getProfilingCollection() {
-        final String servers = Util.getProperty(Util.COLLECTOR_SERVER_ADDRESSES, "");
-        final String dbName = Util.getProperty(Util.COLLECTOR_DATABASE, null);
-        final String collName = Util.getProperty(Util.COLLECTOR_COLLECTION, null);
-        try {
-            final List<ServerAddress> addresses = Util.getServerAddresses(servers);
-            
-            final Mongo mongo = new Mongo(addresses);
-            final DB db = mongo.getDB(dbName);
-            final String login = Util.getProperty(Util.COLLECTOR_LOGIN, null);
-            final String pw = Util.getProperty(Util.COLLECTOR_PASSWORD, null);
-            if(login!= null && pw != null) {
-                boolean ok = db.authenticate(login, pw.toCharArray());
-                LOG.info("auth on " + addresses + " ok: " + ok);
+        CollectorServerDto serverDto = ConfigReader.getCollectorServer();
+;
+        try{
+            MongoDbAccessor mongo = new MongoDbAccessor(serverDto.getAdminUser(), serverDto.getAdminPw(), serverDto.getHosts());
+            DB db = mongo.getMongoDB(serverDto.getDb());
+            Jongo jongo = new Jongo(db);
+            MongoCollection result =  jongo.getCollection(serverDto.getCollection());
+
+            if(result == null) {
+                throw new IllegalArgumentException("Can't continue without profile collection for " + serverDto.getHosts());
             }
-            
-            db.setReadPreference(ReadPreference.secondaryPreferred());
-            final Jongo jongo = new Jongo(db);
-            return jongo.getCollection(collName);
+
+            return result;
         } catch (MongoException e) {
-            LOG.error("Exception while connecting to: " + servers, e);
+            LOG.error("Exception while connecting to: {}", serverDto.getHosts(), e);
         }
         return null;
     }
@@ -77,14 +80,16 @@ public class Grapher {
     public SlowOpsDto aggregateSlowQueries(StringBuffer filter, Object[] params, StringBuffer groupExp, StringBuffer groupTime) {
         final SlowOpsDto result = new SlowOpsDto();
         final String[] customFields = new String[] {"count", "minSec", "maxSec"};
-        List<AggregatedProfiling> queryResult = null;
+        //List<AggregatedProfiling> queryResult = null;
+        ResultsIterator<AggregatedProfiling> queryResult = null;
         
-        LOG.debug("filter: " + filter);
-        LOG.debug("groupExp: " + groupExp);
-        LOG.debug("groupTime: " + groupTime);
+        LOG.debug("filter: {}", filter);
+        LOG.debug("groupExp: {}", groupExp);
+        LOG.debug("groupTime: {}", groupTime);
+        
         
         try {
-            final long begin = System.currentTimeMillis();
+            final Date begin = new Date();
             queryResult = coll.aggregate(filter.toString(), params)
             .and("{$group:{" +
                     
@@ -97,6 +102,7 @@ public class Grapher {
                     "avgMs : { $avg : '$millis' }," +
                     "minMs : { $min : '$millis' }," +
                     "maxMs : { $max : '$millis' }," +
+                    "nRet : { $sum : '$nret' }," +
                     "avgRet : { $avg : '$nret' }," +
                     "minRet : { $min : '$nret' }," +
                     "maxRet : { $max : '$nret' }," +
@@ -111,7 +117,7 @@ public class Grapher {
                    "}"
             )
             .as(AggregatedProfiling.class);
-            LOG.debug("Duration in ms: " + (System.currentTimeMillis() - begin));
+            LOG.debug("Duration in ms: {}", ((new Date()).getTime() - begin.getTime()));
         }catch(MongoException e) {
             LOG.warn("MongoException while aggreating.", e);
             result.setErrorMessage(e.getMessage());
@@ -125,17 +131,25 @@ public class Grapher {
         
         final HashMap<Calendar, Set<AggregatedProfiling>> timeSeries = new HashMap<Calendar, Set<AggregatedProfiling>>();
         final HashBiMap<String, Integer> groups = HashBiMap.create();
+        final HashMap<String, AggregatedProfiling> labelSeries = new HashMap<String, AggregatedProfiling>();
         int index=0;
         Calendar minCalendar = new GregorianCalendar();
         double maxAvgMs=0;
         
         for (AggregatedProfiling entry : queryResult) {
             final AggregatedProfilingId id = entry.getId();
-            final String idLabel = id.getLabel();
+            final String idLabel = id.getLabel(false);
             
             if(!groups.containsKey(idLabel)) {
                 groups.put(idLabel, Integer.valueOf(index++));
             }
+            
+            if(!labelSeries.containsKey(idLabel)) {
+                labelSeries.put(idLabel, entry);//save first entry for this label
+            }else {//sum up the other same-label-entries with this one
+                labelSeries.get(idLabel).combine(entry);
+            }
+            
             
             final Calendar calendar = id.getCalendar();
             
@@ -202,7 +216,7 @@ public class Grapher {
             final String[] values = new String[groups.size()*(customFields.length+1)];
             for (AggregatedProfiling entry : entries) {
                 final AggregatedProfilingId id = entry.getId();
-                final String idLabel = id.getLabel();
+                final String idLabel = id.getLabel(false);
                 final Integer idx = (Integer)groups.get(idLabel);
                 final int startIdx = idx.intValue()*(customFields.length+1); 
                 values[startIdx] = decimalFormat.format(entry.getAvgMs()/scale);//millis to seconds
@@ -231,11 +245,47 @@ public class Grapher {
         
         //LOG.debug(dataGrid.toString());
         
+        
         result.setDataGrid(dataGrid);
         result.setVisibilityValues(visibilityValues);
+        result.setLabelSeries(labelSeries);
+            
 
         
         return result;
+
     }
+    
+    
+   public static void main(String[] args) {
+       //Grapher g = new Grapher();
+       //g.aggregateSlowQueries();
+       /*
+       HashSet<String> a = new HashSet<String>();
+       a.add("a");
+       a.add("b");
+       
+       HashSet<String> b = new HashSet<String>();
+       b.add("b");
+       b.add("a");
+       
+       HashSet<HashSet<String>> fields = new HashSet<HashSet<String>>();
+       fields.add(a);
+       fields.add(b);
+       
+       for (HashSet<String> strings : fields) {
+           for (String string : strings) {
+               System.out.println(string);
+           }
+           
+       }
+       */
+       //boolean[] b = new boolean[] {true, false};
+       Boolean[] b = new Boolean[] {true, false};
+       System.out.println(""+Arrays.toString(b));
+       
+   }
+
+     
     
 }

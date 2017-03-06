@@ -1,13 +1,14 @@
-/target
-/.settings
-.project
-.classpath
+.idea/
+target/
+*.csv
+*.log
+*.bak
+.~lock*
+*.png
 .checkstyle
-
-*.class
-
-# Package Files #
-*.jar
-*.war
-*.ear
-
+.classpath
+.git*
+.project
+.settings
+src/main/resources/config.local.json
+src/main/resources/config.prod.json

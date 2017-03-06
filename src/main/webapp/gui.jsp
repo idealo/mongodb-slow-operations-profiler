@@ -2,26 +2,29 @@
 <html>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
     pageEncoding="ISO-8859-1"
-    import="java.util.*,javax.servlet.*,de.idealo.mongodb.slowops.dto.SlowOpsDto" %>
+    import="java.util.*,de.idealo.mongodb.slowops.dto.SlowOpsDto,de.idealo.mongodb.slowops.grapher.*" %>
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-	<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7; IE=EmulateIE9">
-	<script type="text/javascript" src="js/dygraph-combined.js"></script>
-	<script type="text/javascript" src="js/jquery.min.js"></script>
-	<script type="text/javascript" src="js/bootstrap.min.js"></script>
-	<script type="text/javascript" src="js/bootstrap-datetimepicker.min.js"></script>
-	<link href="css/bootstrap-combined.css" rel="stylesheet">
-	<link href="css/bootstrap-datetimepicker.min.css" rel="stylesheet" type="text/css" media="screen" >
-	<title>slow operations</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+  <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7; IE=EmulateIE9">
+  <script type="text/javascript" src="js/dygraph-combined.js"></script>
+  <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap-datetimepicker.min.js"></script>	
+  <script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
+  <script type="text/javascript" src="js/jquery.dataTables.sum.js"></script>
+  <script type="text/javascript" src="js/jquery.number.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/jquery.dataTables.css">
+  <link href="css/bootstrap-combined.css" rel="stylesheet">
+  <link href="css/bootstrap-datetimepicker.min.css" rel="stylesheet" type="text/css" media="screen" >
+  <title>slow operations</title>
 </head>
-<%! 
-boolean isEmpty(HttpServletRequest request, String param) {
+<%!boolean isEmpty(HttpServletRequest request, String param) {
     return request.getParameter(param) == null || request.getParameter(param).trim().length() == 0; 
-}
-%>
+}%>
 <%
   final SlowOpsDto slowOpsDto = (SlowOpsDto)request.getAttribute("slowOpsDto");
   final String sortLegend = request.getParameter("sortLegend");
+  final String countAsSqrt = request.getParameter("countAsSqrt");
 %>
 <body>
 <form name="input" action="gui" method="get">
@@ -29,22 +32,37 @@ boolean isEmpty(HttpServletRequest request, String param) {
 		<tr>
 			<td valign="top"><strong>Filter by</strong>
 				<table>
-					<tr><td>Earliest date</td><td><div id="datetimepickerFrom" class="date"><input type="text" id="fromDate" name="fromDate" size="20" readonly <% if(!isEmpty(request,"fromDate")){out.print("value=\""+request.getParameter("fromDate")+"\"");}else{out.print("value=\""+request.getAttribute("fromDate")+"\"");}%> ><span class="add-on"><i data-time-icon="icon-time" data-date-icon="icon-calendar"></i></span></div></td></tr>
-					<tr><td>Latest date</td><td><div id="datetimepickerTo" class="date"><input type="text" id="toDate" name="toDate" size="20" readonly <% if(!isEmpty(request,"toDate")){out.print("value=\""+request.getParameter("toDate")+"\"");}else{out.print("value=\""+request.getAttribute("toDate")+"\"");}%> ><span class="add-on"><i data-time-icon="icon-time" data-date-icon="icon-calendar"></i></span></div></td></tr>
-					<tr><td>Server address</td><td><input type="text" name="adr" size="20" <% 								if(!isEmpty(request,"adr")){out.print("value=\""+request.getParameter("adr")+"\"");}%> >(or)</td></tr>
-					<tr><td>User</td><td><input type="text" name="user" size="20" <% 										if(!isEmpty(request,"user")){out.print("value=\""+request.getParameter("user")+"\"");}%> >(or)</td></tr>
-					<tr><td>Operation</td><td><input type="text" name="op" size="20" <% 									if(!isEmpty(request,"op")){out.print("value=\""+request.getParameter("op")+"\"");}%> >(or)</td></tr>
-					<tr><td>Queried fields</td><td><input type="text" name="fields" size="20" <% 							if(!isEmpty(request,"fields")){out.print("value=\""+request.getParameter("fields")+"\"");}%> >(and)</td></tr>
-					<tr><td>Sorted fields</td><td><input type="text" name="sort" size="20" <% 								if(!isEmpty(request,"sort")){out.print("value=\""+request.getParameter("sort")+"\"");}%> >(and)</td></tr>
-					<tr><td>Millis from</td><td><input type="text" name="fromMs" size="6" <% if(!isEmpty(request,"fromMs")){out.print("value=\""+request.getParameter("fromMs")+"\"");}%> > to <input type="text" name="toMs" size="6" <% if(!isEmpty(request,"toMs")){out.print("value=\""+request.getParameter("toMs")+"\"");}%> ></td></tr>
+					<tr><td>Earliest date</td><td><div id="datetimepickerFrom" class="date"><input type="text" id="fromDate" name="fromDate" size="30" readonly <% 	if(!isEmpty(request,"fromDate")){out.print("value=\""+request.getParameter("fromDate")+"\"");}else{out.print("value=\""+request.getAttribute("fromDate")+"\"");}%> ><span class="add-on"><i data-time-icon="icon-time" data-date-icon="icon-calendar"></i></span></div></td></tr>
+					<tr><td>Latest date</td><td><div id="datetimepickerTo" class="date"><input type="text" id="toDate" name="toDate" size="30" readonly <% 			if(!isEmpty(request,"toDate")){out.print("value=\""+request.getParameter("toDate")+"\"");}else{out.print("value=\""+request.getAttribute("toDate")+"\"");}%> ><span class="add-on"><i data-time-icon="icon-time" data-date-icon="icon-calendar"></i></span></div></td></tr>
+					<tr><td>Label</td><td><input type="text" name="lbl" size="30" <% 			if(!isEmpty(request,"lbl")){out.print("value=\""+request.getParameter("lbl")+"\"");}%> ><sup>1</sup></td></tr>
+					<tr><td>Server address</td><td><input type="text" name="adr" size="30" <% 	if(!isEmpty(request,"adr")){out.print("value=\""+request.getParameter("adr")+"\"");}%> ><sup>1</sup></td></tr>
+					<tr><td>ReplicaSet</td><td><input type="text" name="rs" size="30" <% 		if(!isEmpty(request,"rs")){out.print("value=\""+request.getParameter("rs")+"\"");}%> ><sup>1</sup></td></tr>
+					<tr><td>Database</td><td><input type="text" name="db" size="30" <% 			if(!isEmpty(request,"db")){out.print("value=\""+request.getParameter("db")+"\"");}%> ><sup>1</sup></td></tr>
+					<tr><td>Collection</td><td><input type="text" name="col" size="30" <% 		if(!isEmpty(request,"col")){out.print("value=\""+request.getParameter("col")+"\"");}%> ><sup>1</sup></td></tr>
+					<tr><td>User</td><td><input type="text" name="user" size="30" <% 			if(!isEmpty(request,"user")){out.print("value=\""+request.getParameter("user")+"\"");}%> ><sup>1</sup></td></tr>
+					<tr><td>Operation</td><td><input type="text" name="op" size="30" <% 		if(!isEmpty(request,"op")){out.print("value=\""+request.getParameter("op")+"\"");}%> ><sup>1</sup></td></tr>
+					<tr><td>Queried fields</td><td><input type="text" name="fields" size="30" <%if(!isEmpty(request,"fields")){out.print("value=\""+request.getParameter("fields")+"\"");}%> ><sup>2</sup></td></tr>
+					<tr><td>Sorted fields</td><td><input type="text" name="sort" size="30" <% 	if(!isEmpty(request,"sort")){out.print("value=\""+request.getParameter("sort")+"\"");}%> ><sup>2</sup></td></tr>
+					<tr><td>Millis from</td><td><input type="text" name="fromMs" size="10" <%    if(!isEmpty(request,"fromMs")){out.print("value=\""+request.getParameter("fromMs")+"\"");}%> > to <input type="text" name="toMs" size="10" <%                if(!isEmpty(request,"toMs")){out.print("value=\""+request.getParameter("toMs")+"\"");}%> ></td></tr>
+					<tr><td colspan="2">
+						<i>
+							Values separated by semicolon are logically combined: </br>
+							<sup>1</sup> or </br>
+							<sup>2</sup> and
+						</i>
+					</td></tr>
 				</table>
 			</td>
 			<td valign="top"><strong>Group by</strong>
 				<table>
+					<tr><td><input type="checkbox" name="byLbl" value="lbl" <%   	if(!isEmpty(request,"byLbl")){out.print("checked=\"checked\"");}%> >Label</td></tr>
 					<tr><td><input type="checkbox" name="byAdr" value="adr" <%   	if(!isEmpty(request,"byAdr")){out.print("checked=\"checked\"");}%> >Server address</td></tr>
+					<tr><td><input type="checkbox" name="byRs" value="rs" <%   	if(!isEmpty(request,"byRs")){out.print("checked=\"checked\"");}%> >ReplicaSet</td></tr>
+					<tr><td><input type="checkbox" name="byDb" value="db" <%   	if(!isEmpty(request,"byDb")){out.print("checked=\"checked\"");}%> >Database</td></tr>
+					<tr><td><input type="checkbox" name="byCol" value="col" <%   	if(!isEmpty(request,"byCol")){out.print("checked=\"checked\"");}%> >Collection</td></tr>
 					<tr><td><input type="checkbox" name="byUser" value="user" <%	if(!isEmpty(request,"byUser")){out.print("checked=\"checked\"");}%> >User</td></tr>
 					<tr><td><input type="checkbox" name="byOp" value="op" <%		if(!isEmpty(request,"byOp")){out.print("checked=\"checked\"");}%> >Operation</td></tr>
-					<tr><td><input type="checkbox" name="byFields" value="fields" <%if(!isEmpty(request,"byFields")  || (isEmpty(request,"byAdr") && isEmpty(request,"byUser") && isEmpty(request,"byOp") && isEmpty(request,"bySort"))){out.print("checked=\"checked\"");}%> >Queried fields</td></tr>
+					<tr><td><input type="checkbox" name="byFields" value="fields" <%if(!isEmpty(request,"byFields")  || (isEmpty(request,"byLbl") && isEmpty(request,"byAdr") && isEmpty(request,"byDb") && isEmpty(request,"byCol") && isEmpty(request,"byUser") && isEmpty(request,"byOp") && isEmpty(request,"bySort"))){out.print("checked=\"checked\"");}%> >Queried fields</td></tr>
 					<tr><td><input type="checkbox" name="bySort" value="sort" <% 	if(!isEmpty(request,"bySort")){out.print("checked=\"checked\"");}%> >Sorted fields</td></tr>
 				</table>
 			</td>
@@ -61,17 +79,25 @@ boolean isEmpty(HttpServletRequest request, String param) {
 			<td valign="top"><strong>Options</strong>
 				<table>
 					<tr><td><input type="checkbox" name="exclude" value="exclude" <% if(request.getParameter("exclude")!=null){out.print("checked=\"checked\"");}%> >exclude 14-days-operations</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td><input type="submit" value="Submit"></td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr><td>&nbsp;</td></tr>
 					<tr><td><input type="radio" name="sortLegend" value="y" onclick="sortLegendBy(this);" <% if(sortLegend==null || "y".equals(sortLegend)){out.print("checked=\"checked\"");}%> >sort legend by y-value</td></tr>
 					<tr><td><input type="radio" name="sortLegend" value="count" onclick="sortLegendBy(this);" <% if("count".equals(sortLegend)){out.print("checked=\"checked\"");}%> >sort legend by count-value</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td><a href="status">collector status</a></td></tr>
-					<tr><td><input type="submit" value="Submit"></td></tr>
+					<tr><td><input type="checkbox" name="countAsSqrt" value="countAsSqrt" onclick="setCountAsSqrt(this);" <% if(countAsSqrt!=null){out.print("checked=\"checked\"");}%> >show circles as sqrt of count-value</td></tr>
 				</table>
 			</td>
 		</tr>
-	</table>	
+	</table>
 </form>
 <%
 final String errorMsg = slowOpsDto.getErrorMessage(); 
@@ -79,29 +105,31 @@ if(errorMsg!=null){%>
 	<div style="color:red; padding-top:5px;">An error occurred. <%=errorMsg.contains("\"code\" : 16389")?"Filter more and/or group less to decrease size of result document! ":""%><br/><%=errorMsg%></div>
 <%}else{%>	
 
-	<table><tr><td>
+  <table><tr><td>
 		<div id="graph"></div>
 	</td>
 	<td valign="top">
 		<div id="status" style="max-height:480px; overflow-y:scroll; font-size:0.8em; padding-top:5px;"></div>
 	</td></tr>
-	</table>
-
+  </table>
+  
 <script type="text/javascript">
-			$('#datetimepickerFrom').datetimepicker({
-				format: 'yyyy/MM/dd hh:mm:ss',
-				weekStart: 1
-			});
-			$('#datetimepickerTo').datetimepicker({
-				format: 'yyyy/MM/dd hh:mm:ss',
-				weekStart: 1
-			});
+      $('#datetimepickerFrom').datetimepicker({
+        format: 'yyyy/MM/dd hh:mm:ss',
+        weekStart: 1
+      });
+      $('#datetimepickerTo').datetimepicker({
+          format: 'yyyy/MM/dd hh:mm:ss',
+          weekStart: 1
+        });
 </script>
-
+  
 <script type="text/javascript">
 var currentRow=0;
 var lastSeries;
 var sortByCount = <%="count".equals(sortLegend)%>;
+var countAsSqrt = <%="countAsSqrt".equals(countAsSqrt)%>;
+var lastMouseEvent;
 
 function sortLegendBy(radioButton){
 	if(radioButton.value == "count"){
@@ -109,7 +137,53 @@ function sortLegendBy(radioButton){
 	}else{
 		sortByCount = false;
 	}
+	drawLegend();
+
 }
+function setCountAsSqrt(checkButton){
+	countAsSqrt = checkButton.checked;
+	g.setAnnotations(g.annotations()); //redraw graph
+}
+
+function drawLegend(){
+	if(lastMouseEvent) {
+		var e = lastMouseEvent.e;
+		var x = lastMouseEvent.x;
+		var pts = lastMouseEvent.pts;
+		var row = lastMouseEvent.row;
+
+		var text = "";
+		var legend = new Array();
+		for (var i = 0; i < pts.length; i++) {
+			var rangeY = g.yAxisRange();
+			if (pts[i].yval >= rangeY[0] && pts[i].yval <= rangeY[1]) {//don't show labels for series outside of the view
+				var seriesProps = g.getPropertiesForSeries(pts[i].name);
+				var count = g.getValue(row, seriesProps.column + 1);
+				var minSec = g.getValue(row, seriesProps.column + 2);
+				var maxSec = g.getValue(row, seriesProps.column + 3);
+				if (pts[i].yval != 0 && count != 0) {//0-values are necessary to put into the data matrix (instead of empty values) but they are not shown in the legend
+					legend.push([seriesProps.color, pts[i], count, minSec, maxSec]);
+				}
+			}
+		}
+		if (sortByCount) {
+			legend.sort(function (a, b) {
+				return b[2] - a[2]
+			});//sort by count-values
+		} else {
+			legend.sort(function (a, b) {
+				return b[1].yval - a[1].yval
+			});//sort by y-values
+		}
+		for (var i = 0; i < legend.length; i++) {
+			text += "<span style='font-weight: bold; color: " + legend[i][0] + ";'> " + legend[i][1].name + "</span><br/><span>" + Dygraph.dateString_(legend[i][1].xval) + " count:" + legend[i][2] + " <b>Duration</b> min:" + legend[i][3] + " max:" + legend[i][4] + " avg:" + legend[i][1].yval + "</span><br/>";
+		}
+		document.getElementById("status").innerHTML = text;
+	}
+}
+
+
+
 g = new Dygraph(document.getElementById("graph"),
 	<%= slowOpsDto.getDataGrid()%>
 	{
@@ -153,29 +227,11 @@ g = new Dygraph(document.getElementById("graph"),
 	},*/
 	
 	highlightCallback: function(e, x, pts, row) {
-		var text = "";
-		var legend = new Array();
-		for (var i = 0; i < pts.length; i++) {
-			var rangeY = g.yAxisRange();
-			if(pts[i].yval >= rangeY[0] && pts[i].yval <= rangeY[1]){//don't show labels for series outside of the view
-				var seriesProps = g.getPropertiesForSeries(pts[i].name);
-				var count = g.getValue(row, seriesProps.column+1);
-				var minSec = g.getValue(row, seriesProps.column+2);
-				var maxSec = g.getValue(row, seriesProps.column+3);
-				if(pts[i].yval != 0 && count != 0){//0-values are necessary to put into the data matrix (instead of empty values) but they are not shown in the legend
-					legend.push([seriesProps.color, pts[i], count, minSec, maxSec]);
-				}
-			}
-		}
-		if(sortByCount){
-			legend.sort(function(a,b){return b[2]-a[2]});//sort by count-values
-		}else{
-			legend.sort(function(a,b){return b[1].yval-a[1].yval});//sort by y-values
-		}
-		for (var i = 0; i < legend.length; i++) {
-			text += "<span style='font-weight: bold; color: "+legend[i][0]+";'> "+legend[i][1].name + "</span><br/><span>"+Dygraph.dateString_(legend[i][1].xval)+" count:" + legend[i][2] +" min:" + legend[i][3] +" max:" + legend[i][4] + " avg:"+legend[i][1].yval+"</span><br/>";
-		}
-		document.getElementById("status").innerHTML = text;
+		lastMouseEvent = {"e":e,
+			"x":x,
+			"pts":pts,
+			"row":row};
+		drawLegend();
 		
 	},
 	
@@ -186,21 +242,133 @@ g = new Dygraph(document.getElementById("graph"),
 		}
 		currentRow++;
 		var col = g.indexFromSetName(seriesName);
-		var avg = g.getValue(currentRow, col);
-		if(avg > 0){
-			var count = g.getValue(currentRow, col+1);
-			ctx.strokeStyle = color;
-			ctx.lineWidth = 0.8;
-			ctx.beginPath();
+		var count = g.getValue(currentRow, col+1);
+		ctx.strokeStyle = color;
+		ctx.lineWidth = 0.8;
+		ctx.beginPath();
+		if(countAsSqrt){
+			ctx.arc(cx, cy, Math.sqrt(Math.sqrt(count)/Math.PI), 0, 2 * Math.PI, false); //surface equal to square root of count
+		}else{
 			ctx.arc(cx, cy, Math.sqrt(count/Math.PI), 0, 2 * Math.PI, false); //surface equal to count
-			ctx.closePath();
-			ctx.stroke();
 		}
+		ctx.closePath();
+		ctx.stroke();
 	}
 });
     	
 </script>
 <%}%>
 
+<style>
+.toggle-vis-true { color: #3174c7; }
+.toggle-vis-false { color: #6c6c6c; }
+a {
+    color: #3174c7;
+    cursor: pointer;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration:underline;
+}
+</style>
+<script type="text/javascript" >
+
+    $(document).ready(function() {
+    
+        var colNames = [{"visible":true, "name":"Group"},
+                        {"visible":true, "name": "Count"},
+                        {"visible":true, "name": "Min ms"},
+                        {"visible":true, "name": "Max ms"},
+                        {"visible":true, "name": "Avg ms"},
+                        {"visible":true, "name": "Sum ms"},
+                        {"visible":true, "name": "Min ret"},
+                        {"visible":true, "name": "Max ret"},
+                        {"visible":true, "name": "Avg ret"},
+                        {"visible":true, "name": "Sum ret"},
+                        {"visible":true, "name": "ret/ms"}
+        ];
+        
+        var columnDefs = [];
+        for(var i in colNames){
+            $( "#tableHeader" ).append( "<th>" + colNames[i].name +  "</th>");
+            $( "#tableFooter" ).append( "<th>" + colNames[i].name +  "</th>");
+            columnDefs.push({"targets": [Number(i)], "visible":colNames[i].visible,
+                "mRender": function ( data, type, full ) {
+                              return isNaN(data)?data:$.number(data, 1, ".", ",");
+                           }
+            });
+        }
+
+        var table = $('#main').DataTable({
+            "sScrollY": "600px",
+            "paging": false,
+            "columnDefs": columnDefs,
+            "footerCallback": function ( row, data, start, end, display ) {
+                var api = this.api(), data;
+                // Remove the formatting to get integer data for summation
+                var intVal = function ( i ) {
+                    return typeof i === 'string' ? i.replace(/[\$,]/g, '')*1 : typeof i === 'number' ? i : 0;
+                };
+                // Total over all pages
+                var total1 = api.column( 1 ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+                var total5 = api.column( 5 ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+                var total9 = api.column( 9 ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+                // Update footer
+                $( api.column( 1 ).footer() ).html('Total count: '+ $.number(total1, 0, ".", ","));
+                $( api.column( 5 ).footer() ).html('Total ms: '+ $.number(total5, 0, ".", ","));
+                $( api.column( 9 ).footer() ).html('Total ret: '+ $.number(total9, 0, ".", ","));
+            }
+        });
+
+        var t = table.columns().header();
+        $.each(t, function(k,v){
+            var visible = table.column( $(v) ).visible();
+            $( "#cols" ).append( "<a id='cols_"+k+"' class='toggle-vis-" + visible + "' data-column='" + k + "'>" + $(v).html() +  "</a> - ");
+            $( "#cols_" + k ).on('click', function (e) {
+            e.preventDefault();
+
+            // Get the column API object
+            var column = table.column( $(this).attr('data-column') );
+
+            // Toggle the visibility
+            var isVisible = column.visible();
+            $("#cols_" + column[0]).removeClass("toggle-vis-" + isVisible).addClass("toggle-vis-" + !isVisible);
+            column.visible( ! isVisible );
+        } );
+        })
+    } );
+</script>
+
+<br/>
+    <div id="cols">Toggle columns: </div>
+
+    <table  id="main" class="display" cellspacing="0" width="100%" align="top" cellpadding="10">
+   <thead>
+     <tr id="tableHeader"></tr>
+   </thead>
+   <tfoot>
+     <tr id="tableFooter"></tr>
+   </tfoot>
+    <tbody>
+    <% 
+    final HashMap<String, AggregatedProfiling> labelSeries = slowOpsDto.getLabelSeries();
+    for (AggregatedProfiling labelSerie : labelSeries.values()) {%>
+        <tr>
+            <td valign="top"><%=labelSerie.getId().getLabel(true) %></td>
+            <td valign="top"><%=labelSerie.getCount() %></td>
+            <td valign="top"><%=labelSerie.getMinMs() %></td>
+            <td valign="top"><%=labelSerie.getMaxMs() %></td>
+            <td valign="top"><%=labelSerie.getMillis()/labelSerie.getCount() %></td>
+            <td valign="top"><%=labelSerie.getMillis() %></td>
+            <td valign="top"><%=labelSerie.getMinRet() %></td>
+            <td valign="top"><%=labelSerie.getMaxRet() %></td>
+            <td valign="top"><%=labelSerie.getNRet()/labelSerie.getCount() %></td>
+            <td valign="top"><%=labelSerie.getNRet() %></td>
+            <td valign="top"><%=labelSerie.getMillis()>0?(labelSerie.getNRet()/labelSerie.getMillis()):"" %></td>
+        </tr>
+    <%}%>
+  <tbody>
+ </table>
+<%@ include file="buildInfo.jsp" %>
 </body>
 </html>

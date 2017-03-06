@@ -1,0 +1,65 @@
+package de.idealo.mongodb.slowops.dto;
+
+import java.util.Date;
+import java.util.List;
+
+/**
+ * Created by kay.agahd on 31.10.16.
+ */
+public class ApplicationStatusDto {
+
+    private List<CollectorStatusDto> collectorStatuses;
+    private CollectorServerDto collectorServerDto;
+    private Date collectorRunningSince;
+    private long numberOfReads;
+    private long numberOfWrites;
+    private long numberOfReadsOfRemovedReaders;
+
+
+
+    public List<CollectorStatusDto> getCollectorStatuses() {
+        return collectorStatuses;
+    }
+
+    public void setCollectorStatuses(List<CollectorStatusDto> collectorStatuses) {
+        this.collectorStatuses = collectorStatuses;
+    }
+
+    public CollectorServerDto getCollectorServerDto() {
+        return collectorServerDto;
+    }
+
+    public void setCollectorServerDto(CollectorServerDto collectorServerDto) {
+        this.collectorServerDto = collectorServerDto;
+    }
+
+    public Date getCollectorRunningSince() {
+        return collectorRunningSince;
+    }
+
+    public void setCollectorRunningSince(Date collectorRunningSince) { this.collectorRunningSince = collectorRunningSince;  }
+
+    public long getNumberOfReads() {
+        return numberOfReads;
+    }
+
+    public void setNumberOfReads(long numberOfReads) {
+        this.numberOfReads = numberOfReads;
+    }
+
+    public long getNumberOfWrites() {
+        return numberOfWrites;
+    }
+
+    public void setNumberOfWrites(long numberOfWrites) {
+        this.numberOfWrites = numberOfWrites;
+    }
+
+    public long getNumberOfReadsOfRemovedReaders() {
+        return numberOfReadsOfRemovedReaders;
+    }
+
+    public void setNumberOfReadsOfRemovedReaders(long numberOfReadsOfRemovedReaders) {
+        this.numberOfReadsOfRemovedReaders = numberOfReadsOfRemovedReaders;
+    }
+}
