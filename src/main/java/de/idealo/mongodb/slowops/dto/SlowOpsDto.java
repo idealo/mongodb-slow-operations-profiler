@@ -28,7 +28,12 @@ public class SlowOpsDto {
 
 
     public SlowOpsDto() {
-        scale = ConfigReader.getString(ConfigReader.CONFIG, Util.Y_AXIS_SCALE,  Util.Y_AXIS_MILLISECONDS);
+        final String scaleStr = ConfigReader.getString(ConfigReader.CONFIG, Util.Y_AXIS_SCALE,  Util.Y_AXIS_MILLISECONDS);
+        if(scaleStr.equals(Util.Y_AXIS_MILLISECONDS)){
+            scale = Util.Y_AXIS_MILLISECONDS;
+        }else {
+            scale = Util.Y_AXIS_SECONDS;//default
+        }
     }
 
     /**

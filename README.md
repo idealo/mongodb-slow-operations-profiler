@@ -111,7 +111,7 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
     { "enabled": false,
       "label":"bar",
       "hosts":["someMongoRouter:27017"],
-      "ns":["someDatabase.someCollection", "anotherDatabase.anotherCollection"],
+      "ns":["someDatabase.someCollection", "anotherDatabase.*"],
       "adminUser":"",
       "adminPw":"",
       "slowMS":250
@@ -129,7 +129,7 @@ Fields of `profiled` entries explained:
 * `enabled` = whether collecting has to be started automatically upon (re)start of the application
 * `label` = just a label in order to be able to filter or sort on it
 * `hosts` = an array of members of the same replica set, or just a single host, or a mongo router
-* `ns` = an array of the namespaces to be collected in the format of `databaseName.collectionName`
+* `ns` = an array of the namespaces to be collected in the format of `databaseName.collectionName`. The placeholder `*` may be used instead of `collectionName` to collect from all collections of the given database.
 * `adminUser`= if authentication is enabled, name of the user for database "admin" having role "root"
 * `adminPw`= if authentication is enabled, passwort of the user 
 * `slowMS`= threshold of slow operations in milliseconds
@@ -138,6 +138,8 @@ The field `yAxisScale` is to be set either to the value "milliseconds" or "secon
 
 ## Version history
 
+* v1.1.0
+    + new: namespace (`profiled.ns`) in config.json may use placeholder `*` for collection names (i.e. `mydb.*`) in order to collect from all collections of the given database
 * v1.0.3
     + new: multiple databases and collections for different replica sets, clusters or single mongod's can be defined to be profiled
     + new: automatic resolving of all mongod's constituting the defined clusters and replica sets
