@@ -290,7 +290,10 @@
 					rs.add(row.replSetName);
 					adr.add(row.serverAddressAsString);
 					db.add(row.database);
-					col.add(row.collectionsAsString.replace(",", ";"));
+					var colAsString = row.collectionsAsString.replace(",", ";");
+                    if(colAsString != "*") {
+                        col.add(colAsString);
+                    }
 
 				});
 

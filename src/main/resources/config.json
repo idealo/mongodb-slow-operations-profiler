@@ -22,7 +22,7 @@
     { "enabled": false,
       "label":"bar",
       "hosts":["someMongoRouter:27017"],
-      "ns":["someDatabase.someCollection", "anotherDatabase.anotherCollection"],
+      "ns":["someDatabase.someCollection", "anotherDatabase.*"],
       "adminUser":"",
       "adminPw":"",
       "slowMS":250

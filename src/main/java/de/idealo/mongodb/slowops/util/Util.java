@@ -27,7 +27,6 @@ public class Util {
     
     private static final Logger LOG = LoggerFactory.getLogger(Util.class);
     
-    public final static String CONFIG_PROPERTIES = "config.properties";
     public final static char PROPERTIES_SEPARATOR = ',';
 
     public final static String Y_AXIS_SCALE = "yAxisScale";
