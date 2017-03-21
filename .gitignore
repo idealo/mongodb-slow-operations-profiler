@@ -2,7 +2,6 @@
 target/
 *.csv
 *.log
-*.bak
 .~lock*
 *.png
 .checkstyle

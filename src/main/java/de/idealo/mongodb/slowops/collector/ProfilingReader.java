@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.regex.Pattern;
 
 /**
  * 
@@ -239,14 +240,24 @@ public class ProfilingReader extends Thread implements Callable{
         final BasicDBObject query = new BasicDBObject();
         final BasicDBObject orderBy = new BasicDBObject();
         //search namespaces "database.collection" and also "database.$cmd" because count() is treated as command
-        List<String> namesspaces = Lists.newArrayList(database + ".$cmd");
+        final List<String> namespaces = Lists.newArrayList(database + ".$cmd");
         for(String col : collections){
-            namesspaces.add(database + "." + col);
-        }
+            if("*".equals(col)){
+                LOG.info("found collection placeholder *");
+                //if at least one collection name is * then use regex to match all collections
+                query.append("ns", Pattern.compile("^" + database + "."));
+                namespaces.clear();
+                break;
+            }else {
+                namespaces.add(database + "." + col);
+            }
 
-        query.put("ns", new BasicDBObject( "$in", namesspaces));
-        query.put("ts",  new BasicDBObject( "$gt" , lastTs ));
-        orderBy.put("$natural", Long.valueOf(1));//aufsteigend von alt zu neu
+        }
+        if(!namespaces.isEmpty()){
+            query.append("ns", new BasicDBObject("$in", namespaces));
+        }
+        query.append("ts",  new BasicDBObject( "$gt" , lastTs ));
+        orderBy.append("$natural", Long.valueOf(1));//aufsteigend von alt zu neu
         
         return profileCollection.find(query).sort(orderBy).cursorType(CursorType.TailableAwait).iterator();
 
@@ -499,12 +510,13 @@ public class ProfilingReader extends Thread implements Callable{
         final ServerAddress address =  new ServerAddress("localhost",27017);
         
         BlockingQueue<ProfilingEntry> jobQueue = new LinkedBlockingQueue<ProfilingEntry>();
-        ProfiledServerDto dto = new ProfiledServerDto(true, "some label", new ServerAddress[]{new ServerAddress("127.0.0.1:27017")}, new String[]{"offerStore.offer"}, null, null, 100);
-        ProfilingReader reader = new ProfilingReader(0, jobQueue, address, null, dto, "offerStore", Lists.newArrayList("offers"), false, 0, 100, null);
+        ProfiledServerDto dto = new ProfiledServerDto(true, "some label", new ServerAddress[]{new ServerAddress("127.0.0.1:27017")}, new String[]{"offerStore.*"}, null, null, 0);
+        ProfilingReader reader = new ProfilingReader(0, jobQueue, address, null, dto, "offerStore", Lists.newArrayList("*"), false, 0, 0, null);
         reader.start();
-        reader.setSlowMs(1, 3);
-        reader.terminate();
-        //Thread.sleep(5000);
+        //reader.setSlowMs(1, 3);
+        //reader.terminate();
+        Thread.sleep(5000);
+        //reader.terminate();
         //reader.stop();
         
         LOG.info("main end");
