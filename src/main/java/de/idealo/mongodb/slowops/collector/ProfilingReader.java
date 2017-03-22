@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.regex.Pattern;
 
 /**
  * 
@@ -244,8 +243,9 @@ public class ProfilingReader extends Thread implements Callable{
         for(String col : collections){
             if("*".equals(col)){
                 LOG.info("found collection placeholder *");
-                //if at least one collection name is * then use regex to match all collections
-                query.append("ns", Pattern.compile("^" + database + "."));
+                //if at least one collection name is * then use regex to match all collections except system.profile
+                query.append("ns", new BasicDBObject("$regex", "^" + database + ".")
+                                             .append("$ne", database + ".system.profile"));
                 namespaces.clear();
                 break;
             }else {

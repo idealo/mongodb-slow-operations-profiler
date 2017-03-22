@@ -138,6 +138,8 @@ The field `yAxisScale` is to be set either to the value "milliseconds" or "secon
 
 ## Version history
 
+* v1.1.1
+    + new: when using placeholder `*` to collect from all collections, exclude documents of namespace `db.system.profile` because reading from `db.system.profile` may be slower than defined by slowMS, resulting in a new entry in `db.system.profile` which is irrelevant for the analysis
 * v1.1.0
     + new: namespace (`profiled.ns`) in config.json may use placeholder `*` for collection names (i.e. `mydb.*`) in order to collect from all collections of the given database
 * v1.0.3
