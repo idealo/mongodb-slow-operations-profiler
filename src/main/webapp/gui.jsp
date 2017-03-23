@@ -285,7 +285,8 @@ a:hover {
                         {"visible":true, "name": "Max ret"},
                         {"visible":true, "name": "Avg ret"},
                         {"visible":true, "name": "Sum ret"},
-                        {"visible":true, "name": "ret/ms"}
+                        {"visible":true, "name": "ret/ms"},
+                        {"visible":true, "name": "ms/ret"}
         ];
         
         var columnDefs = [];
@@ -306,17 +307,19 @@ a:hover {
             "footerCallback": function ( row, data, start, end, display ) {
                 var api = this.api(), data;
                 // Remove the formatting to get integer data for summation
-                var intVal = function ( i ) {
-                    return typeof i === 'string' ? i.replace(/[\$,]/g, '')*1 : typeof i === 'number' ? i : 0;
+                var intVal = function (i) {
+                    return typeof i === 'string' ? i.replace(/[\$,]/g, '') * 1 : typeof i === 'number' ? i : 0;
                 };
-                // Total over all pages
-                var total1 = api.column( 1 ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-                var total5 = api.column( 5 ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-                var total9 = api.column( 9 ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-                // Update footer
-                $( api.column( 1 ).footer() ).html('Total count: '+ $.number(total1, 0, ".", ","));
-                $( api.column( 5 ).footer() ).html('Total ms: '+ $.number(total5, 0, ".", ","));
-                $( api.column( 9 ).footer() ).html('Total ret: '+ $.number(total9, 0, ".", ","));
+                if (api.column(1).data().length) {//don't compute sum on initial draw before data is loaded
+                    // Total over current page so that search results reflect the sum
+                    var total1 = api.column(1, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    var total5 = api.column(5, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    var total9 = api.column(9, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    // Update footer
+                    $(api.column(1).footer()).html('Total count: ' + $.number(total1, 0, ".", ","));
+                    $(api.column(5).footer()).html('Total ms: ' + $.number(total5, 0, ".", ","));
+                    $(api.column(9).footer()).html('Total ret: ' + $.number(total9, 0, ".", ","));
+                }
             }
         });
 
@@ -365,6 +368,7 @@ a:hover {
             <td valign="top"><%=labelSerie.getNRet()/labelSerie.getCount() %></td>
             <td valign="top"><%=labelSerie.getNRet() %></td>
             <td valign="top"><%=labelSerie.getMillis()>0?(labelSerie.getNRet()/labelSerie.getMillis()):"" %></td>
+            <td valign="top"><%=labelSerie.getNRet()>0?(labelSerie.getMillis()/labelSerie.getNRet()):"" %></td>
         </tr>
     <%}%>
   <tbody>
