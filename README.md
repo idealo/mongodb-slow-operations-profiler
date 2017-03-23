@@ -138,6 +138,9 @@ The field `yAxisScale` is to be set either to the value "milliseconds" or "secon
 
 ## Version history
 
+* v1.1.2
+    + bugfix: the sum on columns was not updated when rows were filtered on analysis page
+    + new: column `ms/ret` in table on analysis page added which shows how much time was globally spent for one returned document
 * v1.1.1
     + new: when using placeholder `*` to collect from all collections, exclude documents of namespace `db.system.profile` because reading from `db.system.profile` may be slower than defined by slowMS, resulting in a new entry in `db.system.profile` which is irrelevant for the analysis
 * v1.1.0
