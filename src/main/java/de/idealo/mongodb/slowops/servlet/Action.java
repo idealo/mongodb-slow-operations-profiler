@@ -28,9 +28,9 @@ public class Action {
 	@Produces({MediaType.APPLICATION_JSON})
 	public ApplicationStatusDto getApplicationJSON(@QueryParam("cmd") String cmd, @QueryParam("p") String p, @QueryParam("ms") String ms) {
 		LOG.debug(">>> getApplicationJSON cmd: {} p: {} ms:{} ", new Object[]{cmd, p, ms});
+        final List<Integer> pList = Lists.newArrayList();
 		if(p != null) {
 			String[] params = p.split(",");
-			List<Integer> pList = Lists.newArrayList();
 			if (params.length > 0) {
 				for (String param : params) {
 					try {
@@ -46,17 +46,17 @@ public class Action {
 					CollectorManagerInstance.startStopProfilingReaders(pList, false);
 				} else if ("stop".equals(cmd)) {
 					CollectorManagerInstance.startStopProfilingReaders(pList, true);
-				}else if ("remove".equals(cmd)) {
-					CollectorManagerInstance.removeProfilingReaders(pList);
 				}else if ("slowms".equals(cmd)) {
 					CollectorManagerInstance.setSlowMs(pList, ms);
 				}
-				LOG.debug("<<< getApplicationJSON");
+				LOG.debug("<<<< getApplicationJSON");
 				return CollectorManagerInstance.getApplicationStatus(pList);
 			}
-		}
+		}else if ("rc".equals(cmd)){
+            LOG.debug("<<<<< getApplicationJSON");
+            return CollectorManagerInstance.getApplicationStatus(pList);
+        }
 		LOG.debug("<<< getApplicationJSON");
-
 		return CollectorManagerInstance.getApplicationStatus();
 	}
 

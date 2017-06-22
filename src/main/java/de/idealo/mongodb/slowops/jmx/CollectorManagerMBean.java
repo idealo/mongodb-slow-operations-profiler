@@ -21,6 +21,8 @@ public interface CollectorManagerMBean {
 
     long getNumberOfReadsOfRemovedReaders();
 
+    long getNumberOfWritesOfRemovedWriters();
+
     Date getRunningSince();
 
 }

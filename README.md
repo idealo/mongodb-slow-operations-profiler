@@ -63,6 +63,9 @@ Below the table is the **Actions panel** in order to switch collecting on/off, t
 
 By clicking on `analyse`, the above mentioned analysis page will show the slow operation types of the last 24 hours of the selected rows, here the 5 first rows are selected.
 
+Since v1.2.0 you can dynamically upload new configurations in order to add, remove or change profiling readers or the collector writer. The uploaded config is **not** persisted server side and will be lost upon webapp restart. All servers of changed "profiled"-entries are (re)started. Also the collector needs to be restarted if its config changed. Even though stops and starts are executed simultaneously, it may take some time depending on how many changes need to be applied, thus how many readers, respectively the writer, are involved by the config change.
+
+
 ##   Setup
 
 ### Preconditions
@@ -138,6 +141,12 @@ The field `yAxisScale` is to be set either to the value "milliseconds" or "secon
 
 ## Version history
 
+* v1.2.0
+    + new: show currently used configuration as json
+    + new: upload new configuration as json (which is applied but not persisted server side); all servers of changed "profiled"-entries are (re)started; collector is restarted if its config changed
+    + new: option to refresh only collector status
+    + new: show number of reads and writes from current and removed/changed profilers and the collector which helps to see if all reads of the profilers got written by collector
+    + update: socket timeout for analyze queries set from 10 to 60 seconds
 * v1.1.2
     + bugfix: the sum on columns was not updated when rows were filtered on analysis page
     + new: column `ms/ret` in table on analysis page added which shows how much time was globally spent for one returned document
