@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @version $Id: $
  * @copyright idealo internet GmbH
  */
-public class ProfilingWriter extends Thread{
+public class ProfilingWriter extends Thread implements Terminable{
     
     private static final Logger LOG = LoggerFactory.getLogger(ProfilingWriter.class);
     private static final int RETRY_AFTER_SECONDS = 10;
@@ -98,7 +98,8 @@ public class ProfilingWriter extends Thread{
         }
         LOG.info("<<< closeConnections");
     }
-    
+
+    @Override
     public void terminate() {
         stop = true;
         interrupt();//need to interrupt when sleeping or waiting on jobQueue
@@ -106,6 +107,7 @@ public class ProfilingWriter extends Thread{
     }
     
     
+    @Override
     public long getDoneJobs() {
         return doneJobs.get();
     }
