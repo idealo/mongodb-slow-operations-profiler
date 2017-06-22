@@ -24,15 +24,15 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * 
- * 
+ *
+ *
  * @author kay.agahd
  * @since 25.02.2013
  * @version $Id: $
  * @copyright idealo internet GmbH
  */
 
-public class ProfilingReader extends Thread implements Callable{
+public class ProfilingReader extends Thread implements Callable, Terminable{
 
     private static final Logger LOG = LoggerFactory.getLogger(ProfilingReader.class);
     private static final int RETRY_AFTER_SECONDS = 60*60;//1 hour
@@ -40,7 +40,7 @@ public class ProfilingReader extends Thread implements Callable{
 
     private static AtomicInteger instances = new AtomicInteger(1);
 
-    
+
     private final ServerAddress serverAddress;
     private final ProfiledServerDto profiledServerDto;
     private final String database;
@@ -55,7 +55,6 @@ public class ProfilingReader extends Thread implements Callable{
     private MongoCollection<Document> profileCollection;
     private MongoDbAccessor mongo;
     private Date lastTs;
-    private ServerChecker restarter;
     private MongoCursor<Document> profileCursor;
     private final ProfiledDocumentHandler profiledDocumentHandler;
     private String replSet;
@@ -117,11 +116,10 @@ public class ProfilingReader extends Thread implements Callable{
 
 
 
-    public ProfilingReader(int id, BlockingQueue<ProfilingEntry> jobQueue, ServerAddress adr, Date lastTs, ProfiledServerDto profiledServerDto, String dbName, List<String> collNames, boolean stop, long doneJobs, long slowMs, ServerChecker restarter) {
+    public ProfilingReader(int id, BlockingQueue<ProfilingEntry> jobQueue, ServerAddress adr, Date lastTs, ProfiledServerDto profiledServerDto, String dbName, List<String> collNames, boolean stop, long doneJobs, long slowMs) {
         this.jobQueue = jobQueue;
         this.serverAddress = adr;
         this.profiledServerDto = profiledServerDto;
-        this.restarter = restarter;
         if(lastTs == null) {
             this.lastTs = new Date(0);
         }else {
@@ -172,10 +170,10 @@ public class ProfilingReader extends Thread implements Callable{
             }
         });
     }
-    
+
     private void init() {
         LOG.info(">>> init for {}", serverAddress);
-        
+
         try {
             if(mongo == null) {
                 mongo = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), serverAddress);
@@ -191,17 +189,13 @@ public class ProfilingReader extends Thread implements Callable{
         } catch (MongoException e) {
             LOG.error("Error while initializing mongo at address {}", serverAddress, e);
             closeConnections();
-            if(restarter != null) {
-                //commented out because might loop endlessly
-                //restarter.checkForNewOrRemovedMongods(this);
-            }
         }
         LOG.info("<<< init for {}", serverAddress);
     }
-    
+
     private void closeConnections() {
         LOG.info(">>> closeConnections {}", serverAddress);
-        
+
         try {
             if(profileCursor != null) {
                 profileCursor.close();
@@ -209,7 +203,7 @@ public class ProfilingReader extends Thread implements Callable{
         } catch (Throwable e) {
             LOG.error("Error while closing profileCursor ", e);
         }
-        
+
         try {
             if(mongo != null) {
                 mongo.closeConnections();
@@ -218,7 +212,7 @@ public class ProfilingReader extends Thread implements Callable{
         } catch (Throwable e) {
             LOG.error("Error while closing mongo ", e);
         }
-        
+
         LOG.info("<<< closeConnections {}", serverAddress);
     }
 
@@ -258,25 +252,25 @@ public class ProfilingReader extends Thread implements Callable{
         }
         query.append("ts",  new BasicDBObject( "$gt" , lastTs ));
         orderBy.append("$natural", Long.valueOf(1));//aufsteigend von alt zu neu
-        
+
         return profileCollection.find(query).sort(orderBy).cursorType(CursorType.TailableAwait).iterator();
 
     }
-    
+
     private void readSystemProfile() {
-        
+
         if(mongo == null) {
             LOG.error("Can't read entries from {}/{} since mongo is not initialized.", serverAddress, database );
             return;
         }
-        
+
         profileCursor = getProfileCursor();//get tailable cursor from oldest to newest profile entry
-        
+
         try {
-        
+
             if(profileCursor.hasNext()) {
                 while(!stop && profileCursor.hasNext()) {
-                    
+
                     final Document doc = profileCursor.next();
                     lastTs = (Date)doc.get("ts");
                     filterDoc(doc);
@@ -316,7 +310,7 @@ public class ProfilingReader extends Thread implements Callable{
 
     private String getShrinkedLogLine(Document doc) {
         String result = ""+doc;
-        final int lineLength = result.length(); 
+        final int lineLength = result.length();
         if(lineLength > MAX_LOG_LINE_LENGTH) {
             final int region = MAX_LOG_LINE_LENGTH/2;
             final int commas = result.substring(region, result.length()-region).split(",").length;
@@ -416,6 +410,7 @@ public class ProfilingReader extends Thread implements Callable{
     }
 
 
+    @Override
     public long getDoneJobs() { return doneJobs.get(); }
 
     public long getSlowMs() { return slowMs; }
@@ -433,7 +428,7 @@ public class ProfilingReader extends Thread implements Callable{
     public List<String> getCollections() {
         return collections;
     }
-    
+
     public String getLabel() { return profiledServerDto.getLabel(); }
 
     public ProfiledServerDto getProfiledServerDto() { return profiledServerDto; }
@@ -464,19 +459,20 @@ public class ProfilingReader extends Thread implements Callable{
         return result;
     }
 
+    @Override
     public void terminate() {
         stop = true;
         interrupt(); //need to interrupt when sleeping or waiting on tailable cursor data
         closeConnections();
         shutdownScheduler();
     }
-    
+
     public boolean isStopped() {
         return stop;
     }
 
 
-    
+
     /* (non-Javadoc)
      * @see java.lang.Runnable#run()
      */
@@ -492,7 +488,7 @@ public class ProfilingReader extends Thread implements Callable{
                     try {
                         LOG.info("{} sleeping...", serverAddress);
                         Thread.sleep(1000*RETRY_AFTER_SECONDS);
-                        
+
                     } catch (InterruptedException e) {
                         LOG.error("InterruptedException while sleeping.");
                     }
@@ -508,20 +504,20 @@ public class ProfilingReader extends Thread implements Callable{
 
     public static void main(String[] args) throws Exception {
         final ServerAddress address =  new ServerAddress("localhost",27017);
-        
+
         BlockingQueue<ProfilingEntry> jobQueue = new LinkedBlockingQueue<ProfilingEntry>();
         ProfiledServerDto dto = new ProfiledServerDto(true, "some label", new ServerAddress[]{new ServerAddress("127.0.0.1:27017")}, new String[]{"offerStore.*"}, null, null, 0);
-        ProfilingReader reader = new ProfilingReader(0, jobQueue, address, null, dto, "offerStore", Lists.newArrayList("*"), false, 0, 0, null);
+        ProfilingReader reader = new ProfilingReader(0, jobQueue, address, null, dto, "offerStore", Lists.newArrayList("*"), false, 0, 0);
         reader.start();
         //reader.setSlowMs(1, 3);
         //reader.terminate();
         Thread.sleep(5000);
         //reader.terminate();
         //reader.stop();
-        
+
         LOG.info("main end");
-        
-        
+
+
     }
 
 

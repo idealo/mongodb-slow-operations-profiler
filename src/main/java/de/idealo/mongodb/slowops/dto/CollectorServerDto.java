@@ -2,6 +2,8 @@ package de.idealo.mongodb.slowops.dto;
 
 import com.mongodb.ServerAddress;
 
+import java.util.Arrays;
+
 /**
  * Created by kay.agahd on 26.10.16.
  */
@@ -61,7 +63,29 @@ public class CollectorServerDto {
         this.adminPw = adminPw;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        CollectorServerDto that = (CollectorServerDto) o;
 
+        // Probably incorrect - comparing Object[] arrays with Arrays.equals
+        if (!Arrays.equals(hosts, that.hosts)) return false;
+        if (!db.equals(that.db)) return false;
+        if (!collection.equals(that.collection)) return false;
+        if (adminUser != null ? !adminUser.equals(that.adminUser) : that.adminUser != null) return false;
+        return adminPw != null ? adminPw.equals(that.adminPw) : that.adminPw == null;
 
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Arrays.hashCode(hosts);
+        result = 31 * result + db.hashCode();
+        result = 31 * result + collection.hashCode();
+        result = 31 * result + (adminUser != null ? adminUser.hashCode() : 0);
+        result = 31 * result + (adminPw != null ? adminPw.hashCode() : 0);
+        return result;
+    }
 }

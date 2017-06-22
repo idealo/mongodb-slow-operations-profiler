@@ -14,6 +14,8 @@ public class ApplicationStatusDto {
     private long numberOfReads;
     private long numberOfWrites;
     private long numberOfReadsOfRemovedReaders;
+    private long numberOfWritesOfRemovedWriters;
+    private String config;
 
 
 
@@ -62,4 +64,16 @@ public class ApplicationStatusDto {
     public void setNumberOfReadsOfRemovedReaders(long numberOfReadsOfRemovedReaders) {
         this.numberOfReadsOfRemovedReaders = numberOfReadsOfRemovedReaders;
     }
+    public long getNumberOfWritesOfRemovedWriters() {
+        return numberOfWritesOfRemovedWriters;
+    }
+
+    public void setNumberOfWritesOfRemovedWriters(long numberOfWritesOfRemovedWriters) {
+        this.numberOfWritesOfRemovedWriters = numberOfWritesOfRemovedWriters;
+    }
+
+
+    public String getConfig() { return config; }
+
+    public void setConfig(String config) { this.config = config; }
 }

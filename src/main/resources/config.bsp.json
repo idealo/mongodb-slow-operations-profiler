@@ -1,8 +1,8 @@
 {
   "collector":{
     "hosts":["myCollectorHost_member1:27017",
-      "myCollectorHost_member2:27017",
-      "myCollectorHost_member3:27017"],
+             "myCollectorHost_member2:27017",
+             "myCollectorHost_member3:27017"],
     "db":"profiling",
     "collection":"slowops",
     "adminUser":"",
@@ -12,8 +12,8 @@
     { "enabled": false,
       "label":"foo",
       "hosts":["someHost1:27017",
-        "someHost2:27017",
-        "someHost3:27017"],
+               "someHost2:27017",
+               "someHost3:27017"],
       "ns":["someDatabase.someCollection", "anotherDatabase.anotherCollection"],
       "adminUser":"",
       "adminPw":"",

@@ -3,6 +3,7 @@
  */
 package de.idealo.mongodb.slowops.servlet;
 
+import de.idealo.mongodb.slowops.collector.CollectorManagerInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +32,7 @@ public class ApplicationStatus extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		LOG.debug(">>> doGet");
+        reloadConfig(request);
 		RequestDispatcher view = request.getRequestDispatcher("/applicationStatus.jsp");
 		LOG.debug("doGet");
 		view.forward(request, response);
@@ -43,5 +45,13 @@ public class ApplicationStatus extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	    doGet(request, response);
 	}
+
+    private void reloadConfig(HttpServletRequest request){
+        final String cfg = request.getParameter("config");
+        if(cfg != null && cfg.trim().length() > 0){
+            LOG.info("reload application using a new configuration");
+            CollectorManagerInstance.reloadConfig(cfg);
+        }
+    }
 
 }

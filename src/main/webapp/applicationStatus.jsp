@@ -145,9 +145,13 @@
 						$('#clr_db').html(json.collectorServerDto.db);
 						$('#clr_col').html(json.collectorServerDto.collection);
 						$('#clr_reads').html(json.numberOfReads);
-						$('#clr_writes').html(json.numberOfWrites);
 						$('#clr_dead').html(json.numberOfReadsOfRemovedReaders);
-						$('#clr_date').html(formatDate(new Date(json.collectorRunningSince)));
+                        $('#clr_total').html((json.numberOfReads+json.numberOfReadsOfRemovedReaders));
+                        $('#clr_writes').html(json.numberOfWrites);
+                        $('#clr_oldwrites').html(json.numberOfWritesOfRemovedWriters);
+                        $('#clr_totalwrites').html((json.numberOfWrites + json.numberOfWritesOfRemovedWriters));
+                        $('#clr_date').html(formatDate(new Date(json.collectorRunningSince)));
+                        $("textarea#config").val(JSON.stringify(JSON.parse(json.config), undefined, 4));
 					}
 				});
 
@@ -177,6 +181,8 @@
 				});
 
 				$(".infoSlowMs").tooltip({content:function(){return $("#infoSlowMsContent").html();}});
+                $(".infoConfig").tooltip({content:function(){return $("#infoConfigContent").html();}});
+                $(".infoOpsCount").tooltip({content:function(){return $("#infoOpsCountContent").html();}});
 
 			} );
 
@@ -195,19 +201,23 @@
 						url: "<%=request.getContextPath()%>/rest/action?cmd="+cmd+"&p="+pId+"&ms="+slowMs,
 						headers: { "Accept": "application/json" },
 						handleAs: "json",
-						load: function(result) {
-							if(result && result != null) {
-								var statuses = result.collectorStatuses;
+						load: function(json) {
+							if(json && json != null) {
+								var statuses = json.collectorStatuses;
 								if (statuses != null) {
 									statuses.forEach(function (u) {
 										mainTable.row(selectedRow).data(u).draw();
 										$("#chk_" + u.instanceId).prop( "checked", true );
 									})
 								}
-								$('#clr_reads').html(result.numberOfReads);
-								$('#clr_writes').html(result.numberOfWrites);
-								$('#clr_dead').html(result.numberOfReadsOfRemovedReaders);
-								$('#clr_date').html(formatDate(new Date(result.collectorRunningSince)));
+								$('#clr_reads').html(json.numberOfReads);
+								$('#clr_dead').html(json.numberOfReadsOfRemovedReaders);
+                                $('#clr_total').html((json.numberOfReads+json.numberOfReadsOfRemovedReaders));
+                                $('#clr_writes').html(json.numberOfWrites);
+                                $('#clr_oldwrites').html(json.numberOfWritesOfRemovedWriters);
+                                $('#clr_totalwrites').html((json.numberOfWrites + json.numberOfWritesOfRemovedWriters));
+                                $('#clr_date').html(formatDate(new Date(json.collectorRunningSince)));
+                                $("textarea#config").val(JSON.stringify(JSON.parse(json.config), undefined, 4));
 							}
 							if(count-- == 0){
 								$('#commands').html(cellContent);
@@ -217,6 +227,38 @@
 
 				});
 			}
+
+            function refreshCollector(){
+
+                dojo.xhrGet({
+                    url: "<%=request.getContextPath()%>/rest/action?cmd=rc",
+                    headers: { "Accept": "application/json" },
+                    handleAs: "json",
+                    load: function(json) {
+                        if(json && json.collectorServerDto) {
+                            var hostsString = "";
+                            json.collectorServerDto.hosts.forEach(function (u) {
+                                hostsString += u.host + ":" + u.port + ", ";
+                            })
+                            if (hostsString.length > 0) {
+                                hostsString = hostsString.slice(0, -2);//remove last ", "
+                            }
+                            $('#clr_hosts').html(hostsString);
+                            $('#clr_db').html(json.collectorServerDto.db);
+                            $('#clr_col').html(json.collectorServerDto.collection);
+                            $('#clr_reads').html(json.numberOfReads);
+                            $('#clr_dead').html(json.numberOfReadsOfRemovedReaders);
+                            $('#clr_total').html((json.numberOfReads+json.numberOfReadsOfRemovedReaders));
+                            $('#clr_writes').html(json.numberOfWrites);
+                            $('#clr_oldwrites').html(json.numberOfWritesOfRemovedWriters);
+                            $('#clr_totalwrites').html((json.numberOfWrites + json.numberOfWritesOfRemovedWriters));
+                            $('#clr_date').html(formatDate(new Date(json.collectorRunningSince)));
+                            $("textarea#config").val(JSON.stringify(JSON.parse(json.config), undefined, 4));
+                        }
+                    }
+                });
+
+            }
 
 			function formatDate(dateObject) {
 				var d = new Date(dateObject);
@@ -333,6 +375,12 @@
 		a:hover {
 			text-decoration:underline;
 		}
+
+        .opstable td, .opstable th{
+            border: 1px solid black;
+            text-align: right;
+            padding: 5px;
+        }
 	</style>
 <body>
 <h1>Application Status </h1>
@@ -343,10 +391,34 @@
 	<tr><td>Access point(s)</td><td id="clr_hosts"></td></tr>
 	<tr><td>Database</td><td id="clr_db"></td></tr>
 	<tr><td>Collection</td><td id="clr_col"></td></tr>
-	<tr><td>Number of reads</td><td id="clr_reads"></td></tr>
-	<tr><td>Number of writes</td><td id="clr_writes"></td></tr>
-	<tr><td>Number of reads of removed profilers</td><td id="clr_dead"></td></tr>
-	<tr><td>Running since</td><td id="clr_date"></td></tr>
+    <tr>
+        <td valign="top">Number of ops</td>
+        <td>
+            <table class="opstable" style="border-collapse:collapse;">
+                <tr>
+                    <th>&nbsp;</th>
+                    <th>current</th>
+                    <th class="infoOpsCount">old&nbsp;<img src='img/info.gif' alt='info' title='info'></th>
+                    <th>total</th>
+                </tr>
+                <tr>
+                    <td>Reads</td>
+                    <td id="clr_reads"></td>
+                    <td id="clr_dead"></td>
+                    <td id="clr_total"></td>
+                </tr>
+                <tr>
+                    <td>Writes</td>
+                    <td id="clr_writes"></td>
+                    <td id="clr_oldwrites"></td>
+                    <td id="clr_totalwrites"></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr><td>Collector running since</td><td id="clr_date"></td></tr>
+    <tr><td>&nbsp;</td><td><a href="javascript:refreshCollector();">refresh</a></td></tr>
+
 </table>
 
 <br/>
@@ -391,7 +463,15 @@
 	</table>
 	<br/>
 </form>
-<span id="infoSlowMsContent" style="display:none">Low slowMs values may slow down both the profiled mongod('s) and also the collector because more slow operations need to be read and written.</span>
+
+<form name="configForm" action="app" method="post" class="infoConfig">
+    <input type="submit" value="upload new config">&nbsp;<img src='img/info.gif' alt='info' title='info'><br/>
+    <textarea id="config" name="config" rows="10" cols="60"></textarea><br/>
+</form>
+
+<span id="infoSlowMsContent" style="display:none">Low slowMs values may slow down both the profiled mongod('s) and also the collector because more slow operations need to be read and written. A value of 0 will result in profiling all operations.</span>
+<span id="infoConfigContent" style="display:none">Uploading a new config may be slow if many "profiled"-entries changed because all server addresses of a changed entry need to be resolved and will be (re)started. The uploaded configuration ist not persisted server side and will be lost upon webapp restart.</span>
+<span id="infoOpsCountContent" style="display:none">"old" means operations from removed or changed servers due to uploaded configuration changes since (re)start of the webapp</span>
 <%@ include file="buildInfo.jsp" %>
 </body>
 </html>

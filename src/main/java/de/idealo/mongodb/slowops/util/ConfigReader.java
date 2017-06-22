@@ -26,13 +26,46 @@ public class ConfigReader {
     
     private static final Logger LOG = LoggerFactory.getLogger(ConfigReader.class);
 
-    public final static String CONFIG_FILE = "config.json";
-
-    public final static Document CONFIG;
+    public static Document CONFIG;
 
     
     static {
-        CONFIG = getConfig(CONFIG_FILE);
+        CONFIG = getConfig(Util.CONFIG_FILE);
+    }
+
+    /**
+     * returns true is the given cfg passed the validation test and replaced the current configuration
+     *
+     * @param cfg - config in json format
+     * @return
+     */
+    public static boolean reloadConfig(String cfg){
+        boolean result = false;
+        final Document bak = CONFIG;
+        try {
+            CONFIG = Document.parse(cfg);
+            if(isValidConfig()){
+                result = true;
+            }else{
+                CONFIG = bak;
+            }
+        } catch (Exception e) {
+            LOG.error("Error while reading config: {}", cfg, e);
+        }
+        return result;
+    }
+
+    //rudimental validation
+    private static boolean isValidConfig(){
+        boolean result = true;
+        final CollectorServerDto collectorServer = getCollectorServer();
+
+        result = result && !getProfiledServers().isEmpty();
+        result = result && collectorServer.getHosts().length > 0;
+        result = result && !collectorServer.getDb().isEmpty();
+        result = result && !collectorServer.getCollection().isEmpty();
+
+        return  result;
     }
 
     public static boolean getBoolean(Document doc, String propertyName, boolean defaultValue) {
@@ -99,6 +132,10 @@ public class ConfigReader {
         return defaultValue;
     }
 
+    public static String  getConfig() {
+        return CONFIG.toJson();
+    }
+
 
     private static Document  getConfig(String fileName) {
         Document result = null;
@@ -109,7 +146,7 @@ public class ConfigReader {
                 LOG.info("Try to load config file '{}' ", file.getAbsolutePath());
                 in = new FileInputStream(new File(fileName));
             } else {
-                LOG.info("Try to load properties file '{}' from within jar file", fileName);
+                LOG.info("Try to load config file '{}' from within jar file", fileName);
                 in = ConfigReader.class.getClassLoader().getResourceAsStream(fileName);
             }
             if (in != null) {
@@ -146,9 +183,11 @@ public class ConfigReader {
         }
         return result.toArray(new ServerAddress[]{});
     }
+
     public static CollectorServerDto getCollectorServer(){
         return getCollectorServer(CONFIG);
     }
+
     public static CollectorServerDto getCollectorServer(Document doc){
         List<String> hostList = getList(doc, "collector.hosts", Lists.newArrayList());
         return new CollectorServerDto(
@@ -163,6 +202,15 @@ public class ConfigReader {
     public static List<ProfiledServerDto> getProfiledServers(){
         return getProfiledServers(CONFIG);
     }
+
+    public static boolean isProfiledServer(ProfiledServerDto dto){
+        final List<ProfiledServerDto> servers = getProfiledServers(CONFIG);
+        for (ProfiledServerDto server : servers) {
+            if(server.equals(dto)) return true;
+        }
+        return false;
+    }
+
 
     public static List<ProfiledServerDto> getProfiledServers(Document doc){
         List<ProfiledServerDto> result = Lists.newArrayList();
