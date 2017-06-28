@@ -111,42 +111,32 @@ public class SlowOps extends HttpServlet {
             pipeline.append("},");
         }
 
-        if(!isEmpty(request, "fromDate") && !isEmpty(request, "toDate")) {
-            final Date fromDate = getDate(request.getParameter("fromDate"));
-            final Date toDate = getDate(request.getParameter("toDate"));
-            
-            if(fromDate != null && toDate != null) {
-                pipeline.append("ts:{$gt: #, $lt: # },");
-                params.add(fromDate);
-                params.add(toDate);
-            }
-        }else if(!isEmpty(request,"fromDate")) {
-            final Date fromDate = getDate(request.getParameter("fromDate"));
-            if(fromDate != null) {
-                pipeline.append("ts:{$gt: # },");
-                params.add(fromDate);
-            }
-        }else if(!isEmpty(request,"toDate")) {
-            final Date toDate = getDate(request.getParameter("toDate"));
-            if(toDate != null) {
-                pipeline.append("ts:{$lt: # },");
-                params.add(toDate);
-            }
+        //fromDate and toDate are required so set it to default if not existent
+        Date fromDate = null;
+        Date toDate = null;
+        if(!isEmpty(request,"fromDate")) {
+            fromDate = getDate(request.getParameter("fromDate"));
         }
-        
-        if(pipeline.length() == PREFIX.length()) {//default
-            pipeline.append("ts:{$gt: #, $lt: # }");
-            final Date toDate = new Date();
-            final Date fromDate = new Date(toDate.getTime() - (1000*60*60*24));
-            final SimpleDateFormat df = new SimpleDateFormat(DATEFORMAT);
-            params.add(fromDate);
-            params.add(toDate);
-            request.setAttribute("fromDate", df.format(fromDate));
-            request.setAttribute("toDate", df.format(toDate));
-        }else {
-            pipeline.deleteCharAt(pipeline.length()-1);//delete last comma
+        if(!isEmpty(request,"toDate")) {
+            toDate = getDate(request.getParameter("toDate"));
         }
-        
+        if(fromDate == null && toDate == null) {
+            toDate = new Date();
+            fromDate = new Date(toDate.getTime() - (1000*60*60*24));
+        }else if(fromDate == null) {
+            toDate = new Date();
+            fromDate = new Date(toDate.getTime() - (1000*60*60*24));
+        }if(toDate == null) {
+            toDate = new Date(fromDate.getTime() + (1000*60*60*24));
+        }
+        pipeline.append("ts:{$gt: #, $lt: # }");
+        params.add(fromDate);
+        params.add(toDate);
+
+        final SimpleDateFormat df = new SimpleDateFormat(DATEFORMAT);
+        request.setAttribute("fromDate", df.format(fromDate));
+        request.setAttribute("toDate", df.format(toDate));
+
         pipeline.append("}}");
         
         System.out.println(pipeline);
