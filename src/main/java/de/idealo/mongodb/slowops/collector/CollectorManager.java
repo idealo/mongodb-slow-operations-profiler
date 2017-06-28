@@ -176,23 +176,6 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         }
         return result;
     }
-    
-    
-    private boolean removeReader(ProfilingReader r) {
-        LOG.error("removeReader for {}/{}", r.getServerAddress(), r.getDatabase());
-        writeLock.lock();
-        try{
-            for (ProfilingReader reader : readers) {
-                if(reader.getIntanceId() == r.getIntanceId()) {
-                    return readers.remove(reader);
-                }
-            }
-        }finally{
-            writeLock.unlock();
-        }
-        
-        return false;
-    }
 
     public boolean isReaderExists(ServerAddress adr, String db) {
 
@@ -268,6 +251,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
             writeLock.lock();
             try{
                 if(readers != null) {
+                    final LinkedList<ProfilingReader> toBeRemoved = Lists.newLinkedList();
                     for (ProfilingReader r : readers) {
                         boolean isSameReader = ConfigReader.isProfiledServer(r.getProfiledServerDto());
                         if(terminateAll || !isSameReader) {
@@ -275,12 +259,14 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
                                 Terminator terminator = new Terminator(r);
                                 Future<Long> result = terminatorExecutor.submit(terminator);
                                 futureTerminatorList.add(result);
-                                removeReader(r);
+                                LOG.info("will remove reader for {}/{}", r.getServerAddress(), r.getDatabase());
+                                toBeRemoved.add(r);
                             } catch (Throwable e) {
                                 LOG.error("Error while terminating reader ", e);
                             }
                         }
                     }
+                    readers.removeAll(toBeRemoved);
                 }
             }finally{
                 writeLock.unlock();
@@ -497,6 +483,8 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
     public void startStopProfilingReaders(List<Integer> idList, boolean stop){
         writeLock.lock();
         try{
+            final LinkedList<ProfilingReader> toBeAdded = Lists.newLinkedList();
+            final LinkedList<ProfilingReader> toBeRemoved = Lists.newLinkedList();
             for(int id : idList){
                 for (ProfilingReader reader : readers) {
                     if(id == reader.getIntanceId()){
@@ -515,16 +503,19 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
                                     reader.getDoneJobs(),
                                     reader.getSlowMs()
                             );
-                            readers.add(newReader);
-                            readers.remove(reader);
+                            LOG.info("will add reader for {}/{}", newReader.getServerAddress(), newReader.getDatabase());
+                            toBeAdded.add(newReader);
+                            LOG.info("will remove reader for {}/{}", reader.getServerAddress(), reader.getDatabase());
+                            toBeRemoved.add(reader);
 
                             newReader.start();
-
                         }
                         break;
                     }
                 }
             }
+            readers.removeAll(toBeRemoved);
+            readers.addAll(toBeAdded);
 
         }finally{
             writeLock.unlock();

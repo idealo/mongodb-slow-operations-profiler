@@ -141,6 +141,11 @@ The field `yAxisScale` is to be set either to the value "milliseconds" or "secon
 
 ## Version history
 
+* v1.2.1
+    + bugfix: removing profiling reader(s) when uploading a new config might have failed
+    + update: both parameters fromDate and toDate are required on analyse page and will be set to default if not existent; other given parameters are applied independently
+    + update: change index from {adr:1, db:1} to {adr:1, db:1, ts:-1} on profiling.slowops collection to accelerate start-up of profiling readers when they query for their newest written entry in order to continue from
+    + update: change index from {ts:-1} to {ts:-1, lbl:1} on profiling.slowops collection to speed-up analyse queries having also "lbl" ("ts" is always provided)
 * v1.2.0
     + new: show currently used configuration as json
     + new: upload new configuration as json (which is applied but not persisted server side); all servers of changed "profiled"-entries are (re)started; collector is restarted if its config changed
