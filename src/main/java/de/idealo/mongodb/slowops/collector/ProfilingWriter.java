@@ -74,10 +74,10 @@ public class ProfilingWriter extends Thread implements Terminable{
 
             IndexOptions indexOptions = new IndexOptions();
             indexOptions.background(true);
-            LOG.info("Create index {ts:-1} in the background if it does not yet exists");
-            profileCollection.createIndex(new BasicDBObject("ts",-1), indexOptions);
-            LOG.info("Create index {adr:1, db:1} in the background if it does not yet exists");
-            profileCollection.createIndex(new BasicDBObject("adr",1).append("db",1), indexOptions);
+            LOG.info("Create index {ts:-1, lbl:1} in the background if it does not yet exists");
+            profileCollection.createIndex(new BasicDBObject("ts",-1).append("lbl", 1), indexOptions);
+            LOG.info("Create index {adr:1, db:1, ts:-1} in the background if it does not yet exists");
+            profileCollection.createIndex(new BasicDBObject("adr",1).append("db",1).append("ts", -1), indexOptions);
 
         } catch (MongoException e) {
             LOG.error("Exception while connecting to: {}", serverDto.getHosts(), e);
