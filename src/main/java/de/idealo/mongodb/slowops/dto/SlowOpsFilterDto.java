@@ -26,7 +26,7 @@ public class SlowOpsFilterDto {
     }
 
     /**
-     * @param array
+     * @param parameters
      */
     public void setParameters(Object[] parameters) {
         this.parameters = parameters;

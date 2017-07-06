@@ -30,23 +30,25 @@ public class MongoDbAccessor {
     private final int socketTimeOut;
     private final String user;
     private final String pw;
+    private final boolean isSecondaryReadPreferred;
     private MongoClient mongo;
 
     
     
     private MongoDbAccessor(){
-        this(-1, null, null, null);
+        this(-1, false, null, null, null);
     };
     
     public MongoDbAccessor(String user, String pw, ServerAddress ... serverAddress){
-        this(-1, user, pw, serverAddress);
+        this(-1, false, user, pw, serverAddress);
     }
     
-    public MongoDbAccessor(int socketTimeOut, String user, String pw, ServerAddress ... serverAddress){
+    public MongoDbAccessor(int socketTimeOut, boolean isSecondaryReadPreferred, String user, String pw, ServerAddress ... serverAddress){
         this.serverAddress = serverAddress;
         this.socketTimeOut = socketTimeOut;
         this.user = user;
         this.pw = pw;
+        this.isSecondaryReadPreferred = isSecondaryReadPreferred;
         init();
     }
     
@@ -65,7 +67,7 @@ public class MongoDbAccessor {
             MongoClientOptions options = MongoClientOptions.builder().
             		connectTimeout(1000*2).//fail fast, so we know this node is unavailable
             		socketTimeout(socketTimeOut==-1?1000*10:socketTimeOut).//default 10 seconds
-            		readPreference(ReadPreference.secondaryPreferred()).
+            		readPreference(isSecondaryReadPreferred?ReadPreference.secondaryPreferred():ReadPreference.primaryPreferred()).
                     writeConcern(WriteConcern.ACKNOWLEDGED).
             		build();
 
@@ -97,7 +99,7 @@ public class MongoDbAccessor {
     public Document runCommand(String dbName, DBObject cmd) throws IllegalStateException {
         checkMongo();
         if(dbName != null && !dbName.isEmpty()) {
-           return getMongoDatabase(dbName).runCommand((Bson) cmd, ReadPreference.secondaryPreferred());
+           return getMongoDatabase(dbName).runCommand((Bson) cmd, isSecondaryReadPreferred?ReadPreference.secondaryPreferred():ReadPreference.primaryPreferred());
         }
         throw new IllegalStateException("Database not initialized");
     }

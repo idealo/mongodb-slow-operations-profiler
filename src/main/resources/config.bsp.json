@@ -1,8 +1,8 @@
 {
   "collector":{
     "hosts":["myCollectorHost_member1:27017",
-             "myCollectorHost_member2:27017",
-             "myCollectorHost_member3:27017"],
+      "myCollectorHost_member2:27017",
+      "myCollectorHost_member3:27017"],
     "db":"profiling",
     "collection":"slowops",
     "adminUser":"",
@@ -10,17 +10,17 @@
   },
   "profiled":[
     { "enabled": false,
-      "label":"foo",
+      "label":"dbs foo",
       "hosts":["someHost1:27017",
-               "someHost2:27017",
-               "someHost3:27017"],
+        "someHost2:27017",
+        "someHost3:27017"],
       "ns":["someDatabase.someCollection", "anotherDatabase.anotherCollection"],
       "adminUser":"",
       "adminPw":"",
       "slowMS":250
     },
     { "enabled": false,
-      "label":"bar",
+      "label":"dbs bar",
       "hosts":["someMongoRouter:27017"],
       "ns":["someDatabase.someCollection", "anotherDatabase.*"],
       "adminUser":"",
@@ -28,5 +28,6 @@
       "slowMS":250
     }
   ],
-  "yAxisScale":"milliseconds"
+  "yAxisScale":"milliseconds",
+  "adminToken": "mySecureAdminToken"
 }

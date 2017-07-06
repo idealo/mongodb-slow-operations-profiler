@@ -1,7 +1,8 @@
 # MongoDB slow operation profiler and visualizer
 
 This java web application collects slow operations from a mongoDB system in order to visualize and analyze them.
-The software has been presented during the [MongoDB User Group Berlin on 4th of June 2013](http://www.meetup.com/MUGBerlin/events/119503502/).
+Since v2.0.0 it may be easily extended to an administration tool by implementing commands to be executed against the configured database system(s).
+The initial version of the software has been presented during the [MongoDB User Group Berlin on 4th of June 2013](http://www.meetup.com/MUGBerlin/events/119503502/).
 Slides of the presentation can be found [here](http://www.slideshare.net/Kay1A/slow-ops).
 
 The following first screenshot demonstrates how slow operations are visualized in the diagram: The higher a point or circle on the y-axis, the slower was the execution time of this operation. The greater the diameter of the circle, the more slow operations of this type were executed at this time. 
@@ -65,6 +66,17 @@ By clicking on `analyse`, the above mentioned analysis page will show the slow o
 
 Since v1.2.0 you can dynamically upload new configurations in order to add, remove or change profiling readers or the collector writer. The uploaded config is **not** persisted server side and will be lost upon webapp restart. All servers of changed "profiled"-entries are (re)started. Also the collector needs to be restarted if its config changed. Even though stops and starts are executed simultaneously, it may take some time depending on how many changes need to be applied, thus how many readers, respectively the writer, are involved by the config change.
 
+Since v2.0.0, commands may be run against the selected database system(s). Even if multiple nodes or databases of the **same** database system are selected, all implemented commands in v2.0.0 are executed against the corresponding database system (i.e. mongos-router) and not against the individually selected nodes (i.e. mongod). Current implemented commands are:
+
++ show current running operations
++ list databases and their collections
++ show index access statistics of all databases and their collections (requires mongodb v3.2 or newer)
+
+The command result is shown in a filterable table. Columns are sortable as well, so you can detect immediately spikes.
+Implementing new commands is quite easy: just create a new java class which implements the interface `de.idealo.mongodb.slowops.command.ICommand`. The interface has only 2 methods in order to execute the database command and to transform the result to a corresponding table structure.
+
+This being said, from v2.0.0 on, the webapp may be extended from a pure monitoring and analyzing tool to an administration tool.
+
 
 ##   Setup
 
@@ -102,7 +114,7 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
   },
   "profiled":[
     { "enabled": false,
-      "label":"foo",
+      "label":"dbs foo",
       "hosts":["someHost1:27017",
                "someHost2:27017",
                "someHost3:27017"],
@@ -112,7 +124,7 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
       "slowMS":250
     },
     { "enabled": false,
-      "label":"bar",
+      "label":"dbs bar",
       "hosts":["someMongoRouter:27017"],
       "ns":["someDatabase.someCollection", "anotherDatabase.*"],
       "adminUser":"",
@@ -120,7 +132,8 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
       "slowMS":250
     }
   ],
-  "yAxisScale":"milliseconds"
+  "yAxisScale":"milliseconds",
+  "adminToken":"mySecureAdminToken"
 }
 ```
 This example configuration defines first the `collector` running as a replica set consisting of 3 members on hosts "myCollectorHost_member[1|2|3]" on port 27017, using the collection "slowops" of database "profiling". Both `adminUser` and `adminPw` are empty because the mongodb instance runs without authentication. If mongod runs with authentication, the user must exist for the admin database with role "root".
@@ -137,10 +150,22 @@ Fields of `profiled` entries explained:
 * `adminPw`= if authentication is enabled, passwort of the user 
 * `slowMS`= threshold of slow operations in milliseconds
 
-The field `yAxisScale` is to be set either to the value "milliseconds" or "seconds". It defines the scale of the y-axis in the diagram of the analysis page. 
+The field `yAxisScale` is to be set either to the value "milliseconds" or "seconds". It defines the scale of the y-axis in the diagram of the analysis page.
+
+In v2.0.0 the field `adminToken` has been introduced to restrict access to administrative functionalities i.e. stop/start of collecting slow operations, setting the threshold `slowMs`, seeing the currently used or uploading a new configuration.
+To grant access to these functionalities, add the parameter `adminToken=` followed by your configured value, i.e. `mySecureAdminToken`, to the URL of the application status page, i.e. `http://your-server:your-port/mongodb-slow-operations-profiler-[your-version]/app?adminToken=mySecureAdminToken`.
+
 
 ## Version history
 
+* v2.0.0
+   + new: show tabular result of commands executed against the selected database system(s); implemented commands are:
+     + show current running operations
+     + list databases and their collections
+     + show index access statistics of all databases and their collections (requires mongodb v3.2 or newer)
+   + new: grant access to administrative functionalities only to authorized users
+   + update: use mongodb-java-driver v3.4.2 instead of previously used v3.3.0
+   + update: for consistent reads `ReadPreference.primaryPreferred()` is used instead of previously used `ReadPreference.secondaryPreferred()` - except for analysing collected slow operations which still uses `ReadPreference.secondaryPreferred()`
 * v1.2.1
     + bugfix: removing profiling reader(s) when uploading a new config might have failed
     + update: both parameters fromDate and toDate are required on analyse page and will be set to default if not existent; other given parameters are applied independently

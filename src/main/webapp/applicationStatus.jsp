@@ -1,3 +1,4 @@
+<%@ page import="de.idealo.mongodb.slowops.util.Util" %>
 <!DOCTYPE html>
 <html>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="ISO-8859-1" %>
@@ -17,7 +18,7 @@
 			$(document).ready(function() {
 
 				var colNames = [{"visible":true, "name":"Select"},
-					{"visible":true, "name":"Label"},
+					{"visible":true, "name":"DBS Label"},
 					{"visible":true, "name": "ReplSet"},
 					{"visible":true, "name": "Status"},
 					{"visible":true, "name": "Host"},
@@ -46,7 +47,7 @@
 
 				mainTable = $('#main').DataTable({
 					"ajax": {
-						url: "<%=request.getContextPath()%>/rest/action?cmd=refresh",
+						url: "<%=request.getContextPath()%>/rest/action?cmd=refresh&<%=Util.ADMIN_TOKEN + "=" + request.getParameter(Util.ADMIN_TOKEN)%>",
 						dataSrc: "collectorStatuses"
 					},
 					"columns": [
@@ -183,11 +184,18 @@
 				$(".infoSlowMs").tooltip({content:function(){return $("#infoSlowMsContent").html();}});
                 $(".infoConfig").tooltip({content:function(){return $("#infoConfigContent").html();}});
                 $(".infoOpsCount").tooltip({content:function(){return $("#infoOpsCountContent").html();}});
+                $(".infoRefreshCollector").tooltip({content:function(){return $("#infoRefreshCollectorContent").html();}});
+                $(".infoRefresh").tooltip({content:function(){return $("#infoRefreshContent").html();}});
+                $(".infoAnalyse").tooltip({content:function(){return $("#infoAnalyseContent").html();}});
+                $(".infoCurrentOps").tooltip({content:function(){return $("#infoCurrentOpsContent").html();}});
+                $(".infoListDbs").tooltip({content:function(){return $("#infoListDbsContent").html();}});
+                $(".infoIdxAccStats").tooltip({content:function(){return $("#infoIdxAccStatsContent").html();}});
+                $(".infoCollecting").tooltip({content:function(){return $("#infoCollectingContent").html();}});
 
 			} );
 
 
-			function action(cmd){
+			function parallelAction(cmd){
 				var cellContent = document.getElementById("commands").innerHTML;
 				var slowMs = $("#slowms").val();
 				var count = 0;
@@ -227,6 +235,63 @@
 
 				});
 			}
+
+            function singleAction(cmd) {
+
+                if(cmd == "analyse") {
+                    var lbl = new StringSet();
+                    var rs = new StringSet();
+                    var adr = new StringSet();
+                    var db = new StringSet();
+                    var col = new StringSet();
+
+                    $("input:checkbox[name=chk]:checked").each(function () {
+                        var selectedRow = $(this).parent().parent();
+                        var row = mainTable.row(selectedRow).data();
+
+                        lbl.add(row.label);
+                        rs.add(row.replSetName);
+                        adr.add(row.serverAddressAsString);
+                        db.add(row.database);
+                        var colAsString = row.collectionsAsString.replace(",", ";");
+                        if(colAsString != "*") {
+                            col.add(colAsString);
+                        }
+
+                    });
+
+                    var toDate = new Date();
+                    var fromDate = new Date(toDate.getTime() - (24 * 60 * 60 * 1000));
+                    window.open("<%=request.getContextPath()%>/gui?fromDate=" + formatDate(fromDate) + "&toDate=" + formatDate(toDate)
+                            + "&lbl=" + lbl.values()
+                            + "&rs=" + rs.values()
+                            + "&adr=" + adr.values()
+                            + "&db=" + db.values()
+                            + "&col=" + col.values()
+                            + "&byLbl=lbl"
+                            + "&byAdr=adr"
+                            + "&byRs=rs"
+                            + "&byDb=db"
+                            + "&byCol=col"
+                            + "&byFields=fields"
+                            + "&resolution=hour"
+                            + "&sortLegend=y"
+                            , "_blank");
+                }else{
+                    var pIds = new StringSet();
+
+                    $("input:checkbox[name=chk]:checked").each(function () {
+                        var selectedRow = $(this).parent().parent();
+                        var pId = $(this).val();
+                        pIds.add(pId);
+                    });
+                    if(pIds.size() > 0) {
+                        window.open("<%=request.getContextPath()%>/cmd?&cmd=" + cmd + "&pIds=" + pIds.values(), "_blank");
+                    }else{
+                        alert("Tick one or more checkboxes first in order to execute this action.");
+                    }
+                }
+            }
 
             function refreshCollector(){
 
@@ -313,54 +378,16 @@
 
 					return values;
 				};
-			}
 
-			function analyse() {
-
-				var id;
-				var lbl = new StringSet();
-				var rs = new StringSet();
-				var adr = new StringSet();
-				var db = new StringSet();
-				var col = new StringSet();
-				$("input:checkbox[name=chk]:checked").each(function () {
-					var selectedRow = $(this).parent().parent();
-					var row = mainTable.row(selectedRow).data();
-
-					id = row.instanceId;
-					lbl.add(row.label);
-					rs.add(row.replSetName);
-					adr.add(row.serverAddressAsString);
-					db.add(row.database);
-					var colAsString = row.collectionsAsString.replace(",", ";");
-                    if(colAsString != "*") {
-                        col.add(colAsString);
+                this.size = function() {
+                    var result = 0;
+                    for (var i in setObj) {
+                        result++;
                     }
+                    return result;
+                }
 
-				});
-
-				var toDate = new Date();
-				var fromDate = new Date(toDate.getTime()-(24*60*60*1000));
-
-
-				window.open("<%=request.getContextPath()%>/gui?fromDate=" + formatDate(fromDate) + "&toDate=" + formatDate(toDate)
-						+ "&lbl=" + lbl.values()
-						+ "&rs=" + rs.values()
-						+ "&adr=" + adr.values()
-						+ "&db=" + db.values()
-						+ "&col=" + col.values()
-						+ "&byLbl=lbl"
-						+ "&byAdr=adr"
-						+ "&byRs=rs"
-						+ "&byDb=db"
-						+ "&byCol=col"
-						+ "&byFields=fields"
-						+ "&resolution=hour"
-						+ "&sortLegend=y"
-						, "_blank");
 			}
-
-
 
 		</script>
 	</head>
@@ -417,13 +444,20 @@
         </td>
     </tr>
     <tr><td>Collector running since</td><td id="clr_date"></td></tr>
-    <tr><td>&nbsp;</td><td><a href="javascript:refreshCollector();">refresh</a></td></tr>
+    <tr><td>&nbsp;</td><td class="infoRefreshCollector"><a href="javascript:refreshCollector();">refresh</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td></tr>
 
 </table>
 
 <br/>
 
-<h2>Profiled mongod's</h2>
+<%  Object adminToken = session.getAttribute(Util.ADMIN_TOKEN);
+    boolean isAdmin = false;
+    if(adminToken != null && adminToken instanceof Boolean && (Boolean)adminToken == true){
+        isAdmin = true;
+    }
+%>
+
+<h2>Registered mongod's</h2>
 
 <form name="input" action="app" method="get">
 	<br/>
@@ -442,36 +476,51 @@
 
 	<table  align="top" border="1" cellpadding="10">
 		<tr id="commands">
-			<td><a href="javascript:action('refresh');">refresh</a></td>
-			<td>
+			<td class='infoRefresh'><a href="javascript:parallelAction('refresh');">refresh</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+            <td class='infoAnalyse'><a href="javascript:singleAction('analyse');">analyse</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+            <td class='infoCurrentOps'><a href="javascript:singleAction('cops');">current ops</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+            <td class='infoListDbs'><a href="javascript:singleAction('lsdbs');">list db.collections</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+            <td class='infoIdxAccStats'><a href="javascript:singleAction('idxacc');">index access stats</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+            <%  if(isAdmin){ %>
+            <td>
 				<table>
 					<tr>
-						<td colspan="2">Collecting</td>
+						<td colspan="2" class='infoCollecting'>Collecting&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
 					</tr>
 					<tr>
-						<td><a href="javascript:action('start');">start</a></td>
-						<td><a href="javascript:action('stop');">stop</a></td>
+						<td><a href="javascript:parallelAction('start');">start</a></td>
+						<td><a href="javascript:parallelAction('stop');">stop</a></td>
 					</tr>
 				</table>
 			</td>
 			<td class='infoSlowMs'>
-				<a href="javascript:action('slowms');">set slowMs </a><input id="slowms" type="text" maxlength="10" size="10">&nbsp;<img src='img/info.gif' alt='info' title='info'><br/>
+				<a href="javascript:parallelAction('slowms');">set slowMs </a><input id="slowms" type="text" maxlength="10" size="10">&nbsp;<img src='img/info.gif' alt='info' title='info'><br/>
 				<small>negative values stop, positive values start profiling</small>
 			</td>
-			<td><a href="javascript:analyse();">analyse</a></td>
+            <%}%>
 		</tr>
 	</table>
 	<br/>
 </form>
+<%  if(isAdmin){ %>
+        <form name="configForm" action="app" method="post" class="infoConfig">
+            <input type="submit" value="upload new config">&nbsp;<img src='img/info.gif' alt='info' title='info'><br/>
+            <textarea id="config" name="config" rows="10" cols="60"></textarea><br/>
+        </form>
+<%}%>
 
-<form name="configForm" action="app" method="post" class="infoConfig">
-    <input type="submit" value="upload new config">&nbsp;<img src='img/info.gif' alt='info' title='info'><br/>
-    <textarea id="config" name="config" rows="10" cols="60"></textarea><br/>
-</form>
 
-<span id="infoSlowMsContent" style="display:none">Low slowMs values may slow down both the profiled mongod('s) and also the collector because more slow operations need to be read and written. A value of 0 will result in profiling all operations.</span>
-<span id="infoConfigContent" style="display:none">Uploading a new config may be slow if many "profiled"-entries changed because all server addresses of a changed entry need to be resolved and will be (re)started. The uploaded configuration ist not persisted server side and will be lost upon webapp restart.</span>
 <span id="infoOpsCountContent" style="display:none">"old" means operations from removed or changed servers due to uploaded configuration changes since (re)start of the webapp</span>
+<span id="infoRefreshCollectorContent" style="display:none">Get and show latest data of the collector.</span>
+<span id="infoRefreshContent" style="display:none">Get and show latest data of the selected node(s).<br><b>Attention</b>: Requires to request each selected node. If many nodes are selected, <b>use with care!</b></span>
+<span id="infoAnalyseContent" style="display:none">Open the analyse page, preset with the selected node(s) for the last 24 hours.</span>
+<span id="infoCurrentOpsContent" style="display:none">Show all current running operations of the database system(s) of the selected node(s).</span>
+<span id="infoListDbsContent" style="display:none">Show all databases and their collections of the database system(s) of the selected node(s).</span>
+<span id="infoIdxAccStatsContent" style="display:none">Show index access statistics of all databases and their collections of the database system(s) of the selected node(s).<br><b>Attention</b>: May slow down the database system, especially if the database system has many collections and indexes!<br><b>Use with care!</b></span>
+<span id="infoCollectingContent" style="display:none">Start or stop collecting slow operations of the selected node(s).</span>
+<span id="infoSlowMsContent" style="display:none">Set the treshold in milliseconds for operations to be profiled. Low slowMs values may slow down both the profiled mongod('s) and also the collector because more slow operations need to be read and written.<br>Negative values stop, positive values start profiling. A value of 0 will result in profiling <b>all</b> operations.</span>
+<span id="infoConfigContent" style="display:none">Apply a new configuration. Uploading a new config may be slow if many "profiled"-entries changed because all server addresses of a changed entry need to be resolved and will be (re)started.<br>The uploaded configuration is not persisted server side and will be lost upon webapp restart.</span>
+
 <%@ include file="buildInfo.jsp" %>
 </body>
 </html>

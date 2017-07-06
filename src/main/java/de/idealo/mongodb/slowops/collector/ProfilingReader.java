@@ -172,7 +172,7 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
     }
 
     private void init() {
-        LOG.info(">>> init for {}", serverAddress);
+        LOG.debug(">>> init for {}", serverAddress);
 
         try {
             if(mongo == null) {
@@ -190,11 +190,11 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
             LOG.error("Error while initializing mongo at address {}", serverAddress, e);
             closeConnections();
         }
-        LOG.info("<<< init for {}", serverAddress);
+        LOG.debug("<<< init for {}", serverAddress);
     }
 
     private void closeConnections() {
-        LOG.info(">>> closeConnections {}", serverAddress);
+        LOG.debug(">>> closeConnections {}", serverAddress);
 
         try {
             if(profileCursor != null) {
@@ -213,7 +213,7 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
             LOG.error("Error while closing mongo ", e);
         }
 
-        LOG.info("<<< closeConnections {}", serverAddress);
+        LOG.debug("<<< closeConnections {}", serverAddress);
     }
 
     private void shutdownScheduler(){

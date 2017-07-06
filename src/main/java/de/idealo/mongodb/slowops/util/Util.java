@@ -30,6 +30,7 @@ public class Util {
     public final static String Y_AXIS_SCALE = "yAxisScale";
     public final static String Y_AXIS_SECONDS = "seconds";
     public final static String Y_AXIS_MILLISECONDS = "milliseconds";
+    public final static String ADMIN_TOKEN = "adminToken";
     public final static String CONFIG_FILE = "config.json";
 
 
