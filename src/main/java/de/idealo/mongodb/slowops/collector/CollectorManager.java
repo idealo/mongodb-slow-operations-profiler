@@ -163,18 +163,20 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         return jobQueue;
     }
 
-    
-    private List<ServerAddress> getExistingReaders() {
-        List<ServerAddress> result = Lists.newLinkedList();
+    public List<ProfilingReader> getProfilingReaders(Set<Integer> ids) {
+        final List<ProfilingReader> result = Lists.newLinkedList();
         readLock.lock();
         try{
             for (ProfilingReader reader : readers) {
-                result.add(reader.getServerAddress());
+                if(ids.contains(reader.getIntanceId())) {
+                    result.add(reader);
+                }
             }
         }finally{
             readLock.unlock();
         }
         return result;
+
     }
 
     public boolean isReaderExists(ServerAddress adr, String db) {
@@ -409,7 +411,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         return new Date();
     }
 
-    public ApplicationStatusDto getApplicationStatus() {
+    public ApplicationStatusDto getApplicationStatus(boolean isAuthenticated) {
         LOG.debug(">>> getApplicationStatus");
         List<Integer> idList = Lists.newLinkedList();
         readLock.lock();
@@ -421,10 +423,10 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
             readLock.unlock();
         }
         LOG.debug("<<< getApplicationStatus");
-        return getApplicationStatus(idList);
+        return getApplicationStatus(idList, isAuthenticated);
     }
 
-    public ApplicationStatusDto getApplicationStatus(List<Integer> idList) {
+    public ApplicationStatusDto getApplicationStatus(List<Integer> idList, boolean isAuthenticated) {
         LOG.debug(">>> getApplicationStatus listSize: {} ", idList.size());
         ApplicationStatusDto result = new ApplicationStatusDto();
         List<CollectorStatusDto> collectorStatuses = Lists.newLinkedList();
@@ -474,7 +476,9 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
         result.setCollectorRunningSince(getRunningSince());
 
-        result.setConfig(ConfigReader.getConfig());
+        if(isAuthenticated) {
+            result.setConfig(ConfigReader.getConfig());
+        }
 
         LOG.debug("<<< getApplicationStatus");
         return result;
@@ -596,7 +600,4 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
 
 
-    
-
-    
 }
