@@ -158,6 +158,8 @@ To grant access to these functionalities, add the parameter `adminToken=` follow
 
 ## Version history
 
+* v2.0.1
+   + new: preset search filter on application status page with value of url parameter `lbl`
 * v2.0.0
    + new: show tabular result of commands executed against the selected database system(s); implemented commands are:
      + show current running operations
