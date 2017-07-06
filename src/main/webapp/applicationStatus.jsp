@@ -115,7 +115,10 @@
 								last = group;
 							}
 						} );
-					}
+					},
+                    "search": {
+                        "search": "<%=request.getParameter("lbl")!=null?request.getParameter("lbl"):""%>"
+                    }
 				});
 
 				// Order by the grouping
