@@ -60,7 +60,7 @@ public class Grapher {
         CollectorServerDto serverDto = ConfigReader.getCollectorServer();
 ;
         try{
-            MongoDbAccessor mongo = new MongoDbAccessor(60000, serverDto.getAdminUser(), serverDto.getAdminPw(), serverDto.getHosts());
+            MongoDbAccessor mongo = new MongoDbAccessor(60000, true, serverDto.getAdminUser(), serverDto.getAdminPw(), serverDto.getHosts());
             DB db = mongo.getMongoDB(serverDto.getDb());
             Jongo jongo = new Jongo(db);
             MongoCollection result =  jongo.getCollection(serverDto.getCollection());

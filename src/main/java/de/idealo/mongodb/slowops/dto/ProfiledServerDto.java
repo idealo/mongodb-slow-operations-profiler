@@ -120,9 +120,7 @@ public class ProfiledServerDto {
         if (enabled != that.enabled) return false;
         if (slowMs != that.slowMs) return false;
         if (label != null ? !label.equals(that.label) : that.label != null) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(hosts, that.hosts)) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(ns, that.ns)) return false;
         if (adminUser != null ? !adminUser.equals(that.adminUser) : that.adminUser != null) return false;
         return adminPw != null ? adminPw.equals(that.adminPw) : that.adminPw == null;

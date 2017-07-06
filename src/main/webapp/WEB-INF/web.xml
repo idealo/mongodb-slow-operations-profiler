@@ -17,6 +17,11 @@
     <servlet-name>ApplicationStatus</servlet-name>
     <servlet-class>de.idealo.mongodb.slowops.servlet.ApplicationStatus</servlet-class>
   </servlet>
+  <servlet>
+    <display-name>CommandResult</display-name>
+    <servlet-name>CommandResult</servlet-name>
+    <servlet-class>de.idealo.mongodb.slowops.servlet.CommandResult</servlet-class>
+  </servlet>
 
   <servlet>
     <servlet-name>Jersey REST Service</servlet-name>
@@ -43,6 +48,10 @@
   <servlet-mapping>
     <servlet-name>ApplicationStatus</servlet-name>
     <url-pattern>/app/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>CommandResult</servlet-name>
+    <url-pattern>/cmd/*</url-pattern>
   </servlet-mapping>
 
 </web-app>
