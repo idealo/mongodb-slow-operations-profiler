@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 	<script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
@@ -28,9 +28,25 @@
 					]
 				} );
 
+                $('#actionsLink').click(function() {
+                    $('#actionsTable').toggle('slow');
+                });
+
 			} );
 
 		</script>
+        <style>
+            .actions {
+                padding: 5px 10px;
+                border: 1px solid #999;
+                background: #f7f7f7;
+                position: fixed;  /* This is the magic - stays during scroll. */
+                top: 0; right: 0; /* These coordinates are now in
+                         relation to the first parent
+                         with non-static positioning (body) */
+            }
+
+        </style>
 	</head>
 <body>
 	<table id="example" class="display" cellspacing="0" width="100%">
@@ -69,8 +85,110 @@
 			<td>2009/01/12</td>
 			<td>$86,000</td>
 		</tr>
+        <tr>
+            <td>{"name":"Tiger Nixon", "age":50}</td>
+            <td>System Architect</td>
+            <td>Edinburgh</td>
+            <td>61</td>
+            <td>2011/04/25</td>
+            <td>$320,800</td>
+        </tr>
+        <tr>
+            <td>{"name":"Garrett Winters", "age":50}</td>
+            <td>Accountant</td>
+            <td>Tokyo</td>
+            <td>63</td>
+            <td>2011/07/25</td>
+            <td>$170,750</td>
+        </tr>
+        <tr>
+            <td>{"name":"Ashton Cox", "age":50}</td>
+            <td>Junior Technical Author</td>
+            <td>San Francisco</td>
+            <td>66</td>
+            <td>2009/01/12</td>
+            <td>$86,000</td>
+        </tr>
+        <tr>
+            <td>{"name":"Tiger Nixon", "age":50}</td>
+            <td>System Architect</td>
+            <td>Edinburgh</td>
+            <td>61</td>
+            <td>2011/04/25</td>
+            <td>$320,800</td>
+        </tr>
+        <tr>
+            <td>{"name":"Garrett Winters", "age":50}</td>
+            <td>Accountant</td>
+            <td>Tokyo</td>
+            <td>63</td>
+            <td>2011/07/25</td>
+            <td>$170,750</td>
+        </tr>
+        <tr>
+            <td>{"name":"Ashton Cox", "age":50}</td>
+            <td>Junior Technical Author</td>
+            <td>San Francisco</td>
+            <td>66</td>
+            <td>2009/01/12</td>
+            <td>$86,000</td>
+        </tr>
+        <tr>
+            <td>{"name":"Tiger Nixon", "age":50}</td>
+            <td>System Architect</td>
+            <td>Edinburgh</td>
+            <td>61</td>
+            <td>2011/04/25</td>
+            <td>$320,800</td>
+        </tr>
+        <tr>
+            <td>{"name":"Garrett Winters", "age":50}</td>
+            <td>Accountant</td>
+            <td>Tokyo</td>
+            <td>63</td>
+            <td>2011/07/25</td>
+            <td>$170,750</td>
+        </tr>
+        <tr>
+            <td>{"name":"Ashton Cox", "age":50}</td>
+            <td>Junior Technical Author</td>
+            <td>San Francisco</td>
+            <td>66</td>
+            <td>2009/01/12</td>
+            <td>$86,000</td>
+        </tr>
 		</tbody>
 	</table>
 </form>
+
+    <div class="actions">
+        <h2>Actions&nbsp;<img id="actionsLink" src="res/showhide.png" title="show/hide" alt="show/hide"/> </h2>
+        <table  id="actionsTable" align="top" border="1" cellpadding="10">
+            <tr id="commands">
+                <td class='infoRefresh'><a href="javascript:parallelAction('refresh');">refresh</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+                <td class='infoAnalyse'><a href="javascript:singleAction('analyse');">analyse</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+                <td class='infoCurrentOps'><a href="javascript:singleAction('cops');">current ops</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+                <td class='infoListDbs'><a href="javascript:singleAction('lsdbs');">list db.collections</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+                <td class='infoIdxAccStats'><a href="javascript:singleAction('idxacc');">index access stats</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+
+                <td>
+                    <table>
+                        <tr>
+                            <td colspan="2" class='infoCollecting'>Collecting&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+                        </tr>
+                        <tr>
+                            <td><a href="javascript:parallelAction('start');">start</a></td>
+                            <td><a href="javascript:parallelAction('stop');">stop</a></td>
+                        </tr>
+                    </table>
+                </td>
+                <td class='infoSlowMs'>
+                    <a href="javascript:parallelAction('slowms');">set slowMs </a><input id="slowms" type="text" maxlength="10" size="10">&nbsp;<img src='img/info.gif' alt='info' title='info'><br/>
+                    <small>negative values stop, positive values start profiling</small>
+                </td>
+
+            </tr>
+        </table>
+    </div>
 </body>
 </html>

@@ -2,8 +2,8 @@
 target/
 *.csv
 *.log
+slowOpsGui*.png
 .~lock*
-*.png
 .checkstyle
 .classpath
 .git*

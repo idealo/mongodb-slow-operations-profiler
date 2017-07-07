@@ -184,6 +184,10 @@
 					$(':checkbox', mainTable.rows().nodes()).prop('checked', this.checked);
 				});
 
+                $('#actionsLink').click(function() {
+                    $('#actionsTable').toggle('slow');
+                });
+
 				$(".infoSlowMs").tooltip({content:function(){return $("#infoSlowMsContent").html();}});
                 $(".infoConfig").tooltip({content:function(){return $("#infoConfigContent").html();}});
                 $(".infoOpsCount").tooltip({content:function(){return $("#infoOpsCountContent").html();}});
@@ -411,6 +415,13 @@
             text-align: right;
             padding: 5px;
         }
+        .actions {
+            padding: 5px 10px;
+            border: 1px solid #999;
+            background: #f7f7f7;
+            position: fixed;
+            top: 0; right: 0;
+        }
 	</style>
 <body>
 <h1>Application Status </h1>
@@ -474,35 +485,35 @@
 		<tr id="tableFooter"></tr>
 		</tfoot>
 	</table>
-
-	<h2>Actions</h2>
-
-	<table  align="top" border="1" cellpadding="10">
-		<tr id="commands">
-			<td class='infoRefresh'><a href="javascript:parallelAction('refresh');">refresh</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
-            <td class='infoAnalyse'><a href="javascript:singleAction('analyse');">analyse</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
-            <td class='infoCurrentOps'><a href="javascript:singleAction('cops');">current ops</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
-            <td class='infoListDbs'><a href="javascript:singleAction('lsdbs');">list db.collections</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
-            <td class='infoIdxAccStats'><a href="javascript:singleAction('idxacc');">index access stats</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
-            <%  if(isAdmin){ %>
-            <td>
-				<table>
-					<tr>
-						<td colspan="2" class='infoCollecting'>Collecting&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
-					</tr>
-					<tr>
-						<td><a href="javascript:parallelAction('start');">start</a></td>
-						<td><a href="javascript:parallelAction('stop');">stop</a></td>
-					</tr>
-				</table>
-			</td>
-			<td class='infoSlowMs'>
-				<a href="javascript:parallelAction('slowms');">set slowMs </a><input id="slowms" type="text" maxlength="10" size="10">&nbsp;<img src='img/info.gif' alt='info' title='info'><br/>
-				<small>negative values stop, positive values start profiling</small>
-			</td>
-            <%}%>
-		</tr>
-	</table>
+    <div class="actions">
+        <h2>Actions&nbsp;<img id="actionsLink" src="res/showhide.png" title="show/hide" alt="show/hide"/></h2>
+        <table id="actionsTable" align="top" border="1" cellpadding="10">
+            <tr id="commands">
+                <td class='infoRefresh'><a href="javascript:parallelAction('refresh');">refresh</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+                <td class='infoAnalyse'><a href="javascript:singleAction('analyse');">analyse</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+                <td class='infoCurrentOps'><a href="javascript:singleAction('cops');">current ops</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+                <td class='infoListDbs'><a href="javascript:singleAction('lsdbs');">list db.collections</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+                <td class='infoIdxAccStats'><a href="javascript:singleAction('idxacc');">index access stats</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+                <%  if(isAdmin){ %>
+                <td>
+                    <table>
+                        <tr>
+                            <td colspan="2" class='infoCollecting'>Collecting&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+                        </tr>
+                        <tr>
+                            <td><a href="javascript:parallelAction('start');">start</a></td>
+                            <td><a href="javascript:parallelAction('stop');">stop</a></td>
+                        </tr>
+                    </table>
+                </td>
+                <td class='infoSlowMs'>
+                    <a href="javascript:parallelAction('slowms');">set slowMs </a><input id="slowms" type="text" maxlength="10" size="10">&nbsp;<img src='img/info.gif' alt='info' title='info'><br/>
+                    <small>negative values stop, positive values start profiling</small>
+                </td>
+                <%}%>
+            </tr>
+        </table>
+     </div>
 	<br/>
 </form>
 <%  if(isAdmin){ %>
