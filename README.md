@@ -158,6 +158,8 @@ To grant access to these functionalities, add the parameter `adminToken=` follow
 
 ## Version history
 
+* v2.0.2
+   + new: action panel is now floating on top so it's always visible which avoids scrolling down the whole page to use it
 * v2.0.1
    + new: preset search filter on application status page with value of url parameter `lbl`
 * v2.0.0
