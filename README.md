@@ -69,6 +69,11 @@ Since v2.0.0. you may execute **commands** against the selected database system(
 + show index access statistics of all databases and their collections (requires mongodb v3.2 or newer)
 
 The command result is shown in a new page in a filterable table. Columns are sortable as well, so you can detect immediately spikes. **Hint:** Hold shift key pressed while clicking the column headers in order to sort multiple columns.
+
+Here is a cutout of a screenshot showing the result of the current-operation command. The table is sorted by column "secs running" in order to see slow operations first.
+
+![Screenshot](img/slow_operations_command_result_page.png "Screenshot of the operation command result page")
+
 Implementing new commands is quite easy: just create a new java class which implements the interface `de.idealo.mongodb.slowops.command.ICommand`. The interface has only 2 methods in order to execute the database command and to transform the result to a corresponding table structure.
 
 This being said, from v2.0.0 on, the webapp may be extended from a pure monitoring and analyzing tool to an administration tool.
