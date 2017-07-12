@@ -48,34 +48,35 @@ Here is a reduced screenshot of the table where all columns are shown, sorted by
 
 ## Applicaton status page
 
-Since v1.0.3 there is also a page to show the application status. Besides showing the status of the collector, means where and how many slow operations have been collected (read and written) since application restart, it shows also every database to be profiled in a table. Since profiling works per database, each database to be profiled is in one row.
+Since v1.0.3 there is also a page to show the application status. Besides showing the status of the collector, means where and how many slow operations have been collected (read and written) since application restart, it shows also every registered database in a table. Since profiling works per database, each database to be profiled is in one row.
 
 The table is filterable. Columns are sortable and selectable to be hidden or shown. The sum over the values of columns, where it makes sense, is shown at the bottom of the columns. The table is by default sorted by the columns `Label`, `ReplSet` and `Status` which gives a very good overview over a whole bunch of clusters. **Hint:** Hold shift key pressed while clicking the column headers in order to sort multiple columns.
 
-Here is a reduced screenshot of the 7 first rows of the table, ordered by column `#1Day`, with a filter "offerstore" applied on rows:
+Here is a reduced screenshot of some first rows of the table, ordered by columns `ReplSet` and `Status`, with a filter "datastore" applied on rows:
 
-![Screenshot](img/slow_operations_app_status_5_slowest_last_day.jpg "Screenshot of the application status page")
+![Screenshot](img/slow_operations_app_status.png "Screenshot of the application status page")
 
-The table has a bunch of time slot columns (10 sec, 1 min, 10 min, 30 min, 1 hour, 12 hours, 1 day). These show the number of slow operations collected during these last time periods, so you can see already here which databases may behave abnormally. In such case, you may either analyse those databases or switching off collecting  or lower their `slowMs` threshold in order to profile less slow operations.
+At its right side, the table has a bunch of time slot columns (10 sec, 1 min, 10 min, 30 min, 1 hour, 12 hours, 1 day). These show the number of slow operations collected during these last time periods, so you can see already here which databases may behave abnormally. In such case, you may either analyse those databases or switching off collecting  or lower their `slowMs` threshold in order to profile less slow operations.
 
-Below the table is the **Actions panel** in order to switch collecting on/off, to change the slowMs threshold or to analyse  the selected databases with one click on the fly:
+#### Actions
 
-![Screenshot](img/slow_operations_app_status_5_slowest_last_day_end.jpg "Screenshot of the application status page")
+Since v2.0.2, a floating **Actions panel** is shown always on top and can be switched on or off. Both `refresh` and `analyse` actions were implemented already before v2.0.0. `refresh` gets and shows the latest data of the selected database(s). `analyse` opens the above mentionned analysis page to show the slow operation types of the last 24 hours of the selected node(s) respectively database(s). Both `collecting start/stop` and `set slowMs` were also already implemented before but since v2.0.0 they are only shown to authorized users. "Authorized users" are users who used the url parameter `adminToken` set to the right value (see below under "configuration" for more details).
 
-By clicking on `analyse`, the above mentioned analysis page will show the slow operation types of the last 24 hours of the selected rows, here the 5 first rows are selected.
+Since v2.0.0. you may execute **commands** against the selected database system(s). Even if multiple nodes or databases of the **same** database system are selected, all implemented commands in v2.0.0 are executed against the corresponding database system (i.e. mongos-router) and not against the individually selected nodes (i.e. mongod). Current implemented commands are:
 
-Since v1.2.0 you can dynamically upload new configurations in order to add, remove or change profiling readers or the collector writer. The uploaded config is **not** persisted server side and will be lost upon webapp restart. All servers of changed "profiled"-entries are (re)started. Also the collector needs to be restarted if its config changed. Even though stops and starts are executed simultaneously, it may take some time depending on how many changes need to be applied, thus how many readers, respectively the writer, are involved by the config change.
-
-Since v2.0.0, commands may be run against the selected database system(s). Even if multiple nodes or databases of the **same** database system are selected, all implemented commands in v2.0.0 are executed against the corresponding database system (i.e. mongos-router) and not against the individually selected nodes (i.e. mongod). Current implemented commands are:
-
-+ show current running operations
 + list databases and their collections
++ show currently running operations (requires mongodb v3.2 or newer)
 + show index access statistics of all databases and their collections (requires mongodb v3.2 or newer)
 
-The command result is shown in a filterable table. Columns are sortable as well, so you can detect immediately spikes.
+The command result is shown in a new page in a filterable table. Columns are sortable as well, so you can detect immediately spikes. **Hint:** Hold shift key pressed while clicking the column headers in order to sort multiple columns.
 Implementing new commands is quite easy: just create a new java class which implements the interface `de.idealo.mongodb.slowops.command.ICommand`. The interface has only 2 methods in order to execute the database command and to transform the result to a corresponding table structure.
 
 This being said, from v2.0.0 on, the webapp may be extended from a pure monitoring and analyzing tool to an administration tool.
+
+#### Dynamic configurations
+
+Since v1.2.0, authorized users may dynamically upload new configurations in order to add, remove or change databases to be registered respectively to be profiled. The configuration of the collector writer may also be changed. "Authorized users" are users, who used the url parameter `adminToken` set to the right value (see [Configuration](#config) below for more details).
+The uploaded config is **not** persisted server side and will be lost upon webapp restart. All servers of changed "profiled"-entries are (re)started. Also the collector needs to be restarted if its config changed. Even though stops and starts are executed simultaneously, it may take some time depending on how many changes need to be applied, thus how many readers, respectively the writer, are involved by the config change.
 
 
 ##   Setup
@@ -138,12 +139,12 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
 ```
 This example configuration defines first the `collector` running as a replica set consisting of 3 members on hosts "myCollectorHost_member[1|2|3]" on port 27017, using the collection "slowops" of database "profiling". Both `adminUser` and `adminPw` are empty because the mongodb instance runs without authentication. If mongod runs with authentication, the user must exist for the admin database with role "root".
 
-After the definition of the collector follow the databases to be profiled. In this example, there are only two entries. However, keep in mind that the application will **resolve all members** of a replica set (even if only 1 member has been defined) respectively all shards and its replica set members of a whole cluster.
+After the definition of the collector follow the databases to be profiled. In this example, there are only two entries. However, keep in mind that the application will **resolve all members** of a replica set (even if only 1 member has been defined) respectively all shards and its replica set members of a whole mongodb cluster.
 
 Fields of `profiled` entries explained:
 
 * `enabled` = whether collecting has to be started automatically upon (re)start of the application
-* `label` = just a label in order to be able to filter or sort on it
+* `label` = a label of the database system in order to be able to filter, sort and group on it
 * `hosts` = an array of members of the same replica set, or just a single host, or a mongo router
 * `ns` = an array of the namespaces to be collected in the format of `databaseName.collectionName`. The placeholder `*` may be used instead of `collectionName` to collect from all collections of the given database.
 * `adminUser`= if authentication is enabled, name of the user for database "admin" having role "root"
@@ -152,7 +153,7 @@ Fields of `profiled` entries explained:
 
 The field `yAxisScale` is to be set either to the value "milliseconds" or "seconds". It defines the scale of the y-axis in the diagram of the analysis page.
 
-In v2.0.0 the field `adminToken` has been introduced to restrict access to administrative functionalities i.e. stop/start of collecting slow operations, setting the threshold `slowMs`, seeing the currently used or uploading a new configuration.
+In v2.0.0 the field `adminToken` has been introduced to restrict access to administrative functionalities i.e. stop/start of collecting slow operations, setting the threshold `slowMs`, seeing the currently used configuration or uploading a new configuration.
 To grant access to these functionalities, add the parameter `adminToken=` followed by your configured value, i.e. `mySecureAdminToken`, to the URL of the application status page, i.e. `http://your-server:your-port/mongodb-slow-operations-profiler-[your-version]/app?adminToken=mySecureAdminToken`.
 
 
