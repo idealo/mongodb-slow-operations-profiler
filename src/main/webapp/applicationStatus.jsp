@@ -203,7 +203,6 @@
 
 
 			function parallelAction(cmd){
-				var cellContent = document.getElementById("commands").innerHTML;
 				var slowMs = $("#slowms").val();
 				var count = 0;
 
@@ -233,9 +232,6 @@
                                 $('#clr_totalwrites').html((json.numberOfWrites + json.numberOfWritesOfRemovedWriters));
                                 $('#clr_date').html(formatDate(new Date(json.collectorRunningSince)));
                                 $("textarea#config").val(JSON.stringify(JSON.parse(json.config), undefined, 4));
-							}
-							if(count-- == 0){
-								$('#commands').html(cellContent);
 							}
 						}
 					});
@@ -285,6 +281,7 @@
                             + "&sortLegend=y"
                             , "_blank");
                 }else{
+					var mode = $("input[name='mode']:checked").val();
                     var pIds = new StringSet();
 
                     $("input:checkbox[name=chk]:checked").each(function () {
@@ -293,7 +290,7 @@
                         pIds.add(pId);
                     });
                     if(pIds.size() > 0) {
-                        window.open("<%=request.getContextPath()%>/cmd?&cmd=" + cmd + "&pIds=" + pIds.values(), "_blank");
+                        window.open("<%=request.getContextPath()%>/cmd?&cmd=" + cmd + "&pIds=" + pIds.values() + "&mode=" + mode, "_blank");
                     }else{
                         alert("Tick one or more checkboxes first in order to execute this action.");
                     }
@@ -488,7 +485,7 @@
     <div class="actions">
         <h2>Actions&nbsp;<img id="actionsLink" src="res/showhide.png" title="show/hide" alt="show/hide"/></h2>
         <table id="actionsTable" align="top" border="1" cellpadding="10">
-            <tr id="commands">
+            <tr>
                 <td class='infoRefresh'><a href="javascript:parallelAction('refresh');">refresh</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
                 <td class='infoAnalyse'><a href="javascript:singleAction('analyse');">analyse</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
                 <td class='infoCurrentOps'><a href="javascript:singleAction('cops');">current ops</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
@@ -512,6 +509,17 @@
                 </td>
                 <%}%>
             </tr>
+			<tr>
+				<td colspan="2">&nbsp;</td>
+				<td colspan="3">
+					run command against:
+					<input type="radio" name="mode" value="dbs" <%=!"mongod".equals(request.getParameter("mode"))?"checked":""%>> dbs of selected node(s)
+					<input type="radio" name="mode" value="mongod" <%="mongod".equals(request.getParameter("mode"))?"checked":""%>> selected node(s)
+				</td>
+				<%  if(isAdmin){ %>
+				<td colspan="2">&nbsp;</td>
+				<%}%>
+			</tr>
         </table>
      </div>
 	<br/>
@@ -528,9 +536,9 @@
 <span id="infoRefreshCollectorContent" style="display:none">Get and show latest data of the collector.</span>
 <span id="infoRefreshContent" style="display:none">Get and show latest data of the selected node(s).<br><b>Attention</b>: Requires to request each selected node. If many nodes are selected, <b>use with care!</b></span>
 <span id="infoAnalyseContent" style="display:none">Open the analyse page, preset with the selected node(s) for the last 24 hours.</span>
-<span id="infoCurrentOpsContent" style="display:none">Show all current running operations of the database system(s) of the selected node(s).</span>
-<span id="infoListDbsContent" style="display:none">Show all databases and their collections of the database system(s) of the selected node(s).</span>
-<span id="infoIdxAccStatsContent" style="display:none">Show index access statistics of all databases and their collections of the database system(s) of the selected node(s).<br><b>Attention</b>: May slow down the database system, especially if the database system has many collections and indexes!<br><b>Use with care!</b></span>
+<span id="infoCurrentOpsContent" style="display:none">Show all current running operations of the selected node(s).</span>
+<span id="infoListDbsContent" style="display:none">Show all databases and their collections of the selected node(s).</span>
+<span id="infoIdxAccStatsContent" style="display:none">Show index access statistics of all databases and their collections of the selected node(s).<br><b>Attention</b>: May slow down the database system, especially if the database system has many collections and indexes!<br><b>Use with care!</b></span>
 <span id="infoCollectingContent" style="display:none">Start or stop collecting slow operations of the selected node(s).</span>
 <span id="infoSlowMsContent" style="display:none">Set the treshold in milliseconds for operations to be profiled. Low slowMs values may slow down both the profiled mongod('s) and also the collector because more slow operations need to be read and written.<br>Negative values stop, positive values start profiling. A value of 0 will result in profiling <b>all</b> operations.</span>
 <span id="infoConfigContent" style="display:none">Apply a new configuration. Uploading a new config may be slow if many "profiled"-entries changed because all server addresses of a changed entry need to be resolved and will be (re)started.<br>The uploaded configuration is not persisted server side and will be lost upon webapp restart.</span>
