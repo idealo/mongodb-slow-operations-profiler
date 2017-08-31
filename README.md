@@ -62,7 +62,7 @@ At its right side, the table has a bunch of time slot columns (10 sec, 1 min, 10
 
 Since v2.0.2, a floating **Actions panel** is shown always on top and can be switched on or off. Both `refresh` and `analyse` actions were implemented already before v2.0.0. `refresh` gets and shows the latest data of the selected database(s). `analyse` opens the above mentionned analysis page to show the slow operation types of the last 24 hours of the selected node(s) respectively database(s). Both `collecting start/stop` and `set slowMs` were also already implemented before but since v2.0.0 they are only shown to authorized users. "Authorized users" are users who used the url parameter `adminToken` set to the right value (see below under "configuration" for more details).
 
-Since v2.0.0. you may execute **commands** against the selected database system(s). Even if multiple nodes or databases of the **same** database system are selected, all implemented commands in v2.0.0 are executed against the corresponding database system (i.e. mongos-router) and not against the individually selected nodes (i.e. mongod). Current implemented commands are:
+Since v2.0.0. you may execute **commands** against the selected database system(s). Since v2.0.3 you can choose whether the command has to run against the corresponding database system (i.e. mongos-router) or against the individually selected nodes (i.e. mongod). The difference is that the command will run either against the entry point of the database system (i.e. router or primary) or against all selected nodes wich may be secondaries as well. Current implemented commands are:
 
 + list databases and their collections
 + show currently running operations (requires mongodb v3.2 or newer)
@@ -164,6 +164,8 @@ To grant access to these functionalities, add the parameter `adminToken=` follow
 
 ## Version history
 
+* v2.0.3
+   + new: option to run command against database system or against selected nodes
 * v2.0.2
    + new: action panel is now floating on top so it's always visible which avoids scrolling down the whole page to use it
 * v2.0.1

@@ -3,6 +3,7 @@
  */
 package de.idealo.mongodb.slowops.servlet;
 
+import com.mongodb.ServerAddress;
 import de.idealo.mongodb.slowops.collector.CollectorManagerInstance;
 import de.idealo.mongodb.slowops.collector.ProfilingReader;
 import de.idealo.mongodb.slowops.command.*;
@@ -44,6 +45,7 @@ public class CommandResult extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		LOG.debug(">>> doGet");
         final String cmd = request.getParameter("cmd");
+        final String mode = request.getParameter("mode");
         CommandResultDto result = null;
         if (cmd != null) {
             LOG.info("cmd: {}", cmd);
@@ -55,10 +57,7 @@ public class CommandResult extends HttpServlet {
                     final int[] pIdArray = Arrays.asList(pIds).stream().mapToInt(Integer::parseInt).toArray();//convert string array to int arry
                     final Set<Integer> pIdsSet = Arrays.stream(pIdArray).boxed().collect(Collectors.toSet());//convert int array to Set
                     final List<ProfilingReader> readerList = CollectorManagerInstance.getProfilingReaders(pIdsSet);
-                    final HashSet<ProfiledServerDto> dbsEntryPoints = new HashSet<ProfiledServerDto>();
-                    for (ProfilingReader reader : readerList) {
-                        dbsEntryPoints.add(reader.getProfiledServerDto());
-                    }
+
 
                     ICommand command = null;
                     if("cops".equals(cmd)){
@@ -69,8 +68,7 @@ public class CommandResult extends HttpServlet {
                         command = new CmdIdxAccessStats();
                     }
 
-
-                    result = executeCommand(command, dbsEntryPoints );
+                    result = executeCommand(command, readerList, mode);
 
 
                 } catch (Exception e) {
@@ -94,17 +92,33 @@ public class CommandResult extends HttpServlet {
 	    doGet(request, response);
 	}
 
-    private CommandResultDto executeCommand(ICommand command, HashSet<ProfiledServerDto> dbsEntryPoints ){
-        final CommandResultDto result = command.getCommandResultDto();
-        final ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(dbsEntryPoints.size());
-        final List<Future<TableDto>> futureTableList = new ArrayList<>();
 
-        for(ProfiledServerDto dto : dbsEntryPoints){
-            CommandExecutor commandExecutor = new CommandExecutor(dto, command);
-            Future<TableDto> futureTable = threadPool.submit(commandExecutor);
-            futureTableList.add(futureTable);
+    private CommandResultDto executeCommand(ICommand command, List<ProfilingReader> readerList, String mode ){
+        final CommandResultDto result = command.getCommandResultDto();
+        final ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(readerList.size());
+        final List<Future<TableDto>> futureTableList = new ArrayList<>();
+        final HashSet<ServerAddress> serverAdresses = new HashSet<ServerAddress>();
+        final HashSet<ProfiledServerDto> dbsEntryPoints = new HashSet<ProfiledServerDto>();
+        final boolean isMongod = "mongod".equals(mode);
+
+        for (ProfilingReader reader : readerList) {
+            //execute command only *once* for any given server address or dbs (depending on mode)
+            // because nodes selected by user may have same address but just different registered databases
+            boolean isFirst = false;
+            if(isMongod){
+                isFirst = serverAdresses.add(reader.getServerAddress());
+            }else{
+                isFirst = dbsEntryPoints.add(reader.getProfiledServerDto());
+            }
+
+            if (isFirst) {
+                CommandExecutor commandExecutor = new CommandExecutor(reader.getProfiledServerDto(), command, isMongod?reader.getServerAddress():null);
+                Future<TableDto> futureTable = threadPool.submit(commandExecutor);
+                futureTableList.add(futureTable);
+            }
         }
-        
+
+
         for(Future<TableDto> futureTable : futureTableList){
             try{
                 final TableDto table = futureTable.get();
@@ -118,5 +132,6 @@ public class CommandResult extends HttpServlet {
 
         return result;
     }
+
 
 }
