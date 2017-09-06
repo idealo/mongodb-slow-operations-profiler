@@ -164,6 +164,8 @@ To grant access to these functionalities, add the parameter `adminToken=` follow
 
 ## Version history
 
+* v2.1.0
+   + new: application status page loads much quicker if many mongod's or databases are registered because the status of mongod's and databases are now cached; a page reload will refresh the status of mongod's and databases in the background if it's older than 1 minute
 * v2.0.3
    + new: option to run command against database system or against selected nodes
 * v2.0.2
