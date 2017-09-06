@@ -50,6 +50,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
     private final Lock writeLock;
     private String logLine1 = null;
     private String logLine2 = null;
+    private ApplicationStatusDto cachedApplicationStatus = null;
 
 
     public void reloadConfig(String cfg){
@@ -228,6 +229,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         doneJobsOfRemovedWriters = 0;
         readLock = globalLock.readLock();
         writeLock = globalLock.writeLock();
+        cachedApplicationStatus = new ApplicationStatusDto();
 
         registerMBean();
         addShutdownHook();
@@ -412,7 +414,41 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
     }
 
     public ApplicationStatusDto getApplicationStatus(boolean isAuthenticated) {
-        LOG.debug(">>> getApplicationStatus");
+        LOG.info(">>> getApplicationStatus");
+
+        final Date now = new Date();
+        final Date lastRefresh = cachedApplicationStatus.getLastRefresh();
+        final long cacheTimeInMillis = 1000*60*1;//1 minute cacheTime
+
+        if(lastRefresh == null ) {//cached instance does not yet exists, so create it in foreground
+            refreshCachedApplicationStatus(isAuthenticated);
+        }else{//cached instance exists already
+
+            //update only fields which dont't require a time consuming mongo request
+            cachedApplicationStatus.setNumberOfReads(getNumberOfReads());
+            cachedApplicationStatus.setNumberOfWrites(getNumberOfWrites());
+            cachedApplicationStatus.setNumberOfReadsOfRemovedReaders(getNumberOfReadsOfRemovedReaders());
+            cachedApplicationStatus.setNumberOfWritesOfRemovedWriters(getNumberOfWritesOfRemovedWriters());
+            cachedApplicationStatus.setCollectorRunningSince(getRunningSince());
+            if(isAuthenticated) {
+                cachedApplicationStatus.setConfig(ConfigReader.getConfig());
+            }
+
+            if(now.getTime() - lastRefresh.getTime() > cacheTimeInMillis){//cached instance is too old, so refresh it in background
+                new Thread(){
+                    public void run(){
+                        refreshCachedApplicationStatus(isAuthenticated);
+                    }
+                }.start();
+
+            }
+        }
+
+        LOG.info("<<< getApplicationStatus");
+        return cachedApplicationStatus;
+    }
+
+    private void refreshCachedApplicationStatus(boolean isAuthenticated){
         List<Integer> idList = Lists.newLinkedList();
         readLock.lock();
         try{
@@ -422,8 +458,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         }finally{
             readLock.unlock();
         }
-        LOG.debug("<<< getApplicationStatus");
-        return getApplicationStatus(idList, isAuthenticated);
+        cachedApplicationStatus = getApplicationStatus(idList, isAuthenticated);
     }
 
     public ApplicationStatusDto getApplicationStatus(List<Integer> idList, boolean isAuthenticated) {
@@ -433,22 +468,22 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         HashSet<Integer> idSet = new HashSet<Integer>();
         idSet.addAll(idList);
 
-        ExecutorService executor = Executors.newFixedThreadPool(idList.size()+1);//+1 because idList may be empty
+        ExecutorService executor = Executors.newFixedThreadPool(idList.size() + 1);//+1 because idList may be empty
         List<Future<CollectorStatusDto>> futureList = new ArrayList<>();
 
         readLock.lock();
-        try{
+        try {
             for (ProfilingReader reader : readers) {
-                if(idSet.contains(reader.getIntanceId())) {
+                if (idSet.contains(reader.getIntanceId())) {
                     Future<CollectorStatusDto> future = executor.submit((Callable) reader);
                     futureList.add(future);
                 }
             }
-        }finally{
+        } finally {
             readLock.unlock();
         }
 
-        for(Future<CollectorStatusDto> future : futureList){
+        for (Future<CollectorStatusDto> future : futureList) {
             try {
                 CollectorStatusDto dto = future.get();
                 collectorStatuses.add(dto);//wait until future gets a result
@@ -458,6 +493,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
             }
         }
         executor.shutdown();
+
 
         result.setCollectorStatuses(collectorStatuses);
 
@@ -479,6 +515,8 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         if(isAuthenticated) {
             result.setConfig(ConfigReader.getConfig());
         }
+
+        result.setLastRefresh(new Date());
 
         LOG.debug("<<< getApplicationStatus");
         return result;

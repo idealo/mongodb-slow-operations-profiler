@@ -16,6 +16,7 @@ public class ApplicationStatusDto {
     private long numberOfReadsOfRemovedReaders;
     private long numberOfWritesOfRemovedWriters;
     private String config;
+    private Date lastRefresh=null;
 
 
 
@@ -76,4 +77,11 @@ public class ApplicationStatusDto {
     public String getConfig() { return config; }
 
     public void setConfig(String config) { this.config = config; }
+
+
+    public Date getLastRefresh() {return lastRefresh; }
+
+    public void setLastRefresh(Date lastRefresh) {this.lastRefresh = lastRefresh; }
+
+
 }

@@ -155,6 +155,8 @@
                         $('#clr_oldwrites').html(json.numberOfWritesOfRemovedWriters);
                         $('#clr_totalwrites').html((json.numberOfWrites + json.numberOfWritesOfRemovedWriters));
                         $('#clr_date').html(formatDate(new Date(json.collectorRunningSince)));
+						$('#clr_refresh_ts').html(formatDate(new Date(json.lastRefresh)));
+						$('#clr_refresh_quantity').html('all');
                         $("textarea#config").val(JSON.stringify(JSON.parse(json.config), undefined, 4));
 					}
 				});
@@ -231,6 +233,8 @@
                                 $('#clr_oldwrites').html(json.numberOfWritesOfRemovedWriters);
                                 $('#clr_totalwrites').html((json.numberOfWrites + json.numberOfWritesOfRemovedWriters));
                                 $('#clr_date').html(formatDate(new Date(json.collectorRunningSince)));
+								$('#clr_refresh_ts').html(formatDate(new Date(json.lastRefresh)));
+								$('#clr_refresh_quantity').html('some');
                                 $("textarea#config").val(JSON.stringify(JSON.parse(json.config), undefined, 4));
 							}
 						}
@@ -454,8 +458,8 @@
             </table>
         </td>
     </tr>
-    <tr><td>Collector running since</td><td id="clr_date"></td></tr>
-    <tr><td>&nbsp;</td><td class="infoRefreshCollector"><a href="javascript:refreshCollector();">refresh</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td></tr>
+	<tr><td>Collector running since</td><td id="clr_date"></td></tr>
+	<tr><td>&nbsp;</td><td class="infoRefreshCollector"><a href="javascript:refreshCollector();">refresh</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td></tr>
 
 </table>
 
@@ -468,8 +472,8 @@
     }
 %>
 
-<h2>Registered mongod's</h2>
-
+<h2>Registered mongod's and databases</h2>
+Status of <span id="clr_refresh_quantity"></span> mongod's refreshed at: <span id="clr_refresh_ts"></span>
 <form name="input" action="app" method="get">
 	<br/>
 	<div id="cols">Toggle columns: </div>
