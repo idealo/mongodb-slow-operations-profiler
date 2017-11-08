@@ -124,5 +124,21 @@ public class AggregatedProfiling {
             if(entry.getFirstts().before(firstts)) firstts = entry.getFirstts();
         }
     }
-   
+
+    @Override
+    protected AggregatedProfiling clone() {
+        final AggregatedProfiling result = new AggregatedProfiling();
+        result._id = getId();
+        result.count = getCount();
+        result.millis = getMillis();
+        result.avgMs = getAvgMs();
+        result.minMs = getMinMs();
+        result.maxMs = getMaxMs();
+        result.nRet = getNRet();
+        result.avgRet = getAvgRet();
+        result.minRet = getMinRet();
+        result.maxRet = getMaxRet();
+        result.firstts = (Date)getFirstts().clone();
+        return result;
+    }
 }

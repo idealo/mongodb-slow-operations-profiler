@@ -530,8 +530,10 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
             for(int id : idList){
                 for (ProfilingReader reader : readers) {
                     if(id == reader.getIntanceId()){
+                        boolean isStoppedNow = stop;
                         if(stop){
                             reader.terminate();
+                            isStoppedNow = reader.isStopped();
                         }else if(reader.isStopped()){
                             ProfilingReader newReader = new ProfilingReader(
                                     reader.getIntanceId(),
@@ -551,7 +553,16 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
                             toBeRemoved.add(reader);
 
                             newReader.start();
+
+                            isStoppedNow = newReader.isStopped();
                         }
+
+                        //update status of cached application status instance
+                        final CollectorStatusDto cs = cachedApplicationStatus.getCollectorStatus(id);
+                        if(cs != null){
+                            cs.setCollecting(isStoppedNow);
+                        }
+
                         break;
                     }
                 }
@@ -574,6 +585,13 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
                     for (ProfilingReader reader : readers) {
                         if(id == reader.getIntanceId()){
                             reader.setSlowMs(1, slowMs);
+                            //update status of cached application status instance
+                            final CollectorStatusDto cs = cachedApplicationStatus.getCollectorStatus(id);
+                            if(cs != null){
+                                cs.setSlowMs(reader.getSlowMs());
+                                cs.setProfiling(reader.isProfiling());
+
+                            }
                             break;
                         }
                     }
