@@ -26,9 +26,9 @@ public class CollectorStatusDto {
     private final ServerAddress serverAddress;
     private final String database;
     private final List<String> collections;
-    private final long slowMs;
-    private final boolean stopped;
-    private final boolean isProfiling;
+    private long slowMs;
+    private boolean isCollecting;
+    private boolean isProfiling;
     private final Date lastTs;
     private final ArrayList<Long> doneJobsHistory;
     private final String lastTsFormatted;
@@ -36,7 +36,7 @@ public class CollectorStatusDto {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    public CollectorStatusDto(int instanceId, String label, String replSetName, ServerAddress serverAddress, String database, List<String> collections, boolean stopped, boolean isProfiling, long slowMs, String replSetStatus, Date lastTs, ArrayList<Long> doneJobsHistory) {
+    public CollectorStatusDto(int instanceId, String label, String replSetName, ServerAddress serverAddress, String database, List<String> collections, boolean isCollecting, boolean isProfiling, long slowMs, String replSetStatus, Date lastTs, ArrayList<Long> doneJobsHistory) {
         this.instanceId = instanceId;
         this.label = label;
         this.replSetName = replSetName;
@@ -45,7 +45,7 @@ public class CollectorStatusDto {
         this.collections = collections;
         this.slowMs = slowMs;
         this.replSetStatus = replSetStatus;
-        this.stopped = stopped;
+        this.isCollecting = isCollecting;
         this.isProfiling = isProfiling;
         this.lastTs = lastTs;
         this.doneJobsHistory = doneJobsHistory;
@@ -93,13 +93,19 @@ public class CollectorStatusDto {
 
     public long getSlowMs() { return slowMs; }
 
+    public void setSlowMs(long l) { slowMs = l; }
+
     public String getReplSetStatus() {
         return replSetStatus;
     }
 
-    public boolean isStopped() { return stopped;  }
+    public boolean isCollecting() { return isCollecting;  }
+
+    public void setCollecting(boolean b) { isCollecting = b;  }
 
     public boolean isProfiling() { return isProfiling; }
+
+    public void setProfiling(boolean b) {  isProfiling = b; }
 
     public Date getLastTs() {
         return lastTs;

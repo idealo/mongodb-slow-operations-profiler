@@ -164,6 +164,9 @@ To grant access to these functionalities, add the parameter `adminToken=` follow
 
 ## Version history
 
+* v2.1.1
+   + bugfix: the diagram displayed superfluously also the accumulation of all distinct slow operation types, resulting in big circles at the first occurrence of each distinct slow operation type, thus often shown at the very left on the x-axis
+   + bugfix: after refreshing the application status page, the status of profiling, collecting and slowMs of nodes whose status changed within the cache time of 1 minute might have been wrongly reported because these values were not immediately updated in the cache
 * v2.1.0
    + new: application status page loads much quicker if many mongod's or databases are registered because the status of mongod's and databases are now cached; a page reload will refresh the status of mongod's and databases in the background if it's older than 1 minute
 * v2.0.3

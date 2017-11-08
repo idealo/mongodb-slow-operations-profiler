@@ -340,6 +340,7 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
             Object ok = doc.get("ok");
             if (ok != null && ok instanceof Double && Double.valueOf(ok.toString()).doubleValue()==1.0) {
                 slowMs = ms;
+                isProfiling = profile==0?false:true;
                 LOG.info("setSlowMs successfully set to {} ms on {}/{}", new Object[]{ms, serverAddress, database});
             }else{
                 LOG.error("setSlowMs failed on {}/{}", serverAddress, database);

@@ -83,5 +83,11 @@ public class ApplicationStatusDto {
 
     public void setLastRefresh(Date lastRefresh) {this.lastRefresh = lastRefresh; }
 
+    public CollectorStatusDto getCollectorStatus(int id) {
+        for(CollectorStatusDto collectorStatus : collectorStatuses){
+            if(collectorStatus.getInstanceId() == id) return collectorStatus;
+        }
+        return null;
+    }
 
 }
