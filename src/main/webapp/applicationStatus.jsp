@@ -60,7 +60,7 @@
 						{ "data": "collections", "render" : "[, ]"},//create a comma separated list from an array of objects
 						{ "data": "slowMs" },
 						{ "data": "profiling" },
-						{ "data": "stopped", "render": function ( data, type, full, meta ) { return !data }},
+						{ "data": "collecting", "render": function ( data, type, full, meta ) { return !data }},
 						{ "data": "lastTsFormatted" },
 						{ "data": "doneJobsHistory.0" },
 						{ "data": "doneJobsHistory.1" },

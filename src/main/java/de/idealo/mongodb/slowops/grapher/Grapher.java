@@ -3,7 +3,6 @@
  */
 package de.idealo.mongodb.slowops.grapher;
 
-import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.mongodb.DB;
 import com.mongodb.MongoException;
@@ -145,7 +144,7 @@ public class Grapher {
             }
             
             if(!labelSeries.containsKey(idLabel)) {
-                labelSeries.put(idLabel, entry);//save first entry for this label
+                labelSeries.put(idLabel, entry.clone());//save copy of first entry for this label
             }else {//sum up the other same-label-entries with this one
                 labelSeries.get(idLabel).combine(entry);
             }
@@ -172,13 +171,14 @@ public class Grapher {
         
         final StringBuffer dataGrid = new StringBuffer("\"Date,");
         
+        /*commented out because it's duplicated by the following for-loop
         final BiMap<Integer, String> inversedGroups = groups.inverse();
         for (int i = 0; i < index; i++) {
             dataGrid.append(inversedGroups.get(Integer.valueOf(i))).append(",");
             for (int n = 0; n < customFields.length; n++) {
                 dataGrid.append(customFields[n]).append(",");
             }
-        }
+        }*/
         
         for (String group : groups.keySet()) {
             dataGrid.append(group).append(",");
