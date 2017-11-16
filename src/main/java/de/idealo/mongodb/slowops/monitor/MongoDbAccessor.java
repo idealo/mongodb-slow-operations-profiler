@@ -67,7 +67,8 @@ public class MongoDbAccessor {
             MongoClientOptions options = MongoClientOptions.builder().
             		connectTimeout(1000*2).//fail fast, so we know this node is unavailable
             		socketTimeout(socketTimeOut==-1?1000*10:socketTimeOut).//default 10 seconds
-            		readPreference(isSecondaryReadPreferred?ReadPreference.secondaryPreferred():ReadPreference.primaryPreferred()).
+            		//readPreference(isSecondaryReadPreferred?ReadPreference.secondaryPreferred():ReadPreference.primaryPreferred()).
+                    readPreference(ReadPreference.primaryPreferred()).
                     writeConcern(WriteConcern.ACKNOWLEDGED).
             		build();
 

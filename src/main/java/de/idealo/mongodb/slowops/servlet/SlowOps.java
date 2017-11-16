@@ -97,15 +97,13 @@ public class SlowOps extends HttpServlet {
         if(!isEmpty(request, "sort")) {
             pipeline.append("sort:{$all:[").append(getStringArray(request.getParameter("sort"))).append("]},");
         }
-        if(!isEmpty(request, "fromMs") || !isEmpty(request, "toMs") || !isEmpty(request, "exclude")) {
+        if(!isEmpty(request, "fromMs") || !isEmpty(request, "toMs")) {
             pipeline.append("millis:{");
             if(!isEmpty(request, "fromMs")){
                 pipeline.append("$gte:").append(request.getParameter("fromMs")).append(",");
             }
             if(!isEmpty(request, "toMs")){
                 pipeline.append("$lt:").append(request.getParameter("toMs")).append(",");
-            }else if (!isEmpty(request, "exclude")) {
-                pipeline.append("$lt:1270000000,");
             }
             pipeline.deleteCharAt(pipeline.length()-1);//delete last comma
             pipeline.append("},");
