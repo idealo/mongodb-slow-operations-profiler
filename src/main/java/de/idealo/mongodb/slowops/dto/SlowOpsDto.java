@@ -21,6 +21,7 @@ import java.util.HashMap;
 public class SlowOpsDto {
 
     private boolean[] visibilityValues;
+    private StringBuffer labels;
     private StringBuffer dataGrid;
     private String errorMessage;
     private HashMap<String, AggregatedProfiling> labelSeries;
@@ -48,6 +49,11 @@ public class SlowOpsDto {
     public void setVisibilityValues(boolean[] visibilityValues) {
         this.visibilityValues = visibilityValues;
     }
+
+    public StringBuffer getLabels() {return labels;}
+
+    public void setLabels(StringBuffer labels) {this.labels = labels;}
+
     /**
      * @return the dataGrid
      */
