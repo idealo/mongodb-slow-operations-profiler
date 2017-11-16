@@ -55,45 +55,53 @@
 			</td>
 			<td valign="top"><strong>Group by</strong>
 				<table>
-					<tr><td><input type="checkbox" name="byLbl" value="lbl" <%   	if(!isEmpty(request,"byLbl")){out.print("checked=\"checked\"");}%> >Label</td></tr>
-					<tr><td><input type="checkbox" name="byAdr" value="adr" <%   	if(!isEmpty(request,"byAdr")){out.print("checked=\"checked\"");}%> >Server address</td></tr>
-					<tr><td><input type="checkbox" name="byRs" value="rs" <%   	if(!isEmpty(request,"byRs")){out.print("checked=\"checked\"");}%> >ReplicaSet</td></tr>
-					<tr><td><input type="checkbox" name="byDb" value="db" <%   	if(!isEmpty(request,"byDb")){out.print("checked=\"checked\"");}%> >Database</td></tr>
-					<tr><td><input type="checkbox" name="byCol" value="col" <%   	if(!isEmpty(request,"byCol")){out.print("checked=\"checked\"");}%> >Collection</td></tr>
-					<tr><td><input type="checkbox" name="byUser" value="user" <%	if(!isEmpty(request,"byUser")){out.print("checked=\"checked\"");}%> >User</td></tr>
-					<tr><td><input type="checkbox" name="byOp" value="op" <%		if(!isEmpty(request,"byOp")){out.print("checked=\"checked\"");}%> >Operation</td></tr>
-					<tr><td><input type="checkbox" name="byFields" value="fields" <%if(!isEmpty(request,"byFields")  || (isEmpty(request,"byLbl") && isEmpty(request,"byAdr") && isEmpty(request,"byDb") && isEmpty(request,"byCol") && isEmpty(request,"byUser") && isEmpty(request,"byOp") && isEmpty(request,"bySort"))){out.print("checked=\"checked\"");}%> >Queried fields</td></tr>
-					<tr><td><input type="checkbox" name="bySort" value="sort" <% 	if(!isEmpty(request,"bySort")){out.print("checked=\"checked\"");}%> >Sorted fields</td></tr>
+					<tr><td><input type="checkbox" name="byLbl" value="lbl" <%   	if(!isEmpty(request,"byLbl")){out.print("checked=\"checked\"");}%> > Label</td></tr>
+					<tr><td><input type="checkbox" name="byAdr" value="adr" <%   	if(!isEmpty(request,"byAdr")){out.print("checked=\"checked\"");}%> > Server address</td></tr>
+					<tr><td><input type="checkbox" name="byRs" value="rs" <%   	if(!isEmpty(request,"byRs")){out.print("checked=\"checked\"");}%> > ReplicaSet</td></tr>
+					<tr><td><input type="checkbox" name="byDb" value="db" <%   	if(!isEmpty(request,"byDb")){out.print("checked=\"checked\"");}%> > Database</td></tr>
+					<tr><td><input type="checkbox" name="byCol" value="col" <%   	if(!isEmpty(request,"byCol")){out.print("checked=\"checked\"");}%> > Collection</td></tr>
+					<tr><td><input type="checkbox" name="byUser" value="user" <%	if(!isEmpty(request,"byUser")){out.print("checked=\"checked\"");}%> > User</td></tr>
+					<tr><td><input type="checkbox" name="byOp" value="op" <%		if(!isEmpty(request,"byOp")){out.print("checked=\"checked\"");}%> > Operation</td></tr>
+					<tr><td><input type="checkbox" name="byFields" value="fields" <%if(!isEmpty(request,"byFields")  || (isEmpty(request,"byLbl") && isEmpty(request,"byAdr") && isEmpty(request,"byDb") && isEmpty(request,"byCol") && isEmpty(request,"byUser") && isEmpty(request,"byOp") && isEmpty(request,"bySort"))){out.print("checked=\"checked\"");}%> > Queried fields</td></tr>
+					<tr><td><input type="checkbox" name="bySort" value="sort" <% 	if(!isEmpty(request,"bySort")){out.print("checked=\"checked\"");}%> > Sorted fields</td></tr>
 				</table>
 			</td>
 			<td valign="top"><strong>Resolution by</strong>
 				<table>
-					<tr><td><input type="radio" name="resolution" value="year" <%   if("year".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%> >Year</td></tr>
-					<tr><td><input type="radio" name="resolution" value="month" <%  if("month".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%> >Month</td></tr>
-					<tr><td><input type="radio" name="resolution" value="week" <%	if("week".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%> >Week</td></tr>
-					<tr><td><input type="radio" name="resolution" value="day" <%    if("day".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%> >Day</td></tr>
-					<tr><td><input type="radio" name="resolution" value="hour" <%   if("hour".equals(request.getParameter("resolution")) || isEmpty(request, "resolution")){out.print("checked=\"checked\"");}%> >Hour</td></tr>
-					<tr><td><input type="radio" name="resolution" value="minute" <% if("minute".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%>>Minute</td></tr>
+					<tr><td><input type="radio" name="resolution" value="year" <%   if("year".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%> > Year</td></tr>
+					<tr><td><input type="radio" name="resolution" value="month" <%  if("month".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%> > Month</td></tr>
+					<tr><td><input type="radio" name="resolution" value="week" <%	if("week".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%> > Week</td></tr>
+					<tr><td><input type="radio" name="resolution" value="day" <%    if("day".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%> > Day</td></tr>
+					<tr><td><input type="radio" name="resolution" value="hour" <%   if("hour".equals(request.getParameter("resolution")) || isEmpty(request, "resolution")){out.print("checked=\"checked\"");}%> > Hour</td></tr>
+					<tr><td><input type="radio" name="resolution" value="minute" <% if("minute".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%>> Minute</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td><input type="submit" value="Submit"></td></tr>
 				</table>
 			</td>
-			<td valign="top"><strong>Options</strong>
+			<td valign="top">
 				<table>
-					<tr><td><input type="checkbox" name="exclude" value="exclude" <% if(request.getParameter("exclude")!=null){out.print("checked=\"checked\"");}%> >exclude 14-days-operations</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td><input type="submit" value="Submit"></td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td>&nbsp;</td></tr>
-					<tr><td><input type="radio" name="sortLegend" value="y" onclick="sortLegendBy(this);" <% if(sortLegend==null || "y".equals(sortLegend)){out.print("checked=\"checked\"");}%> >sort legend by y-value</td></tr>
-					<tr><td><input type="radio" name="sortLegend" value="count" onclick="sortLegendBy(this);" <% if("count".equals(sortLegend)){out.print("checked=\"checked\"");}%> >sort legend by count-value</td></tr>
-					<tr><td><input type="checkbox" name="countAsSqrt" value="countAsSqrt" onclick="setCountAsSqrt(this);" <% if(countAsSqrt!=null){out.print("checked=\"checked\"");}%> >show circles as sqrt of count-value</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
+                    <tr><td><strong>Diagram configuration</strong></td></tr>
+                    <tr><td>y-axis: <input name="yAxis" value="avg" onclick="setYAxis(0);" checked="checked" type="radio"> avg
+                    <input name="yAxis" value="min" onclick="setYAxis(2);" type="radio"> min
+                    <input name="yAxis" value="max" onclick="setYAxis(3);" type="radio"> max
+                    <input name="yAxis" value="sum" onclick="setYAxis(4);" type="radio"> sum </td></tr>
+					<tr><td><input type="radio" name="sortLegend" value="y" onclick="sortLegendBy(this);" <% if(sortLegend==null || "y".equals(sortLegend)){out.print("checked=\"checked\"");}%> > sort legend by y-value</td></tr>
+					<tr><td><input type="radio" name="sortLegend" value="count" onclick="sortLegendBy(this);" <% if("count".equals(sortLegend)){out.print("checked=\"checked\"");}%> > sort legend by count-value</td></tr>
+					<tr><td><input type="checkbox" name="countAsSqrt" value="countAsSqrt" onclick="setCountAsSqrt(this);" <% if(countAsSqrt!=null){out.print("checked=\"checked\"");}%> > show circles as sqrt of count-value</td></tr>
 				</table>
 			</td>
 		</tr>
@@ -144,50 +152,99 @@ function setCountAsSqrt(checkButton){
 	countAsSqrt = checkButton.checked;
 	g.setAnnotations(g.annotations()); //redraw graph
 }
-
-function drawLegend(){
-	if(lastMouseEvent) {
-		var e = lastMouseEvent.e;
-		var x = lastMouseEvent.x;
-		var pts = lastMouseEvent.pts;
-		var row = lastMouseEvent.row;
-
-		var text = "";
-		var legend = new Array();
-		for (var i = 0; i < pts.length; i++) {
-			var rangeY = g.yAxisRange();
-			if (pts[i].yval >= rangeY[0] && pts[i].yval <= rangeY[1]) {//don't show labels for series outside of the view
-				var seriesProps = g.getPropertiesForSeries(pts[i].name);
-				var count = g.getValue(row, seriesProps.column + 1);
-				var minSec = g.getValue(row, seriesProps.column + 2);
-				var maxSec = g.getValue(row, seriesProps.column + 3);
-				if (pts[i].yval != 0 && count != 0) {//0-values are necessary to put into the data matrix (instead of empty values) but they are not shown in the legend
-					legend.push([seriesProps.color, pts[i], count, minSec, maxSec]);
-				}
-			}
-		}
-		if (sortByCount) {
-			legend.sort(function (a, b) {
-				return b[2] - a[2]
-			});//sort by count-values
-		} else {
-			legend.sort(function (a, b) {
-				return b[1].yval - a[1].yval
-			});//sort by y-values
-		}
-		for (var i = 0; i < legend.length; i++) {
-			text += "<span style='font-weight: bold; color: " + legend[i][0] + ";'> " + legend[i][1].name + "</span><br/><span>" + Dygraph.dateString_(legend[i][1].xval) + " count:" + legend[i][2] + " <b>Duration</b> min:" + legend[i][3] + " max:" + legend[i][4] + " avg:" + legend[i][1].yval + "</span><br/>";
-		}
-		document.getElementById("status").innerHTML = text;
-	}
+//newYIndex can be one of the 4 custom fields:
+//avg=0
+//min=2
+//max=3
+//sum=4
+var initialYIndex=[0,0,1,2,3,4];//initial order of fields: timestamp,avg,count,min,max,sum
+var currentYIndex=initialYIndex;
+function setYAxis(newYIndex){
+    currentYIndex = interchangeIndexes(initialYIndex, newYIndex);//save current order to show the correct values in the legend
+    var result = makeNewYAxis(newYIndex);
+    g.updateOptions({"file": result});
 }
 
+function drawLegend(){
+    if(lastMouseEvent) {
+        var e = lastMouseEvent.e;
+        var x = lastMouseEvent.x;
+        var pts = lastMouseEvent.pts;
+        var row = lastMouseEvent.row;
 
+        var text = "";
+        var legend = new Array();
+        for (var i = 0; i < pts.length; i++) {
+            var rangeY = g.yAxisRange();
+            if (pts[i].yval >= rangeY[0] && pts[i].yval <= rangeY[1]) {//don't show labels for series outside of the view
+                var seriesProps = g.getPropertiesForSeries(pts[i].name);
+                var avg = g.getValue(row, seriesProps.column + currentYIndex[1]);
+                var count = g.getValue(row, seriesProps.column + currentYIndex[2]);
+                var minSec = g.getValue(row, seriesProps.column + currentYIndex[3]);
+                var maxSec = g.getValue(row, seriesProps.column + currentYIndex[4]);
+                var sumSec = g.getValue(row, seriesProps.column + currentYIndex[5]);
+                if (pts[i].yval != 0 && count != 0) {//0-values are necessary to put into the data matrix (instead of empty values) but they are not shown in the legend
+                    legend.push([seriesProps.color, pts[i], avg, count, minSec, maxSec, sumSec]);
+                }
+            }
+        }
+        if (sortByCount) {
+            legend.sort(function (a, b) {
+                return b[3] - a[3]
+            });//sort by count-values
+        } else {
+            legend.sort(function (a, b) {
+                return b[1].yval - a[1].yval
+            });//sort by y-values
+        }
+        for (var i = 0; i < legend.length; i++) {
+            text += "<span style='font-weight: bold; color: " + legend[i][0] + ";'> " + legend[i][1].name + "</span><br/><span>" + Dygraph.dateString_(legend[i][1].xval) + " count:" + formatNumber(legend[i][3]) + " <b>Duration</b> min:" + formatNumber(legend[i][4]) + " max:" + formatNumber(legend[i][5]) + " avg:" + formatNumber(legend[i][2]) + " sum:" + formatNumber(legend[i][6]) + "</span><br/>";
+        }
+        document.getElementById("status").innerHTML = text;
+    }
+}
+
+function makeNewYAxis(newYIndex){
+    var result = [];
+    for(var i=0; i<arrData.length; i++){
+        var line = arrData[i];
+        var newLine = interchangeIndexes(line, newYIndex);
+        result.push(newLine);
+    }
+    return result;
+}
+
+function interchangeIndexes(line, newYIndex){
+    var result = [];
+    result.push(line[0]);//leading field is always the first element, here a timestamp
+    var c = -1;
+    var origY = 0;
+    for(var i=1; i<line.length; i++){
+        if(++c >= initialYIndex.length-1) c = 0;//we have as many custom fields as defined by initialYIndex minus 1 for the timestamp field
+
+        if(c == 0){//we are at the index where y is saved
+            origY = line[i];
+            result.push(line[i+newYIndex]);//push element from the current y index to the custom field
+        }else if(c == newYIndex){//we are at the custom field which will be the new y
+            result.push(origY);//push the original y to the custom field
+        }else {
+            result.push(line[i]);//just copy without changing the index position
+        }
+    }
+    return result;
+}
+
+function formatNumber(data){
+    return isNaN(data)?data:(new Number(data)).toLocaleString(undefined, {maximumFractionDigits:2});
+}
+
+var arrData = <%= slowOpsDto.getDataGrid()%>;
 
 g = new Dygraph(document.getElementById("graph"),
-	<%= slowOpsDto.getDataGrid()%>
-	{
-	visibility:<%= Arrays.toString(slowOpsDto.getVisibilityValues()) %>,//hide count columns
+	arrData,
+    {
+    labels: [<%= slowOpsDto.getLabels()%>],
+    visibility:<%= Arrays.toString(slowOpsDto.getVisibilityValues()) %>,//hide count columns
 
 	//highlightSeriesOpts: true,
 	showLabelsOnHighlight:false,
@@ -295,7 +352,7 @@ a:hover {
             $( "#tableFooter" ).append( "<th>" + colNames[i].name +  "</th>");
             columnDefs.push({"targets": [Number(i)], "visible":colNames[i].visible,
                 "mRender": function ( data, type, full ) {
-                              return isNaN(data)?data:$.number(data, 1, ".", ",");
+                                return type == "display"?formatNumber(data):data;
                            }
             });
         }
@@ -316,9 +373,9 @@ a:hover {
                     var total5 = api.column(5, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
                     var total9 = api.column(9, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
                     // Update footer
-                    $(api.column(1).footer()).html('Total count: ' + $.number(total1, 0, ".", ","));
-                    $(api.column(5).footer()).html('Total ms: ' + $.number(total5, 0, ".", ","));
-                    $(api.column(9).footer()).html('Total ret: ' + $.number(total9, 0, ".", ","));
+                    $(api.column(1).footer()).html('Total count: ' + formatNumber(total1));
+                    $(api.column(5).footer()).html('Total ms: ' + formatNumber(total5));
+                    $(api.column(9).footer()).html('Total ret: ' + formatNumber(total9));
                 }
             }
         });

@@ -7,7 +7,7 @@ Slides of the presentation can be found [here](http://www.slideshare.net/Kay1A/s
 
 The following first screenshot demonstrates how slow operations are visualized in the diagram: The higher a point or circle on the y-axis, the slower was the execution time of this operation. The greater the diameter of the circle, the more slow operations of this type were executed at this time. 
 
-You can zoom-in by drawing a rectangle with the mouse around the area you are interested in. I suggest to zoom-in **first** horizontally, just y>=0, and then zoom-in vertically. Double click leaves the zoom mode.
+You can zoom-in by drawing a rectangle with the mouse around the area you are interested in. Press Shift + drag mouse in order to move the visible area around. Double click returns to the initial viewport.
 
 While the mouse hovers over the diagram, the corresponding slow operations are shown in bold and details of them are displayed on the right-hand side legend. The different colors in the legend are just to better distinguish the different entries and have no further meaning.
 
@@ -164,6 +164,12 @@ To grant access to these functionalities, add the parameter `adminToken=` follow
 
 ## Version history
 
+* v2.2.0
+   + new: the diagram of the analysis page has now new options to redraw the y-axis either as avg, min, max or sum of the duration of the slow operation types, to easily spot spikes
+   + update: localized formatting of numbers in the legend of the diagram and in the summarized table of the analysis page
+   + update: option "exclude 14-days-operations" removed because newer versions of mongodb have fixed this
+   + bugfix: labels of slow operations types in the legend of the diagram were mixed-up since last version v2.1.1
+   + bugfix: the legend of the chronologically very first slow operation types was not shown next to the diagram
 * v2.1.1
    + bugfix: the diagram displayed superfluously also the accumulation of all distinct slow operation types, resulting in big circles at the first occurrence of each distinct slow operation type, thus often shown at the very left on the x-axis
    + bugfix: after refreshing the application status page, the status of profiling, collecting and slowMs of nodes whose status changed within the cache time of 1 minute might have been wrongly reported because these values were not immediately updated in the cache
