@@ -129,7 +129,7 @@ public class Grapher {
         }
 
 
-        final HashMap<Calendar, Set<AggregatedProfiling>> timeSeries = new HashMap<Calendar, Set<AggregatedProfiling>>();
+        final Map<Calendar, Set<AggregatedProfiling>> timeSeries = new TreeMap<Calendar, Set<AggregatedProfiling>>();
         final HashBiMap<String, Integer> groups = HashBiMap.create();
         final HashMap<String, AggregatedProfiling> labelSeries = new HashMap<String, AggregatedProfiling>();
         int index=0;
