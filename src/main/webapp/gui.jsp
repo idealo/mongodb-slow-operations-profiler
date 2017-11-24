@@ -99,8 +99,8 @@
                     <input name="yAxis" value="min" onclick="setYAxis(2);" type="radio"> min
                     <input name="yAxis" value="max" onclick="setYAxis(3);" type="radio"> max
                     <input name="yAxis" value="sum" onclick="setYAxis(4);" type="radio"> sum </td></tr>
-					<tr><td><input type="radio" name="sortLegend" value="y" onclick="sortLegendBy(this);" <% if(sortLegend==null || "y".equals(sortLegend)){out.print("checked=\"checked\"");}%> > sort legend by y-value</td></tr>
-					<tr><td><input type="radio" name="sortLegend" value="count" onclick="sortLegendBy(this);" <% if("count".equals(sortLegend)){out.print("checked=\"checked\"");}%> > sort legend by count-value</td></tr>
+					<tr><td>sort legend by: <input type="radio" name="sortLegend" value="y" onclick="sortLegendBy(this);" <% if(sortLegend==null || "y".equals(sortLegend)){out.print("checked=\"checked\"");}%> > y-value
+					<input type="radio" name="sortLegend" value="count" onclick="sortLegendBy(this);" <% if("count".equals(sortLegend)){out.print("checked=\"checked\"");}%> > count-value </td></tr>
 					<tr><td><input type="checkbox" name="countAsSqrt" value="countAsSqrt" onclick="setCountAsSqrt(this);" <% if(countAsSqrt!=null){out.print("checked=\"checked\"");}%> > show circles as sqrt of count-value</td></tr>
 				</table>
 			</td>
