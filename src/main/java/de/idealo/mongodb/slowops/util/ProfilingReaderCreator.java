@@ -29,13 +29,13 @@ public class ProfilingReaderCreator implements Callable<ProfilingReader> {
     private final BlockingQueue<ProfilingEntry> jobQueue;
     private final CollectorManager collectorManager;
 
-    public ProfilingReaderCreator(int id, ServerAddress address, ProfiledServerDto dto, String db, CollectorManager collectorManager) {
+    public ProfilingReaderCreator(int id, ServerAddress address, ProfiledServerDto dto, String db, List<String> colls, CollectorManager collectorManager) {
         this.id = id;
         this.address = address;
         this.dto = dto;
         this.db = db;
         this.collectorManager = collectorManager;
-        this.colls = dto.getCollectionsPerDatabase().get(db);
+        this.colls = colls;
         this.writer = collectorManager.getWriter();
         this.jobQueue = collectorManager.getJobQueue();
 
