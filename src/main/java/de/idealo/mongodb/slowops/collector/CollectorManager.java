@@ -115,7 +115,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
             for (ServerAddress mongodAddress : systemServerAddresses) {
                 for (String db : collectionsPerDb.keySet()) {
                     if(!isReaderExists(mongodAddress, db)){//dont't create readers twice
-                        ProfilingReaderCreator profilingReaderCreator = new ProfilingReaderCreator(0, mongodAddress, dto, db, this);
+                        ProfilingReaderCreator profilingReaderCreator = new ProfilingReaderCreator(0, mongodAddress, dto, db, collectionsPerDb.get(db), this);
                         Future<ProfilingReader> futureReader = profilingReaderExecutor.submit(profilingReaderCreator);
                         futureProfilingReaderList.add(futureReader);
                     }else{

@@ -1,7 +1,12 @@
 package de.idealo.mongodb.slowops.dto;
 
 import com.google.common.collect.Lists;
+import com.mongodb.BasicDBObject;
 import com.mongodb.ServerAddress;
+import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,6 +18,8 @@ import java.util.concurrent.Future;
  * Created by kay.agahd on 26.10.16.
  */
 public class ProfiledServerDto {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ProfiledServerDto.class);
 
     private boolean enabled;
     private String label;
@@ -43,15 +50,56 @@ public class ProfiledServerDto {
             if(n.length() > 1){
                 db = parts[0];
                 col = n.substring(n.indexOf(".")+1);
+                if("*".equals(db)){
+                    final List<String> dbList = getAllDbNames();
+                    for (String dbName: dbList) {
+                        addCollection(dbName, col, result);
+                    }
+                }else{
+                    addCollection(db, col, result);
+                }
             }
-            List<String> colls = result.get(db);
-            if(colls == null){
-                colls = Lists.newArrayList();
-            }
-            colls.add(col);
-            result.put(db, colls);
         }
         return result;
+    }
+
+    private List<String> getAllDbNames(){
+        List<String> result = Lists.newArrayList();
+
+        MongoDbAccessor mongoDbAccessor = null;
+        try{
+            mongoDbAccessor = new MongoDbAccessor(adminUser, adminPw, hosts);
+            final Document commandResultDoc = mongoDbAccessor.runCommand("admin", new BasicDBObject("listDatabases", 1));
+
+            if(commandResultDoc != null){
+                Object databases = commandResultDoc.get("databases");
+                if(databases != null && databases instanceof ArrayList) {
+                    final List dbList = (ArrayList) databases;
+                    for (Object entry : dbList) {
+                        if (entry instanceof Document) {
+                            final Document entryDoc = (Document) entry;
+                            final String dbName = entryDoc.getString("name");
+                            result.add(dbName);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception e){
+            LOG.warn("Exception while running command listDatabases", e);
+        } finally {
+            if(mongoDbAccessor != null ) mongoDbAccessor.closeConnections();
+        }
+        return result;
+    }
+
+    private void addCollection(String db, String col, HashMap<String, List<String>> collsPerDb){
+        List<String> colls = collsPerDb.get(db);
+        if(colls == null){
+            colls = Lists.newArrayList();
+        }
+        colls.add(col);
+        collsPerDb.put(db, colls);
     }
 
     public boolean isEnabled() {

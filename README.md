@@ -151,7 +151,10 @@ Fields of `profiled` entries explained:
 * `enabled` = whether collecting has to be started automatically upon (re)start of the application
 * `label` = a label of the database system in order to be able to filter, sort and group on it
 * `hosts` = an array of members of the same replica set, or just a single host, or a mongo router
-* `ns` = an array of the namespaces to be collected in the format of `databaseName.collectionName`. The placeholder `*` may be used instead of `collectionName` to collect from all collections of the given database.
+* `ns` = an array of the namespaces to be collected in the format of `databaseName.collectionName`. The placeholder `*` may be used instead of `databaseName` and/or `collectionName` to collect from all databases and/or all collections. Examples:
+  * `databaseName.*` collects from all collections from database `databaseName`
+  * `*.collectionName` collects from all databases from collection `collectionName`
+  * `*.*` collects from all collections from all databases
 * `adminUser`= if authentication is enabled, name of the user for database "admin" having role "root"
 * `adminPw`= if authentication is enabled, passwort of the user 
 * `slowMS`= threshold of slow operations in milliseconds
@@ -164,6 +167,8 @@ To grant access to these functionalities, add the parameter `adminToken=` follow
 
 ## Version history
 
+* v2.3.0
+   + new: namespace (`profiled.ns`) in config.json may use placeholder `*` for databse names (i.e. `*.myCollection`) in order to collect from myCollection from all databases
 * v2.2.1
    + bugfix: the initial viewport of the diagram did not always cover the whole x-axis range
 * v2.2.0

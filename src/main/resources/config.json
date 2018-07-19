@@ -1,6 +1,7 @@
 {
   "collector":{
-    "hosts":["myCollectorHost_member1:27017",
+    "hosts":[
+      "myCollectorHost_member1:27017",
       "myCollectorHost_member2:27017",
       "myCollectorHost_member3:27017"],
     "db":"profiling",
@@ -11,10 +12,13 @@
   "profiled":[
     { "enabled": false,
       "label":"dbs foo",
-      "hosts":["someHost1:27017",
+      "hosts":[
+        "someHost1:27017",
         "someHost2:27017",
         "someHost3:27017"],
-      "ns":["someDatabase.someCollection", "anotherDatabase.anotherCollection"],
+      "ns":[
+        "someDatabase.someCollection",
+        "anotherDatabase.anotherCollection"],
       "adminUser":"",
       "adminPw":"",
       "slowMS":250
@@ -22,7 +26,18 @@
     { "enabled": false,
       "label":"dbs bar",
       "hosts":["someMongoRouter:27017"],
-      "ns":["someDatabase.someCollection", "anotherDatabase.*"],
+      "ns":[
+        "someDatabase.someCollection",
+        "anotherDatabase.*",
+        "*.myCollection"],
+      "adminUser":"",
+      "adminPw":"",
+      "slowMS":250
+    },
+    { "enabled": false,
+      "label":"dbs with many databases to be profiled",
+      "hosts":["someOtherMongoRouter:27017"],
+      "ns":["*.*"],
       "adminUser":"",
       "adminPw":"",
       "slowMS":250
