@@ -70,6 +70,7 @@ public class MongoDbAccessor {
             		//readPreference(isSecondaryReadPreferred?ReadPreference.secondaryPreferred():ReadPreference.primaryPreferred()).
                     readPreference(ReadPreference.primaryPreferred()).
                     writeConcern(WriteConcern.ACKNOWLEDGED).
+                    socketKeepAlive(true).
             		build();
 
             if(user != null && !user.isEmpty() && pw!= null && !pw.isEmpty()) {
@@ -129,7 +130,9 @@ public class MongoDbAccessor {
     
     
     public static void main(String[] args) throws UnknownHostException {
-        ServerAddress adr = new ServerAddress("localhost:27017");
+        //ServerAddress adr = new ServerAddress("localhost:27017");
+        //mongo-offerlistservice01-03.db00.pro06.eu.idealo.com:27017
+        ServerAddress adr = new ServerAddress("mongo-offerlistservice01-03.db00.pro06.eu.idealo.com:27017");
         MongoDbAccessor monitor = new MongoDbAccessor(null, null, adr);
         Document doc = monitor.runCommand("admin", new BasicDBObject("isMaster", "1"));
         LOG.info("doc: {}", doc);
