@@ -4,6 +4,7 @@
 package de.idealo.mongodb.slowops.dto;
 
 import com.mongodb.ServerAddress;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -36,7 +37,19 @@ public class CollectorStatusDto {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    public CollectorStatusDto(int instanceId, String label, String replSetName, ServerAddress serverAddress, String database, List<String> collections, boolean isCollecting, boolean isProfiling, long slowMs, String replSetStatus, Date lastTs, ArrayList<Long> doneJobsHistory) {
+
+    public CollectorStatusDto(@JsonProperty("instanceId") int instanceId,
+                              @JsonProperty("label") String label,
+                              @JsonProperty("replSetName") String replSetName,
+                              @JsonProperty("serverAddress") ServerAddress serverAddress,
+                              @JsonProperty("database") String database,
+                              @JsonProperty("collections") List<String> collections,
+                              @JsonProperty("isCollecting") boolean isCollecting,
+                              @JsonProperty("isProfiling") boolean isProfiling,
+                              @JsonProperty("slowMs") long slowMs,
+                              @JsonProperty("replSetStatus") String replSetStatus,
+                              @JsonProperty("lastTs") Date lastTs,
+                              @JsonProperty("doneJobsHistory") ArrayList<Long> doneJobsHistory) {
         this.instanceId = instanceId;
         this.label = label;
         this.replSetName = replSetName;
@@ -52,6 +65,8 @@ public class CollectorStatusDto {
         this.lastTsFormatted = lastTs!=null&&lastTs.getTime()>0?dateFormat.format(lastTs):"";
     }
 
+    //the following getter methods are needed for applicationStatus.jsp dataTable columns
+
     public int getInstanceId() {
         return instanceId;
     }
@@ -64,8 +79,8 @@ public class CollectorStatusDto {
         return replSetName;
     }
 
-    public ServerAddress getServerAddress() {
-        return serverAddress;
+    public String getReplSetStatus() {
+        return replSetStatus;
     }
 
     public String getServerAddressAsString() {
@@ -93,23 +108,9 @@ public class CollectorStatusDto {
 
     public long getSlowMs() { return slowMs; }
 
-    public void setSlowMs(long l) { slowMs = l; }
-
-    public String getReplSetStatus() {
-        return replSetStatus;
-    }
-
-    public boolean isCollecting() { return isCollecting;  }
-
-    public void setCollecting(boolean b) { isCollecting = b;  }
-
     public boolean isProfiling() { return isProfiling; }
 
-    public void setProfiling(boolean b) {  isProfiling = b; }
-
-    public Date getLastTs() {
-        return lastTs;
-    }
+    public boolean isCollecting() { return isCollecting;  }
 
     public String getLastTsFormatted() { return lastTsFormatted;}
 

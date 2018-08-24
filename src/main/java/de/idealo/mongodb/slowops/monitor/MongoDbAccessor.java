@@ -26,8 +26,13 @@ public class MongoDbAccessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(MongoDbAccessor.class);
 
+    public static final int DEFAULT_CONNECT_TIMEOUT_MS = 2000;
+    public static final int DEFAULT_SLOW_MS = 100;
+    private static final int DEFAULT_SOCKET_TIMEOUT_MS = 10000;
+
     private final ServerAddress[] serverAddress;
-    private final int socketTimeOut;
+    private final int socketTimeout;
+    private final int connectTimeout;
     private final String user;
     private final String pw;
     private final boolean isSecondaryReadPreferred;
@@ -36,16 +41,21 @@ public class MongoDbAccessor {
     
     
     private MongoDbAccessor(){
-        this(-1, false, null, null, null);
+        this(-1, -1, false, null, null, null);
     };
     
     public MongoDbAccessor(String user, String pw, ServerAddress ... serverAddress){
-        this(-1, false, user, pw, serverAddress);
+        this(-1, -1, false, user, pw, serverAddress);
+    }
+
+    public MongoDbAccessor(int socketTimeout, int connectTimeout, String user, String pw, ServerAddress ... serverAddress){
+        this(socketTimeout, connectTimeout, false, user, pw, serverAddress);
     }
     
-    public MongoDbAccessor(int socketTimeOut, boolean isSecondaryReadPreferred, String user, String pw, ServerAddress ... serverAddress){
+    public MongoDbAccessor(int socketTimeout, int connectTimeout, boolean isSecondaryReadPreferred, String user, String pw, ServerAddress ... serverAddress){
         this.serverAddress = serverAddress;
-        this.socketTimeOut = socketTimeOut;
+        this.socketTimeout = socketTimeout<0? DEFAULT_SOCKET_TIMEOUT_MS :socketTimeout;
+        this.connectTimeout = connectTimeout<0? DEFAULT_CONNECT_TIMEOUT_MS :connectTimeout;
         this.user = user;
         this.pw = pw;
         this.isSecondaryReadPreferred = isSecondaryReadPreferred;
@@ -65,8 +75,8 @@ public class MongoDbAccessor {
         LOG.info(">>> init {}", serverAddress);
         try {
             MongoClientOptions options = MongoClientOptions.builder().
-            		connectTimeout(1000*2).//fail fast, so we know this node is unavailable
-            		socketTimeout(socketTimeOut==-1?1000*10:socketTimeOut).//default 10 seconds
+            		socketTimeout(socketTimeout).
+                    connectTimeout(connectTimeout).
             		//readPreference(isSecondaryReadPreferred?ReadPreference.secondaryPreferred():ReadPreference.primaryPreferred()).
                     readPreference(ReadPreference.primaryPreferred()).
                     writeConcern(WriteConcern.ACKNOWLEDGED).
@@ -100,8 +110,18 @@ public class MongoDbAccessor {
     
     public Document runCommand(String dbName, DBObject cmd) throws IllegalStateException {
         checkMongo();
+
         if(dbName != null && !dbName.isEmpty()) {
-           return getMongoDatabase(dbName).runCommand((Bson) cmd, isSecondaryReadPreferred?ReadPreference.secondaryPreferred():ReadPreference.primaryPreferred());
+           long start = System.currentTimeMillis();
+           Document result = new Document();
+           try {
+               result = getMongoDatabase(dbName).runCommand((Bson) cmd, isSecondaryReadPreferred ? ReadPreference.secondaryPreferred() : ReadPreference.primaryPreferred());
+           }catch (Throwable e){
+               LOG.warn("runCommand failed {} on {}", new Object[]{cmd.toString(), mongo.getConnectPoint()});
+           }
+           long end = System.currentTimeMillis();
+           LOG.info("runCommand {} execTime in ms: {} on {}", new Object[]{cmd.toString(), (end-start), mongo.getConnectPoint()});
+           return result;
         }
         throw new IllegalStateException("Database not initialized");
     }

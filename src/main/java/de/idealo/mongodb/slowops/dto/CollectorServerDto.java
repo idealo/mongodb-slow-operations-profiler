@@ -1,6 +1,7 @@
 package de.idealo.mongodb.slowops.dto;
 
 import com.mongodb.ServerAddress;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.Arrays;
 
@@ -15,7 +16,11 @@ public class CollectorServerDto {
     private String adminUser;
     private String adminPw;
 
-    public CollectorServerDto(ServerAddress[] hosts, String db, String collection, String adminUser, String adminPw) {
+    public CollectorServerDto(@JsonProperty("hosts") ServerAddress[] hosts,
+                              @JsonProperty("db") String db,
+                              @JsonProperty("collection") String collection,
+                              @JsonProperty("adminUser") String adminUser,
+                              @JsonProperty("adminPw") String adminPw) {
         this.hosts = hosts;
         this.db = db;
         this.collection = collection;

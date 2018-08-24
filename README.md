@@ -5,7 +5,7 @@ Since v2.0.0 it may be easily extended to an administration tool by implementing
 The initial version of the software has been presented during the [MongoDB User Group Berlin on 4th of June 2013](http://www.meetup.com/MUGBerlin/events/119503502/).
 Slides of the presentation can be found [here](http://www.slideshare.net/Kay1A/slow-ops).
 
-The following first screenshot demonstrates how slow operations are visualized in the diagram: The higher a point or circle on the y-axis, the slower was the execution time of this operation. The greater the diameter of the circle, the more slow operations of this type were executed at this time. 
+The following first screenshot demonstrates how slow operations are visualized in the diagram: The higher a point or circle on the y-axis, the slower was the execution time of this operation. The greater the diameter of the circle, the more slow operations of this type were executed at this time.
 
 You can zoom-in by drawing a rectangle with the mouse around the area you are interested in. I suggest to zoom-in **first** horizontally, and then zoom-in vertically. Press Shift + drag mouse in order to move the visible area around. Double click returns to the initial viewport.
 
@@ -16,12 +16,12 @@ The more "Group by" checkboxes are checked, the more details constitute slow ope
 
 ### Example
 
-For example, the following screenshot shows that only a few databases have been **filtered**, defined by their labels, server address, replica set name, database and collection for a specific time period of one day. 
+For example, the following screenshot shows that only a few databases have been **filtered**, defined by their labels, server address, replica set name, database and collection for a specific time period of one day.
 Since they are **grouped by** their label, operation, queried and sorted fields, the legend below on the right shows these 4 details grouped together for the time period which is being hovered over by the mouse, here at 04:00 o'clock. As the the **resolution** is set to `Hour`, all slow operations occurred during within the hour hovered over by the mouse, here from 04:00 until 04:59.59 o'clock, are shown.
 
-In this example, during 1 hour from 04:00 o'clock occurred 4 different slow operation types, two on `offerstore-it` and two on `offerstore-en`. As the legend is sorted by y-axis, thus duration, the slowest operation type is shown first. 
+In this example, during 1 hour from 04:00 o'clock occurred 4 different slow operation types, two on `offerstore-it` and two on `offerstore-en`. As the legend is sorted by y-axis, thus duration, the slowest operation type is shown first.
 
-The slowest operation type happened on `offerstore-it` by executing a `count` command on both fields `missingSince`, using an `$ne` expression, and field `shopId`, using a concrete value. This slow operation type occurred 9 times, its minimum duration was 3,583 ms, its maximum 40,784 ms and its average 11,880.56 ms. 
+The slowest operation type happened on `offerstore-it` by executing a `count` command on both fields `missingSince`, using an `$ne` expression, and field `shopId`, using a concrete value. This slow operation type occurred 9 times, its minimum duration was 3,583 ms, its maximum 40,784 ms and its average 11,880.56 ms.
 
 The second slowest operation type happened on `offerstore-en` by fetching a next batch (op=`getmore`). The queried fields are unknown for a getmore operation but the query itself, including its used fields, may have been recorded earlier already because there is no reason that the query itself has been faster than its followed getmore operation.
 
@@ -94,10 +94,10 @@ The uploaded config is **not** persisted server side and will be lost upon webap
 
 ### Starting up
 
-1. Clone the project:   
+1. Clone the project:
 `git clone https://github.com/idealo/mongodb-slow-operations-profiler.git`
 2. Enter the server addresses, database and collection names in file "`mongodb-slow-operations-profiler/src/main/resources/config.json`" (see [Configuration](#config) below)
-3. While being in the in the project folder "`mongodb-slow-operations-profiler/`", build a war file by executing in a shell:  
+3. While being in the in the project folder "`mongodb-slow-operations-profiler/`", build a war file by executing in a shell:
 `mvn package`
 4. Deploy the resulted war file (e.g. "`mongodb-slow-operations-profiler-1.0.3.war`") on a java webserver (e.g. tomcat). Dependent on the above mentionned `config.json`, it may automatically start collecting slow operations. If no slow operations exist yet on the mongod's, the collector(s) will sleep 1 hour before retrying.
 5. The application can be accessed through a web browser by the URL `http://your-server:your-port/mongodb-slow-operations-profiler-[your-version]/app`
@@ -127,7 +127,8 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
       "ns":["someDatabase.someCollection", "anotherDatabase.anotherCollection"],
       "adminUser":"",
       "adminPw":"",
-      "slowMS":250
+      "slowMS":250,
+      "responseTimeoutInMs": 2000
     },
     { "enabled": false,
       "label":"dbs bar",
@@ -135,11 +136,15 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
       "ns":["someDatabase.someCollection", "anotherDatabase.*"],
       "adminUser":"",
       "adminPw":"",
-      "slowMS":250
+      "slowMS":250,
+      "responseTimeoutInMs": 2000
     }
   ],
   "yAxisScale":"milliseconds",
-  "adminToken":"mySecureAdminToken"
+  "adminToken":"mySecureAdminToken",
+  "defaultSlowMS" : 100,
+  "defaultResponseTimeoutInMs" : 2000,
+  "maxWeblogEntries" : 100
 }
 ```
 This example configuration defines first the `collector` running as a replica set consisting of 3 members on hosts "myCollectorHost_member[1|2|3]" on port 27017, using the collection "slowops" of database "profiling". Both `adminUser` and `adminPw` are empty because the mongodb instance runs without authentication. If mongod runs with authentication, the user must exist for the admin database with role "root".
@@ -150,23 +155,40 @@ Fields of `profiled` entries explained:
 
 * `enabled` = whether collecting has to be started automatically upon (re)start of the application
 * `label` = a label of the database system in order to be able to filter, sort and group on it
-* `hosts` = an array of members of the same replica set, or just a single host, or a mongo router
+* `hosts` = an array of members of the same replica set, or just a single host, or one or more mongo router of the same cluster
 * `ns` = an array of the namespaces to be collected in the format of `databaseName.collectionName`. The placeholder `*` may be used instead of `databaseName` and/or `collectionName` to collect from all databases and/or all collections. Examples:
   * `databaseName.*` collects from all collections from database `databaseName`
   * `*.collectionName` collects from all databases from collection `collectionName`
   * `*.*` collects from all collections from all databases
 * `adminUser`= if authentication is enabled, name of the user for database "admin" having role "root"
-* `adminPw`= if authentication is enabled, passwort of the user 
+* `adminPw`= if authentication is enabled, passwort of the user
 * `slowMS`= threshold of slow operations in milliseconds
+* `responseTimeoutInMs`= response timeout in ms
+
 
 The field `yAxisScale` is to be set either to the value "milliseconds" or "seconds". It defines the scale of the y-axis in the diagram of the analysis page.
 
 In v2.0.0 the field `adminToken` has been introduced to restrict access to administrative functionalities i.e. stop/start of collecting slow operations, setting the threshold `slowMs`, seeing the currently used configuration or uploading a new configuration.
 To grant access to these functionalities, add the parameter `adminToken=` followed by your configured value, i.e. `mySecureAdminToken`, to the URL of the application status page, i.e. `http://your-server:your-port/mongodb-slow-operations-profiler-[your-version]/app?adminToken=mySecureAdminToken`.
 
+In v2.4.0 some new options have been introduced:
+* `defaultResponseTimeoutInMs` defines a default response timeout for all `profiled` entries that don't have specified `responseTimeoutInMs` (default: 2000 ms)
+* `defaultSlowMS` defines a default threshold of slow operations in milliseconds for all `profiled` entries that don't have specified `slowMS` (default: 100 ms)
+* `maxWeblogEntries` defines the maximal number of log messages shown in the application status page (default: 100)
+
 
 ## Version history
 
+* v2.4.0
+   + bugfix: the data table of the application status page could sometimes not be loaded du to race conditions and resultant deadlocks
+   + new: user relevant log messages (see new option `maxWeblogEntries`) are shown at the bottom of the application status page, which is helpful for example to spot mongod hosts that could not sent a response within the configured `responseTimeoutInMs`
+   + new: option `responseTimeoutInMs` which is helpful to fail fast (thus to show the application status page quick enough) when some defined mongo hosts are not responsive enough
+   + new: option `defaultResponseTimeoutInMs` defines a default response timeout for all `profiled` entries that don't have specified `responseTimeoutInMs`
+   + new: option `defaultSlowMS` has been introduced to define a default threshold of slow operations in milliseconds for all `profiled` entries that don't have specified `slowMS`
+   + new: option `maxWeblogEntries` has been introduced to define the maximal number of log messages shown at the bottom of the application status page
+   + update: the cache layer, introduced in v2.1.0 in order to load the application status page quicker, has been removed because it's more accurate to see actual than outdated cached values. Thanks to the new option `responseTimeoutInMs`, the application status page should be displayed within at most 2 times of the longest defined `responseTimeoutInMs` plus data transfer time.
+   + update: line number added in log line
+   + update: mongodb driver v3.8.0
 * v2.3.0
    + new: namespace (`profiled.ns`) in config.json may use placeholder `*` for databse names (i.e. `*.myCollection`) in order to collect from myCollection from all databases
 * v2.2.1
