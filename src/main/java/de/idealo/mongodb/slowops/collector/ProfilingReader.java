@@ -4,10 +4,12 @@
 package de.idealo.mongodb.slowops.collector;
 
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mongodb.*;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import de.idealo.mongodb.slowops.dto.ApplicationStatusDto;
 import de.idealo.mongodb.slowops.dto.CollectorStatusDto;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
 import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
@@ -32,7 +34,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @copyright idealo internet GmbH
  */
 
-public class ProfilingReader extends Thread implements Callable, Terminable{
+public class ProfilingReader extends Thread implements Terminable{
 
     private static final Logger LOG = LoggerFactory.getLogger(ProfilingReader.class);
     private static final int RETRY_AFTER_SECONDS = 60*60;//1 hour
@@ -48,16 +50,12 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
     private final AtomicLong doneJobs;
     private long slowMs;
     private boolean isProfiling;
-    private ReplicaStatus replSetStatus;
+    private volatile String replSet;
+    private volatile ReplicaStatus replSetStatus;
     private boolean stop = false;
-
     private final BlockingQueue<ProfilingEntry> jobQueue;
-    private MongoCollection<Document> profileCollection;
-    private MongoDbAccessor mongo;
     private Date lastTs;
-    private MongoCursor<Document> profileCursor;
     private final ProfiledDocumentHandler profiledDocumentHandler;
-    private String replSet;
     private final int instanceId;
     private final ScheduledExecutorService scheduler;
     private final LinkedList<Long> doneJobsHistory;
@@ -141,14 +139,18 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
         schedulePeriodInSeconds = 10;
         doneJobsHistory = new LinkedList<Long>(Collections.nCopies(24*60*60/schedulePeriodInSeconds, 0l));
 
-
-        scheduler = Executors.newScheduledThreadPool( 1 );
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("JobHistoryScheduler-%d")
+                .setDaemon(true)
+                .build();
+        scheduler = Executors.newScheduledThreadPool( 1, threadFactory );
         scheduler.scheduleAtFixedRate(
                 new Runnable() {
                     long runs=0;
                     @Override public void run() {
-                        writeLock.lock();
+
                         try{
+                            writeLock.lock();
                             doneJobsHistory.addFirst(getDoneJobs());
                             doneJobsHistory.removeLast();
                         }finally{
@@ -160,76 +162,34 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
                 schedulePeriodInSeconds,
                 TimeUnit.SECONDS );
 
-        init();
-
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
-                closeConnections();
                 shutdownScheduler();
             }
         });
     }
 
-    private void init() {
-        LOG.debug(">>> init for {}", serverAddress);
-
-        try {
-            if(mongo == null) {
-                mongo = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), serverAddress);
-
-                MongoDatabase db = mongo.getMongoDatabase(database);
-                profileCollection = db.getCollection("system.profile");
-                if (profileCollection == null) {
-                    throw new IllegalArgumentException("Can't continue without profile collection for " + serverAddress);
-                }
-            }else{
-                LOG.info("already inititialized for {}", serverAddress);
-            }
-        } catch (MongoException e) {
-            LOG.error("Error while initializing mongo at address {}", serverAddress, e);
-            closeConnections();
-        }
-        LOG.debug("<<< init for {}", serverAddress);
+    public MongoDbAccessor getMongoDbAccessor() {
+        return new MongoDbAccessor(-1, profiledServerDto.getResponseTimeout(), profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), serverAddress);
     }
 
-    private void closeConnections() {
-        LOG.debug(">>> closeConnections {}", serverAddress);
-
-        try {
-            if(profileCursor != null) {
-                profileCursor.close();
-            }
-        } catch (Throwable e) {
-            LOG.error("Error while closing profileCursor ", e);
-        }
-
-        try {
-            if(mongo != null) {
-                mongo.closeConnections();
-                mongo = null;
-            }
-        } catch (Throwable e) {
-            LOG.error("Error while closing mongo ", e);
-        }
-
-        LOG.debug("<<< closeConnections {}", serverAddress);
-    }
 
     private void shutdownScheduler(){
         if(scheduler!=null){
             scheduler.shutdown();
-            scheduler.shutdownNow();
             try {
                 scheduler.awaitTermination(schedulePeriodInSeconds+1, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 LOG.error("InterruptedException while shuting down scheduler", e );
+            }finally {
+                scheduler.shutdownNow();
             }
         }
     }
 
-    private MongoCursor<Document> getProfileCursor() {
-        LOG.info(">>> getProfileCursor for {} lastTs: {}", serverAddress, lastTs);
+    private MongoCursor<Document> getProfileCursor(MongoDbAccessor mongo) {
+        LOG.info(">>> getProfileCursor for database {} at {}", database, serverAddress);
         final BasicDBObject query = new BasicDBObject();
         final BasicDBObject orderBy = new BasicDBObject();
         //search namespaces "database.collection" and also "database.$cmd" because count() is treated as command
@@ -253,18 +213,21 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
         query.append("ts",  new BasicDBObject( "$gt" , lastTs ));
         orderBy.append("$natural", Long.valueOf(1));//aufsteigend von alt zu neu
 
+
+        final MongoDatabase db = mongo.getMongoDatabase(database);
+        final MongoCollection<Document> profileCollection = db.getCollection("system.profile");
+        if (profileCollection == null) {
+            throw new IllegalArgumentException("Can't continue without profile collection for database " + database +  " at " + serverAddress);
+        }
+
         return profileCollection.find(query).sort(orderBy).cursorType(CursorType.TailableAwait).iterator();
 
     }
 
     private void readSystemProfile() {
 
-        if(mongo == null) {
-            LOG.error("Can't read entries from {}/{} since mongo is not initialized.", serverAddress, database );
-            return;
-        }
-
-        profileCursor = getProfileCursor();//get tailable cursor from oldest to newest profile entry
+        final MongoDbAccessor mongo = getMongoDbAccessor();
+        final MongoCursor<Document> profileCursor = getProfileCursor(mongo);//get tailable cursor from oldest to newest profile entry
 
         try {
 
@@ -277,16 +240,17 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
                     LOG.debug(getShrinkedLogLine(doc));
                 }
             }else {
-                LOG.info("No newer profile entry found for {}", serverAddress);
+                LOG.info("No newer profile entry found for database {} at {}", database, serverAddress);
                 return;
             }
         }catch(Exception e) {
             LOG.error("Exception occurred on {}/{} , will return and try again.", new Object[]{serverAddress, database}, e);
         }finally {
-            LOG.info("profileCursor being closed for {}", serverAddress);
+            LOG.info("profileCursor being closed for database {} at {}", database, serverAddress);
             if(profileCursor != null) {
                 profileCursor.close();
             }
+            mongo.closeConnections();
         }
     }
 
@@ -325,11 +289,7 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
 
     public void setSlowMs(int profile, long ms) {
 
-        boolean wasNull = false;
-        if (mongo == null) {
-            wasNull = true;
-            init();
-        }
+        final MongoDbAccessor mongo = getMongoDbAccessor();
 
         try {
             if(ms < 0){
@@ -347,26 +307,51 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
             }
         } catch (MongoCommandException e) {
             LOG.error("Could not setSlowMs on {}/{}", new Object[]{serverAddress, database}, e);
+        }finally {
+            mongo.closeConnections();
         }
 
-        if(wasNull){
-            closeConnections();
-        }
     }
 
     public boolean isProfiling(){
         return isProfiling;
     }
 
+    protected synchronized void setReplSet(String rsName){
+        replSet = rsName;
+    }
 
-    public void updateServerStatusVariables(){
-        LOG.debug(">>> updateServerStatusVariables");
+    protected synchronized void setReplSetStatus(ReplicaStatus rStatus){
+        replSetStatus = rStatus;
+    }
 
-        boolean wasNull = false;
-        if (mongo == null) {
-            wasNull = true;
-            init();
+    public synchronized void updateReplSetStatus(MongoDbAccessor mongo){
+        LOG.debug(">>> updateReplSetStatus");
+
+        try {
+            try {
+                Document doc = mongo.runCommand("admin", new BasicDBObject("replSetGetStatus", 1));
+                Object rs = doc.get("set");
+                if (rs != null && rs instanceof String) {
+                    replSet = rs.toString();
+                }
+                Object myState = doc.get("myState");
+                if (myState != null && myState instanceof Integer) {
+                    replSetStatus = ReplicaStatus.getReplicaState((Integer)myState);
+                }
+
+            } catch (MongoCommandException e) {
+                LOG.info("this mongod seems not to be a replSet member {}", serverAddress);
+            }
+
+        } catch (MongoCommandException e) {
+            LOG.info("Could not determine replSet status on {}", serverAddress);
         }
+        LOG.debug("<<< updateReplSetStatus");
+    }
+
+    public void updateProfileStatus(MongoDbAccessor mongo){
+        LOG.debug(">>> updateProfileStatus");
 
         try {
             Document doc = mongo.runCommand(database, new BasicDBObject("profile", -1));
@@ -386,28 +371,11 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
                 slowMs = (long)(Integer)ms;
             }
 
-            try {
-                doc = mongo.runCommand("admin", new BasicDBObject("replSetGetStatus", 1));
-                Object rs = doc.get("set");
-                if (rs != null && rs instanceof String) {
-                    replSet = rs.toString();
-                }
-                Object myState = doc.get("myState");
-                if (myState != null && myState instanceof Integer) {
-                    replSetStatus = ReplicaStatus.getReplicaState((Integer)myState);
-                }
-            } catch (MongoCommandException e) {
-                LOG.info("this mongod seems not to be a replSet member {}", serverAddress);
-            }
-
         } catch (MongoCommandException e) {
-            LOG.info("Could not determine status on {}", serverAddress);
+            LOG.info("Could not determine profile status on database {} at {}", database, serverAddress);
         }
 
-        if(wasNull){
-            closeConnections();
-        }
-        LOG.debug("<<< updateServerStatusVariables");
+        LOG.debug("<<< updateProfileStatus");
     }
 
 
@@ -438,13 +406,13 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
 
     public String getReplSet() { return replSet; }
 
-    public int getIntanceId() { return instanceId; }
+    public int getInstanceId() { return instanceId; }
 
     public ArrayList<Long> getDoneJobsHistory() {
         ArrayList<Long> result = Lists.newArrayList();
 
-        readLock.lock();
         try{
+            readLock.lock();
             long newest = doneJobsHistory.get(0);
             result.add(getDoneJobs());//now
             result.add(newest - doneJobsHistory.get(1));//last 10 sec
@@ -460,11 +428,11 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
         return result;
     }
 
+
     @Override
     public void terminate() {
         stop = true;
         interrupt(); //need to interrupt when sleeping or waiting on tailable cursor data
-        closeConnections();
         shutdownScheduler();
     }
 
@@ -482,9 +450,7 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
         LOG.info("Run started {}", serverAddress);
         try {
             while(!stop) {
-                init();
                 readSystemProfile();
-                closeConnections();
                 if(!stop) {
                     try {
                         LOG.info("{} sleeping...", serverAddress);
@@ -492,10 +458,12 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
 
                     } catch (InterruptedException e) {
                         LOG.error("InterruptedException while sleeping.");
+                        stop = true;
                     }
                 }
             }
         }finally {
+            ApplicationStatusDto.addWebLog("ProfilingReader terminated for '"+profiledServerDto.getLabel()+"' at " + serverAddress + "/" + database);
             terminate();
         }
         LOG.info("Run terminated {}", serverAddress);
@@ -507,7 +475,7 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
         final ServerAddress address =  new ServerAddress("localhost",27017);
 
         BlockingQueue<ProfilingEntry> jobQueue = new LinkedBlockingQueue<ProfilingEntry>();
-        ProfiledServerDto dto = new ProfiledServerDto(true, "some label", new ServerAddress[]{new ServerAddress("127.0.0.1:27017")}, new String[]{"offerStore.*"}, null, null, 0);
+        ProfiledServerDto dto = new ProfiledServerDto(true, "some label", new ServerAddress[]{new ServerAddress("127.0.0.1:27017")}, new String[]{"offerStore.*"}, null, null, 0, 2000);
         ProfilingReader reader = new ProfilingReader(0, jobQueue, address, null, dto, "offerStore", Lists.newArrayList("*"), false, 0, 0);
         reader.start();
         //reader.setSlowMs(1, 3);
@@ -522,10 +490,9 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
     }
 
 
-    @Override
-    public CollectorStatusDto call() {
-        updateServerStatusVariables();
-        return new CollectorStatusDto(getIntanceId(),
+
+    public CollectorStatusDto getCollectorStatusDto() {
+        return new CollectorStatusDto(getInstanceId(),
                 getLabel(),
                 getReplSet(),
                 getServerAddress(),
@@ -539,4 +506,5 @@ public class ProfilingReader extends Thread implements Callable, Terminable{
                 getDoneJobsHistory()
         );
     }
+
 }

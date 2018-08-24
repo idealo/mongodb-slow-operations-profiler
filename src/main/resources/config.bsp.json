@@ -21,7 +21,8 @@
         "anotherDatabase.anotherCollection"],
       "adminUser":"",
       "adminPw":"",
-      "slowMS":250
+      "slowMS":250,
+      "responseTimeoutInMs": 1500
     },
     { "enabled": false,
       "label":"dbs bar",
@@ -32,7 +33,8 @@
         "*.myCollection"],
       "adminUser":"",
       "adminPw":"",
-      "slowMS":250
+      "slowMS":250,
+      "responseTimeoutInMs": 3000
     },
     { "enabled": false,
       "label":"dbs with many databases to be profiled",
@@ -40,9 +42,13 @@
       "ns":["*.*"],
       "adminUser":"",
       "adminPw":"",
-      "slowMS":250
+      "slowMS":250,
+      "responseTimeoutInMs": 3000
     }
   ],
   "yAxisScale":"milliseconds",
-  "adminToken": "mySecureAdminToken"
+  "adminToken": "mySecureAdminToken",
+  "defaultSlowMS" : 100,
+  "defaultResponseTimeoutInMs" : 2000,
+  "maxWeblogEntries" : 100
 }

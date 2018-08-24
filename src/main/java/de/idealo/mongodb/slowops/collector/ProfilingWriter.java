@@ -10,6 +10,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.IndexOptions;
+import de.idealo.mongodb.slowops.dto.ApplicationStatusDto;
 import de.idealo.mongodb.slowops.dto.CollectorServerDto;
 import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
 import de.idealo.mongodb.slowops.util.ConfigReader;
@@ -38,39 +39,55 @@ public class ProfilingWriter extends Thread implements Terminable{
     
     private boolean stop = false;
     private AtomicLong doneJobs = new AtomicLong(0);
-    private MongoCollection<Document> profileCollection;
-    private MongoDbAccessor mongo;
     private ProfilingEntry lastJob;
     private CollectorServerDto serverDto;
     private final Date runningSince;
-
-
-
 
     public ProfilingWriter(BlockingQueue<ProfilingEntry> jobQueue) {
         this.jobQueue = jobQueue;
         serverDto = ConfigReader.getCollectorServer();
         runningSince = new Date();
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                closeConnections();
-            }
-        });
+        final MongoDbAccessor mongo = getMongoDbAccessor();
+        try {
+            final MongoCollection<Document> profileCollection = getProfileCollection(mongo);
+
+            IndexOptions indexOptions = new IndexOptions();
+            indexOptions.background(true);
+            LOG.info("Create index {ts:-1, lbl:1} in the background if it does not yet exists");
+            profileCollection.createIndex(new BasicDBObject("ts",-1).append("lbl", 1), indexOptions);
+            LOG.info("Create index {adr:1, db:1, ts:-1} in the background if it does not yet exists");
+            profileCollection.createIndex(new BasicDBObject("adr",1).append("db",1).append("ts", -1), indexOptions);
+
+            LOG.info("ProfilingWriter is ready at {}", serverDto.getHosts());
+
+        } catch (MongoException e) {
+            LOG.error("Exception while connecting to: {}", serverDto.getHosts(), e);
+        }finally {
+            if(mongo!=null) mongo.closeConnections();
+        }
+    }
+
+
+    public MongoDbAccessor getMongoDbAccessor(){
+        return new MongoDbAccessor(serverDto.getAdminUser(), serverDto.getAdminPw(), serverDto.getHosts());
+    }
+
+    private MongoCollection<Document> getProfileCollection(MongoDbAccessor mongo){
+        final MongoDatabase db = mongo.getMongoDatabase(serverDto.getDb());
+        final MongoCollection<Document> result =  db.getCollection(serverDto.getCollection());
+
+        if(result == null) {
+            throw new IllegalArgumentException("Can't continue without profile collection for " + serverDto.getHosts());
+        }
+        return result;
     }
     
-    private void init() {
+    private void init(MongoDbAccessor mongo) {
         LOG.info(">>> init");
 
         try {
-            mongo = new MongoDbAccessor(serverDto.getAdminUser(), serverDto.getAdminPw(), serverDto.getHosts());
-            final MongoDatabase db = mongo.getMongoDatabase(serverDto.getDb());
-            profileCollection =  db.getCollection(serverDto.getCollection());
-
-            if(profileCollection == null) {
-                throw new IllegalArgumentException("Can't continue without profile collection for " + serverDto.getHosts());
-            }
+            final MongoCollection<Document> profileCollection = getProfileCollection(mongo);
 
             IndexOptions indexOptions = new IndexOptions();
             indexOptions.background(true);
@@ -81,29 +98,16 @@ public class ProfilingWriter extends Thread implements Terminable{
 
         } catch (MongoException e) {
             LOG.error("Exception while connecting to: {}", serverDto.getHosts(), e);
-        }    
+        }
         
         LOG.info("<<< init");
     }
     
-    private void closeConnections() {
-        LOG.info(">>> closeConnections");
-        try {
-            if(mongo != null) {
-                mongo.closeConnections();
-                mongo = null;
-            }
-        } catch (Throwable e) {
-            LOG.error("Error while closing mongo ", e);
-        }
-        LOG.info("<<< closeConnections");
-    }
 
     @Override
     public void terminate() {
         stop = true;
         interrupt();//need to interrupt when sleeping or waiting on jobQueue
-        closeConnections();
     }
     
     
@@ -116,11 +120,10 @@ public class ProfilingWriter extends Thread implements Terminable{
 
     public Date getRuningSince() { return runningSince; }
     
-    public Date getNewest(ServerAddress adr, String db) {
+    public Date getNewest(MongoDbAccessor mongo, ServerAddress adr, String db) {
         try {
-            if(mongo == null) {
-                init();
-            }
+            final MongoCollection<Document> profileCollection = getProfileCollection(mongo);
+
             if(adr != null) {
                 final BasicDBObject query = new BasicDBObject();
                 final BasicDBObject fields = new BasicDBObject();
@@ -145,20 +148,16 @@ public class ProfilingWriter extends Thread implements Terminable{
                 }
             }
         }catch(Exception e) {
-            LOG.error("Exception occurred, will shutdown to re-init next time.", e);
-            closeConnections();
+            LOG.error("Couldn't get newest entry for {}/{}", new Object[]{adr, db, e});
+
         }
         return null;
         
     }
     
-    private void writeEntries() {
-        
-        if(mongo == null) {
-            LOG.error("Can't write entries since mongo is not initialized.");
-            return;
-        }
-        
+    private void writeEntries(MongoDbAccessor mongo) {
+
+        final MongoCollection<Document> profileCollection = getProfileCollection(mongo);
         try {
             while(!stop) {
                 if(lastJob == null) {
@@ -179,14 +178,15 @@ public class ProfilingWriter extends Thread implements Terminable{
      */
     @Override
     public void run() {
-        
+
+        MongoDbAccessor mongo = null;
         try {
             while(!stop) {
                 
                 if(lastJob != null || jobQueue.size() > 0) {
-                    init();
-                    writeEntries();
-                    closeConnections();
+                    mongo = getMongoDbAccessor();
+                    init(mongo);
+                    writeEntries(mongo);
                 }
                 
                 if(!stop) {
@@ -196,10 +196,13 @@ public class ProfilingWriter extends Thread implements Terminable{
                         
                     } catch (InterruptedException e) {
                         LOG.error("InterruptedException while sleeping: ");
+                        stop = true;
                     }
                 }
             }
         }finally {
+            ApplicationStatusDto.addWebLog("ProfilingWriter terminated");
+            if(mongo != null) mongo.closeConnections();
             terminate();
         }
         LOG.info("Run terminated.");

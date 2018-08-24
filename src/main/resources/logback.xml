@@ -3,7 +3,7 @@
  
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-      <pattern>%d [%thread] %-5level %logger{35} - %msg%n</pattern>
+      <pattern>%d [%thread] %-5level %logger{35}:%line - %msg%n</pattern>
     </encoder>
   </appender>
 
@@ -14,7 +14,7 @@
 			<maxHistory>10</maxHistory>
 		</rollingPolicy>
 		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-			<pattern>%d [%thread] %-5level %logger{25} - %msg%n</pattern>
+			<pattern>%d [%thread] %-5level %logger{25}:%line - %msg%n</pattern>
 		</encoder>
 	</appender>
 

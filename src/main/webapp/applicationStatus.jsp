@@ -158,6 +158,7 @@
 						$('#clr_refresh_ts').html(formatDate(new Date(json.lastRefresh)));
 						$('#clr_refresh_quantity').html('all');
                         $("textarea#config").val(JSON.stringify(JSON.parse(json.config), undefined, 4));
+						$("textarea#weblog").val(json.webLog);
 					}
 				});
 
@@ -236,6 +237,7 @@
 								$('#clr_refresh_ts').html(formatDate(new Date(json.lastRefresh)));
 								$('#clr_refresh_quantity').html('some');
                                 $("textarea#config").val(JSON.stringify(JSON.parse(json.config), undefined, 4));
+								$("textarea#weblog").val(json.webLog);
 							}
 						}
 					});
@@ -327,6 +329,7 @@
                             $('#clr_totalwrites').html((json.numberOfWrites + json.numberOfWritesOfRemovedWriters));
                             $('#clr_date').html(formatDate(new Date(json.collectorRunningSince)));
                             $("textarea#config").val(JSON.stringify(JSON.parse(json.config), undefined, 4));
+							$("textarea#weblog").val(json.webLog);
                         }
                     }
                 });
@@ -528,10 +531,14 @@ Status of <span id="clr_refresh_quantity"></span> mongod's refreshed at: <span i
      </div>
 	<br/>
 </form>
+<br>
+Last log messages:<br>
+<textarea id="weblog" name="weblog" rows="10" cols="160"></textarea><br/>
+
 <%  if(isAdmin){ %>
         <form name="configForm" action="app" method="post" class="infoConfig">
             <input type="submit" value="upload new config">&nbsp;<img src='img/info.gif' alt='info' title='info'><br/>
-            <textarea id="config" name="config" rows="10" cols="60"></textarea><br/>
+            <textarea id="config" name="config" rows="10" cols="120"></textarea><br/>
         </form>
 <%}%>
 

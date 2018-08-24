@@ -10,5 +10,6 @@ slowOpsGui*.png
 .project
 .settings
 .idealo.yaml
+todo.txt
 src/main/resources/config.local.json
 src/main/resources/config.prod.json
