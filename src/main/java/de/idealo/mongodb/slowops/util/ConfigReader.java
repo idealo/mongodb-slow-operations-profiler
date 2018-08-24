@@ -5,8 +5,10 @@ package de.idealo.mongodb.slowops.util;
 
 import com.google.common.collect.Lists;
 import com.mongodb.ServerAddress;
+import de.idealo.mongodb.slowops.dto.ApplicationStatusDto;
 import de.idealo.mongodb.slowops.dto.CollectorServerDto;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
+import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +48,7 @@ public class ConfigReader {
             CONFIG = Document.parse(cfg);
             if(isValidConfig()){
                 result = true;
+                ApplicationStatusDto.setMaxWebLogEntries(getLong(CONFIG, Util.MAX_WEBLOG_ENTRIES, ApplicationStatusDto.DEFAULT_MAX_WEBLOG_ENTRIES));
             }else{
                 CONFIG = bak;
             }
@@ -226,7 +229,8 @@ public class ConfigReader {
                     nsList.toArray(new String[]{}),
                     getString(serverDoc, "adminUser", null),
                     getString(serverDoc, "adminPw", null),
-                    getLong(serverDoc, "slowMS", 100)
+                    getLong(serverDoc, "slowMS", ConfigReader.getLong(doc, Util.DEFAULT_SLOW_MS, MongoDbAccessor.DEFAULT_SLOW_MS)),
+                    (int)getLong(serverDoc, "responseTimeoutInMs", getLong(doc, Util.DEFAULT_RESPONSE_TIMEOUT_IN_MS, MongoDbAccessor.DEFAULT_CONNECT_TIMEOUT_MS))
             );
             result.add(dto);
         }

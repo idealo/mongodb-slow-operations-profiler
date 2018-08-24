@@ -7,6 +7,7 @@ import de.idealo.mongodb.slowops.collector.ProfilingEntry;
 import de.idealo.mongodb.slowops.collector.ProfilingReader;
 import de.idealo.mongodb.slowops.collector.ProfilingWriter;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
+import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,27 +28,37 @@ public class ProfilingReaderCreator implements Callable<ProfilingReader> {
     private final List<String> colls;
     private final ProfilingWriter writer;
     private final BlockingQueue<ProfilingEntry> jobQueue;
-    private final CollectorManager collectorManager;
+    private final MongoDbAccessor profilingWriterMongo;
 
-    public ProfilingReaderCreator(int id, ServerAddress address, ProfiledServerDto dto, String db, List<String> colls, CollectorManager collectorManager) {
+
+
+    public ProfilingReaderCreator(int id, ServerAddress address, ProfiledServerDto dto, String db, List<String> colls, CollectorManager collectorManager, MongoDbAccessor mongo) {
         this.id = id;
         this.address = address;
         this.dto = dto;
         this.db = db;
-        this.collectorManager = collectorManager;
         this.colls = colls;
         this.writer = collectorManager.getWriter();
         this.jobQueue = collectorManager.getJobQueue();
+        this.profilingWriterMongo = mongo;
 
+    }
+
+    public ServerAddress getAddress() {
+        return address;
+    }
+
+    public ProfiledServerDto getDto() {
+        return dto;
+    }
+
+    public String getDatabase() {
+        return db;
     }
 
     @Override
     public ProfilingReader call() throws Exception {
-        final Date lastTs = writer.getNewest(address, db);
-        final ProfilingReader result = new ProfilingReader(id, jobQueue, address, lastTs, dto, db, colls, !dto.isEnabled(), 0, dto.getSlowMs());
-
-        collectorManager.addAndStartReader(result);
-
-        return result;
+        final Date lastTs = writer.getNewest(profilingWriterMongo, address, db);
+        return new ProfilingReader(id, jobQueue, address, lastTs, dto, db, colls, !dto.isEnabled(), 0, dto.getSlowMs());
     }
 }

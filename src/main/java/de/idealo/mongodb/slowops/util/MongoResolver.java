@@ -15,89 +15,141 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 
-public class MongoResolver implements Callable<List<ServerAddress>> {
+public class MongoResolver implements Callable<MongoResolver> {
 
     private static final Logger LOG = LoggerFactory.getLogger(MongoResolver.class);
 
     private final String adminUser;
     private final String adminPassword;
-    private final ServerAddress serverAddress;
+    private final ServerAddress[] serverAddress;
+    private int socketTimeout;
+    private int responseTimeout;
+    private List<ServerAddress> resolvedHosts;
+    private List<String> resolvedDatabases;
 
 
     public MongoResolver(String adminUser, String adminPassword, ServerAddress serverAddress) {
+        this(-1, -1, adminUser, adminPassword, serverAddress);
+    }
+
+
+    public MongoResolver(int socketTimeout, int responseTimeout, String adminUser, String adminPassword, ServerAddress... serverAddress) {
         this.adminUser = adminUser;
         this.adminPassword = adminPassword;
         this.serverAddress = serverAddress;
+        this.socketTimeout = socketTimeout;
+        this.responseTimeout = responseTimeout;
+        resolvedHosts = Lists.newLinkedList();
+        resolvedDatabases = Lists.newLinkedList();
+    }
+
+    public List<ServerAddress> getResolvedHosts() {
+        return resolvedHosts;
+    }
+
+    public List<String> getResolvedDatabases() {
+        return resolvedDatabases;
     }
 
     /**
-     * If the given serverAddress is a router (mongos) of a sharded system,
+     * If the given serverAddresses point to routers (mongos) of a sharded system,
      * it returns a list of all mongod ServerAddresses of the sharded system.
-     * If the given serverAddress is a mongod,
+     * If the given serverAddresses point to mongod's,
      * the returned List will contain the ServerAddresses of all replSet members
-     * or, if not a replSet, the given ServerAddress.
+     * or, if not a replSet, the first given ServerAddress.
      *
      * @return
      */
-    public List<ServerAddress> getMongodAddresses() {
+    public List<ServerAddress> resolveMongodAddresses(MongoDbAccessor mongo) {
 
         final List<ServerAddress> result = Lists.newLinkedList();
-        MongoDbAccessor mongo = null;
 
         try {
-            mongo = new MongoDbAccessor(adminUser, adminPassword, serverAddress);
+            final Document doc = mongo.runCommand("admin", new BasicDBObject("listShards", 1));
+            final Object shards = doc.get("shards");
+            if(shards != null) {
+                final ArrayList<Document> list = (ArrayList<Document>)shards;
+                for (Object obj : list) {
+                    final Document dbo = (Document)obj;
+                    String hosts = dbo.getString("host");
+                    int slashIndex = hosts.indexOf("/");
+                    if(slashIndex > -1) {
+                        hosts = hosts.substring(slashIndex+1);
+                    }
+                    //hosts = hosts.replace(',', ' ');
 
+                    result.addAll(Util.getServerAddresses(hosts));
+                }
+                return result;
+            }
+        } catch (MongoCommandException e) {//replSets do not know the command listShards, thus throwing an Exception
             try {
-                final Document doc = mongo.runCommand("admin", new BasicDBObject("listShards", 1));
-                final Object shards = doc.get("shards");
-                if(shards != null) {
-                    final ArrayList<Document> list = (ArrayList<Document>)shards;
+                final Document doc = mongo.runCommand("admin", new BasicDBObject("replSetGetStatus", 1));
+                final Object members = doc.get("members");
+                if (members != null && members instanceof ArrayList) {
+                    final ArrayList<Document> list = (ArrayList<Document>) members;
                     for (Object obj : list) {
-                        final Document dbo = (Document)obj;
-                        String hosts = dbo.getString("host");
-                        int slashIndex = hosts.indexOf("/");
-                        if(slashIndex > -1) {
-                            hosts = hosts.substring(slashIndex+1);
-                        }
-                        //hosts = hosts.replace(',', ' ');
-
-                        result.addAll(Util.getServerAddresses(hosts));
+                        final Document dbo = (Document) obj;
+                        final String host = dbo.getString("name");
+                        result.add(new ServerAddress(host));
                     }
                     return result;
                 }
-            } catch (MongoCommandException e) {//replSets do not know the command listShards, thus throwing an Exception
-                try {
-                    final Document doc = mongo.runCommand("admin", new BasicDBObject("replSetGetStatus", 1));
-                    final Object members = doc.get("members");
-                    if (members != null && members instanceof ArrayList) {
-                        final ArrayList<Document> list = (ArrayList<Document>) members;
-                        for (Object obj : list) {
-                            final Document dbo = (Document) obj;
-                            final String host = dbo.getString("name");
-                            result.add(new ServerAddress(host));
-                        }
-                        return result;
-                    }
-                }catch (MongoCommandException e2) {//single nodes do not know the command replSets, thus throwing an Exception
-                    final Document doc = mongo.runCommand("admin", new BasicDBObject("serverStatus", 1));
-                    final Object repl = doc.get("repl");//single nodes don't have serverStatus().repl
-                    if(repl == null) result.add(serverAddress);
+            }catch (MongoCommandException e2) {//single nodes do not know the command replSets, thus throwing an Exception
+                final Document doc = mongo.runCommand("admin", new BasicDBObject("serverStatus", 1));
+                final Object repl = doc.get("repl");//single nodes don't have serverStatus().repl
+                if(repl == null) {
+                    if(serverAddress.length > 0)
+                    result.add(serverAddress[0]);
                 }
             }
-
-        } catch (MongoException e) {
-            LOG.error("Couldn't start mongo node at address {}", serverAddress, e);
-        } finally {
-            if(mongo != null) {
-                mongo.closeConnections();
-            }
         }
+
         return result;
 
     }
 
+    private List<String> resolveAllDbNames(MongoDbAccessor mongoDbAccessor){
+        List<String> result = Lists.newArrayList();
+
+        try{
+            final Document commandResultDoc = mongoDbAccessor.runCommand("admin", new BasicDBObject("listDatabases", 1));
+
+            if(commandResultDoc != null){
+                Object databases = commandResultDoc.get("databases");
+                if(databases != null && databases instanceof ArrayList) {
+                    final List dbList = (ArrayList) databases;
+                    for (Object entry : dbList) {
+                        if (entry instanceof Document) {
+                            final Document entryDoc = (Document) entry;
+                            final String dbName = entryDoc.getString("name");
+                            result.add(dbName);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception e){
+            LOG.warn("Exception while running command listDatabases", e);
+        } finally {
+            if(mongoDbAccessor != null ) mongoDbAccessor.closeConnections();
+        }
+        return result;
+    }
+
     @Override
-    public List<ServerAddress> call() throws Exception {
-        return getMongodAddresses();
+    public MongoResolver call() throws Exception {
+        final MongoDbAccessor mongo = new MongoDbAccessor(socketTimeout, responseTimeout, adminUser, adminPassword, serverAddress);
+
+        try {
+            resolvedDatabases.addAll(resolveAllDbNames(mongo));
+            resolvedHosts.addAll(resolveMongodAddresses(mongo));
+
+        } catch (MongoException e) {
+            LOG.error("Couldn't start mongo node at address {}", serverAddress, e);
+        } finally {
+            mongo.closeConnections();
+        }
+        return this;
     }
 }

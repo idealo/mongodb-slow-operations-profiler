@@ -3,6 +3,7 @@
  */
 package de.idealo.mongodb.slowops.servlet;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mongodb.ServerAddress;
 import de.idealo.mongodb.slowops.collector.CollectorManagerInstance;
 import de.idealo.mongodb.slowops.collector.ProfilingReader;
@@ -21,10 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @WebServlet("/cmd")
@@ -95,7 +93,11 @@ public class CommandResult extends HttpServlet {
 
     private CommandResultDto executeCommand(ICommand command, List<ProfilingReader> readerList, String mode ){
         final CommandResultDto result = command.getCommandResultDto();
-        final ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(readerList.size());
+        final ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("TableDto-%d")
+                .setDaemon(true)
+                .build();
+        final ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(readerList.size(), threadFactory);
         final List<Future<TableDto>> futureTableList = new ArrayList<>();
         final HashSet<ServerAddress> serverAdresses = new HashSet<ServerAddress>();
         final HashSet<ProfiledServerDto> dbsEntryPoints = new HashSet<ProfiledServerDto>();
@@ -117,6 +119,7 @@ public class CommandResult extends HttpServlet {
                 futureTableList.add(futureTable);
             }
         }
+        threadPool.shutdown();
 
 
         for(Future<TableDto> futureTable : futureTableList){
@@ -128,7 +131,8 @@ public class CommandResult extends HttpServlet {
                 LOG.warn("Exception while getting future command", e);
             }
         }
-        threadPool.shutdown();
+        threadPool.shutdownNow();
+
 
         return result;
     }
