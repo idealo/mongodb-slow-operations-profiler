@@ -26,6 +26,7 @@ public class Util {
     private static final Logger LOG = LoggerFactory.getLogger(Util.class);
     
     public final static char PROPERTIES_SEPARATOR = ',';
+    public static final int MAX_THREADS = Runtime.getRuntime().availableProcessors() * 100;
 
     public final static String Y_AXIS_SCALE = "yAxisScale";
     public final static String Y_AXIS_SECONDS = "seconds";
@@ -35,7 +36,6 @@ public class Util {
     public final static String DEFAULT_SLOW_MS = "defaultSlowMS";
     public final static String MAX_WEBLOG_ENTRIES = "maxWeblogEntries";
     public final static String CONFIG_FILE = "config.json";
-
 
 
     public static List<ServerAddress> getServerAddresses(String serverAddresses) {

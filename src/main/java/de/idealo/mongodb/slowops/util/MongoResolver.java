@@ -142,8 +142,8 @@ public class MongoResolver implements Callable<MongoResolver> {
         final MongoDbAccessor mongo = new MongoDbAccessor(socketTimeout, responseTimeout, adminUser, adminPassword, serverAddress);
 
         try {
-            resolvedDatabases.addAll(resolveAllDbNames(mongo));
             resolvedHosts.addAll(resolveMongodAddresses(mongo));
+            resolvedDatabases.addAll(resolveAllDbNames(mongo));
 
         } catch (MongoException e) {
             LOG.error("Couldn't start mongo node at address {}", serverAddress, e);
@@ -152,4 +152,5 @@ public class MongoResolver implements Callable<MongoResolver> {
         }
         return this;
     }
+
 }

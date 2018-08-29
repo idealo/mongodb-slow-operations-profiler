@@ -179,6 +179,10 @@ In v2.4.0 some new options have been introduced:
 
 ## Version history
 
+* v2.4.1
+   + bugfix: replica sets got not resolved (only sharded clusters and single nodes got resolved)
+   + update: limit number of threads dependent on number of cores when using thread pools
+   + update: default sorting of columns corresponds to the order of the columns from right to left: "label, replSet, status, host, database" instead of the former column sort order "label, replSet, host, status, database"
 * v2.4.0
    + bugfix: the data table of the application status page could sometimes not be loaded du to race conditions and resultant deadlocks
    + new: user relevant log messages (see new option `maxWeblogEntries`) are shown at the bottom of the application status page, which is helpful for example to spot mongod hosts that could not sent a response within the configured `responseTimeoutInMs`
