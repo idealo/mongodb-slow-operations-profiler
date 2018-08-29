@@ -11,6 +11,7 @@ import de.idealo.mongodb.slowops.command.*;
 import de.idealo.mongodb.slowops.dto.CommandResultDto;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
 import de.idealo.mongodb.slowops.dto.TableDto;
+import de.idealo.mongodb.slowops.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,11 +94,13 @@ public class CommandResult extends HttpServlet {
 
     private CommandResultDto executeCommand(ICommand command, List<ProfilingReader> readerList, String mode ){
         final CommandResultDto result = command.getCommandResultDto();
+        final int poolSize = 1 + Math.min(readerList.size(), Util.MAX_THREADS);
+        LOG.info("TableDto poolSize:{} ", poolSize );
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("TableDto-%d")
                 .setDaemon(true)
                 .build();
-        final ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(readerList.size(), threadFactory);
+        final ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(poolSize, threadFactory);
         final List<Future<TableDto>> futureTableList = new ArrayList<>();
         final HashSet<ServerAddress> serverAdresses = new HashSet<ServerAddress>();
         final HashSet<ProfiledServerDto> dbsEntryPoints = new HashSet<ProfiledServerDto>();

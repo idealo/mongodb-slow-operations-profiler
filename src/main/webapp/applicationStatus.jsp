@@ -72,7 +72,7 @@
 						{ "data": "doneJobsHistory.7" }
 					],
 					"paging": false,
-					"order": [[ 1, "asc" ], [ 2, "asc" ],[ 4, "asc" ],[ 5, "asc" ],[ 3, "asc" ]],
+					"order": [[ 1, "asc" ], [ 2, "asc" ],[ 3, "asc" ],[ 4, "asc" ],[ 5, "asc" ]],
 					"columnDefs": columnDefs,
 					"footerCallback": function ( row, data, start, end, display ) {
 						var api = this.api(), data;

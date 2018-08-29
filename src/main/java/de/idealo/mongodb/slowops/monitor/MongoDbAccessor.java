@@ -7,11 +7,13 @@ import com.google.common.collect.Lists;
 import com.mongodb.*;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.UnknownHostException;
+import java.util.List;
 
 
 /**
@@ -60,6 +62,10 @@ public class MongoDbAccessor {
         this.pw = pw;
         this.isSecondaryReadPreferred = isSecondaryReadPreferred;
         init();
+    }
+
+    public CodecRegistry getDefaultCodecRegistry(){
+        return mongo.getDefaultCodecRegistry();
     }
     
     public MongoDatabase getMongoDatabase(String dbName) {
@@ -117,10 +123,11 @@ public class MongoDbAccessor {
            try {
                result = getMongoDatabase(dbName).runCommand((Bson) cmd, isSecondaryReadPreferred ? ReadPreference.secondaryPreferred() : ReadPreference.primaryPreferred());
            }catch (Throwable e){
-               LOG.warn("runCommand failed {} on {}", new Object[]{cmd.toString(), mongo.getConnectPoint()});
+               LOG.warn("runCommand failed {} on {}/{}", new Object[]{cmd.toString(), mongo.getConnectPoint(), dbName});
+               throw e;
            }
            long end = System.currentTimeMillis();
-           LOG.info("runCommand {} execTime in ms: {} on {}", new Object[]{cmd.toString(), (end-start), mongo.getConnectPoint()});
+           LOG.info("runCommand {} execTime in ms: {} on {}/{}", new Object[]{cmd.toString(), (end-start), mongo.getConnectPoint(), dbName});
            return result;
         }
         throw new IllegalStateException("Database not initialized");
@@ -147,16 +154,31 @@ public class MongoDbAccessor {
         
         LOG.info("<<< closeConnections {}", serverAddress);
     }
+
+    //none of both methods is able to fetch all mongod addresses of the whole cluster when router addresses are used to initialize mongo
+    private List<ServerAddress> getAllAddresses(){
+        return mongo.getAllAddress();
+        //return mongo.getServerAddressList();
+    }
     
     
     public static void main(String[] args) throws UnknownHostException {
         //ServerAddress adr = new ServerAddress("localhost:27017");
         //mongo-offerlistservice01-03.db00.pro06.eu.idealo.com:27017
-        ServerAddress adr = new ServerAddress("mongo-offerlistservice01-03.db00.pro06.eu.idealo.com:27017");
-        MongoDbAccessor monitor = new MongoDbAccessor(null, null, adr);
+        //ServerAddress adr = new ServerAddress("mongo-microservices-01.db00.pro06.eu.idealo.com:27017");
+        //ServerAddress adr2 = new ServerAddress("mongo-microservices-02.db00.pro05.eu.idealo.com:27017");
+        ServerAddress adr = new ServerAddress("offerstore-de-mongo-n01.db00.pro00.eu.idealo.com:27017");
+        ServerAddress adr2 = new ServerAddress("offerstore-de-mongo-n02.db00.pro00.eu.idealo.com:27017");
+
+
+        MongoDbAccessor monitor = new MongoDbAccessor(null, null, adr, adr2);
         Document doc = monitor.runCommand("admin", new BasicDBObject("isMaster", "1"));
         LOG.info("doc: {}", doc);
         LOG.info("ismaster: {}",  doc.get("ismaster"));
+
+        for(ServerAddress sa : monitor.getAllAddresses()){
+            LOG.info("adr: {}", sa);
+        }
         monitor.closeConnections();
         
     }
