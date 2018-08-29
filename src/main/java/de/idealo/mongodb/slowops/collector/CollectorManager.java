@@ -12,10 +12,7 @@ import de.idealo.mongodb.slowops.dto.CollectorStatusDto;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
 import de.idealo.mongodb.slowops.jmx.CollectorManagerMBean;
 import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
-import de.idealo.mongodb.slowops.util.ConfigReader;
-import de.idealo.mongodb.slowops.util.MongoResolver;
-import de.idealo.mongodb.slowops.util.ProfilingReaderCreator;
-import de.idealo.mongodb.slowops.util.Terminator;
+import de.idealo.mongodb.slowops.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +37,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class CollectorManager extends Thread implements CollectorManagerMBean {
 
     private static final Logger LOG = LoggerFactory.getLogger(CollectorManager.class);
-    
+
+
     private final BlockingQueue<ProfilingEntry> jobQueue;
     private volatile List<ProfilingReader> readers;
     private ProfilingWriter writer;
@@ -106,11 +104,15 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
      * @param profiledServers
      */
     private void resolveMongodAdresses(List<ProfiledServerDto> profiledServers){
+
+        final int poolSize = 1 + Math.min(2*profiledServers.size(), Util.MAX_THREADS);
+        LOG.info("MongoResolver poolSize:{} ", poolSize );
+
         final ThreadFactory threadFactoryMongoResolver = new ThreadFactoryBuilder()
                 .setNameFormat("MongoResolver-%d")
                 .setDaemon(true)
                 .build();
-        final ExecutorService hostExecutor = Executors.newFixedThreadPool(2*(1+profiledServers.size()), threadFactoryMongoResolver);
+        final ExecutorService hostExecutor = Executors.newFixedThreadPool(poolSize, threadFactoryMongoResolver);
         int maxResponseTimeout = 0;
 
         for (ProfiledServerDto dto : profiledServers) {
@@ -180,12 +182,15 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
             if(maxResponseTimeout < dto.getResponseTimeout()) maxResponseTimeout = dto.getResponseTimeout();
         }
 
+        final int poolSize = 1 + Math.min(2 * profilingReaderCreatorlist.size(), Util.MAX_THREADS);
+        LOG.info("ProfilingReader poolSize:{} ", poolSize );
+
         //start for each resolved mongod host one profiling reader
         final ThreadFactory threadFactoryProfilingReader = new ThreadFactoryBuilder()
                 .setNameFormat("ProfilingReader-%d")
                 .setDaemon(true)
                 .build();
-        final ExecutorService profilingReaderExecutor = Executors.newFixedThreadPool(2*(1+profilingReaderCreatorlist.size()), threadFactoryProfilingReader);
+        final ExecutorService profilingReaderExecutor = Executors.newFixedThreadPool(poolSize, threadFactoryProfilingReader);
 
         for(ProfilingReaderCreator profilingReaderCreator : profilingReaderCreatorlist){
             final Future<ProfilingReader> futureReader = profilingReaderExecutor.submit(profilingReaderCreator);
@@ -328,11 +333,15 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
     private void terminateReadersAndWriters(boolean terminateAll) {
         LOG.info(">>> terminateReadersAndWriters {}", terminateAll );
+
+        final int poolSize = 1 + Math.min(readers.size(), Util.MAX_THREADS);
+        LOG.info("Terminator poolSize:{} ", poolSize );
+
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("Terminator-%d")
                 .setDaemon(true)
                 .build();
-        final ExecutorService terminatorExecutor = Executors.newFixedThreadPool(1 + readers.size(), threadFactory);
+        final ExecutorService terminatorExecutor = Executors.newFixedThreadPool(poolSize, threadFactory);
         final List<Future<Long>> futureTerminatorList = new ArrayList<>();
 
         try {
@@ -529,11 +538,14 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         HashSet<Integer> idSet = new HashSet<Integer>();
         idSet.addAll(idList);
 
+        final int poolSize = 1 + Math.min(2 * Math.max(idList.size(), readers.size()), Util.MAX_THREADS);
+        LOG.info("CollectorStatusDto poolSize:{} ", poolSize );
+
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("CollectorStatusDto-%d")
                 .setDaemon(true)
                 .build();
-        final ExecutorService executorService = Executors.newFixedThreadPool(2 * (idList.size() + 1), threadFactory);//+1 because idList may be empty
+        final ExecutorService executorService = Executors.newFixedThreadPool(poolSize, threadFactory);
 
         int maxResponseTimeout = 0;
         final ConcurrentHashMap<ServerAddress, ProfilingReader> uniqueServerAdresses = new ConcurrentHashMap<ServerAddress, ProfilingReader>();
