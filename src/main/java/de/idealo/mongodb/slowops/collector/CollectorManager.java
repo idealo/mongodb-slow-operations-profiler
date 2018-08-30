@@ -142,12 +142,18 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
         hostExecutor.shutdown();
         long start = System.currentTimeMillis();
+        boolean isTerminated = false;
         try {
-            hostExecutor.awaitTermination(maxResponseTimeout, TimeUnit.MILLISECONDS);
+            isTerminated = hostExecutor.awaitTermination(maxResponseTimeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             LOG.error("Error while awaiting termination of hostExecutor for resolving mongod addresses", e);
         }finally {
-            LOG.error("Waited termination of hostExecutor for {} ms, isTerminated: {}", System.currentTimeMillis()-start, hostExecutor.isTerminated());
+            LOG.error("Waited termination of hostExecutor for {} ms, isTerminated: {}", System.currentTimeMillis()-start, isTerminated);
+            if(!isTerminated){
+                final String errMsg = "Pool of max. "+poolSize+" threads to resolve mongod addresses is going to be closed after max. response timeout of " + maxResponseTimeout + " ms although not all threads have terminated. Add CPU cores or increment response timeout to solve the issue.";
+                LOG.error("{}", errMsg);
+                ApplicationStatusDto.addWebLog(errMsg);
+            }
             hostExecutor.shutdownNow();
         }
     }
@@ -217,12 +223,18 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
         profilingReaderExecutor.shutdown();
         long start = System.currentTimeMillis();
+        boolean isTerminated = false;
         try {
-            profilingReaderExecutor.awaitTermination(maxResponseTimeout, TimeUnit.MILLISECONDS);
+            isTerminated = profilingReaderExecutor.awaitTermination(maxResponseTimeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             LOG.error("Error while awaiting termination of profilingReaderExecutor for starting profiling readers", e);
         }finally {
-            LOG.info("Waited termination of profilingReaderExecutor for {} ms, isTerminated: {}", System.currentTimeMillis()-start, profilingReaderExecutor.isTerminated());
+            LOG.info("Waited termination of profilingReaderExecutor for {} ms, isTerminated: {}", System.currentTimeMillis()-start, isTerminated);
+            if(!isTerminated) {
+                final String errMsg = "Pool of max. " + poolSize + " threads to create profiling readers is going to be closed after max. response timeout of " + maxResponseTimeout + " ms although not all threads have terminated. Add CPU cores or increment response timeout to solve the issue.";
+                LOG.error("{}", errMsg);
+                ApplicationStatusDto.addWebLog(errMsg);
+            }
             profilingReaderExecutor.shutdownNow();
             if(writerMongo!=null) writerMongo.closeConnections();
         }
@@ -604,12 +616,18 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         executorService.shutdown();
 
         long start = System.currentTimeMillis();
+        boolean isTerminated = false;
         try {
-            executorService.awaitTermination(maxResponseTimeout, TimeUnit.MILLISECONDS);
+            isTerminated = executorService.awaitTermination(maxResponseTimeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             LOG.error("Error while awaiting termination of executorService for getting collector statuses", e);
         }finally {
-            LOG.info("Waited termination of CollectorStatusDto executorService for {} ms, isTerminated: {}", System.currentTimeMillis() - start, executorService.isTerminated());
+            LOG.info("Waited termination of CollectorStatusDto executorService for {} ms, isTerminated: {}", System.currentTimeMillis() - start, isTerminated);
+            if(!isTerminated){
+                final String errMsg = "Pool of max. " + poolSize + " threads to get updated server status is going to be closed after max. response timeout of " + maxResponseTimeout + " ms although not all threads have terminated. Add CPU cores or increment response timeout to solve the issue.";
+                LOG.error("{}", errMsg);
+                ApplicationStatusDto.addWebLog(errMsg);
+            }
             executorService.shutdownNow();
         }
 
