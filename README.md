@@ -1,6 +1,6 @@
 # MongoDB slow operation profiler and visualizer
 
-This java web application collects slow operations from a mongoDB system in order to visualize and analyze them.
+This java web application collects and stores slow operations from one or more mongoDB system(s) in order to visualize and analyze them.
 Since v2.0.0 it may be easily extended to an administration tool by implementing commands to be executed against the configured database system(s).
 The initial version of the software has been presented during the [MongoDB User Group Berlin on 4th of June 2013](http://www.meetup.com/MUGBerlin/events/119503502/).
 Slides of the presentation can be found [here](http://www.slideshare.net/Kay1A/slow-ops).
@@ -180,7 +180,7 @@ In v2.4.0 some new options have been introduced:
 ## Version history
 
 * v2.4.2
-   + update: log when thread pool is going to be closed after max. response timeout although not all threads have terminated
+   + update: log at the bottom of the application status page when thread pool is going to be closed after max. response timeout although not all threads have terminated. This may be especially relevant if many mongoDB systems with many databases are to be profiled because for each of them one thread is getting server status updates (e.g. if the database profiler is running or stopped). However, if the webserver is limited in CPU cores, it can't handle all threads in parallel within the given max. response timeout. In such cases the user is now informed that not all threads could terminate, and hence the application status page might be incomplete. Adding more CPU cores, incrementing the max. response timeout (see options `responseTimeoutInMs` and `defaultResponseTimeoutInMs`) or profiling quicker responding or fewer mongoDB servers will alleviate or even avoid this issue.
 * v2.4.1
    + bugfix: replica sets got not resolved (only sharded clusters and single nodes got resolved)
    + update: limit number of threads dependent on number of cores when using thread pools
