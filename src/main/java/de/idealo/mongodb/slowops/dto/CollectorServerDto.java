@@ -15,17 +15,20 @@ public class CollectorServerDto {
     private String collection;
     private String adminUser;
     private String adminPw;
+    private boolean ssl;
 
     public CollectorServerDto(@JsonProperty("hosts") ServerAddress[] hosts,
                               @JsonProperty("db") String db,
                               @JsonProperty("collection") String collection,
                               @JsonProperty("adminUser") String adminUser,
-                              @JsonProperty("adminPw") String adminPw) {
+                              @JsonProperty("adminPw") String adminPw,
+                              @JsonProperty("ssl") boolean ssl) {
         this.hosts = hosts;
         this.db = db;
         this.collection = collection;
         this.adminUser = adminUser;
         this.adminPw = adminPw;
+        this.ssl = ssl;
     }
 
     public ServerAddress[] getHosts() {
@@ -68,6 +71,14 @@ public class CollectorServerDto {
         this.adminPw = adminPw;
     }
 
+    public boolean getSsl() {
+        return ssl;
+    }
+
+    public void setSsl(boolean ssl) {
+        this.ssl = ssl;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -79,6 +90,7 @@ public class CollectorServerDto {
         if (!Arrays.equals(hosts, that.hosts)) return false;
         if (!db.equals(that.db)) return false;
         if (!collection.equals(that.collection)) return false;
+        if (ssl != that.ssl) return false;
         if (adminUser != null ? !adminUser.equals(that.adminUser) : that.adminUser != null) return false;
         return adminPw != null ? adminPw.equals(that.adminPw) : that.adminPw == null;
 

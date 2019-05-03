@@ -6,6 +6,8 @@ package de.idealo.mongodb.slowops.monitor;
 import com.google.common.collect.Lists;
 import com.mongodb.*;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
+import com.mongodb.util.JSON;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -37,29 +39,31 @@ public class MongoDbAccessor {
     private final int connectTimeout;
     private final String user;
     private final String pw;
+    private final boolean ssl;
     private final boolean isSecondaryReadPreferred;
     private MongoClient mongo;
 
     
     
     private MongoDbAccessor(){
-        this(-1, -1, false, null, null, null);
+        this(-1, -1, false, null, null, false, null);
     };
     
-    public MongoDbAccessor(String user, String pw, ServerAddress ... serverAddress){
-        this(-1, -1, false, user, pw, serverAddress);
+    public MongoDbAccessor(String user, String pw, boolean ssl, ServerAddress ... serverAddress){
+        this(-1, -1, false, user, pw, ssl, serverAddress);
     }
 
-    public MongoDbAccessor(int socketTimeout, int connectTimeout, String user, String pw, ServerAddress ... serverAddress){
-        this(socketTimeout, connectTimeout, false, user, pw, serverAddress);
+    public MongoDbAccessor(int socketTimeout, int connectTimeout, String user, String pw, boolean ssl, ServerAddress ... serverAddress){
+        this(socketTimeout, connectTimeout, false, user, pw, ssl, serverAddress);
     }
     
-    public MongoDbAccessor(int socketTimeout, int connectTimeout, boolean isSecondaryReadPreferred, String user, String pw, ServerAddress ... serverAddress){
+    public MongoDbAccessor(int socketTimeout, int connectTimeout, boolean isSecondaryReadPreferred, String user, String pw, boolean ssl, ServerAddress ... serverAddress){
         this.serverAddress = serverAddress;
         this.socketTimeout = socketTimeout<0? DEFAULT_SOCKET_TIMEOUT_MS :socketTimeout;
         this.connectTimeout = connectTimeout<0? DEFAULT_CONNECT_TIMEOUT_MS :connectTimeout;
         this.user = user;
         this.pw = pw;
+        this.ssl = ssl;
         this.isSecondaryReadPreferred = isSecondaryReadPreferred;
         init();
     }
@@ -86,6 +90,8 @@ public class MongoDbAccessor {
             		//readPreference(isSecondaryReadPreferred?ReadPreference.secondaryPreferred():ReadPreference.primaryPreferred()).
                     readPreference(ReadPreference.primaryPreferred()).
                     writeConcern(WriteConcern.ACKNOWLEDGED).
+                    sslEnabled(ssl).
+                    sslInvalidHostNameAllowed(true).
                     socketKeepAlive(true).
             		build();
 
@@ -160,18 +166,41 @@ public class MongoDbAccessor {
         return mongo.getAllAddress();
         //return mongo.getServerAddressList();
     }
-    
+
+    private void find(String dbName, String collName, int limit){
+
+        final MongoIterable<Document> res = getMongoDatabase(dbName).getCollection(collName)
+                .find()
+                .limit(limit);
+
+        if(res != null){
+            for(Document doc : res){
+                LOG.info("doc: {}", JSON.serialize(doc));
+            }
+        }
+
+    }
     
     public static void main(String[] args) throws UnknownHostException {
         //ServerAddress adr = new ServerAddress("localhost:27017");
         //mongo-offerlistservice01-03.db00.pro06.eu.idealo.com:27017
         //ServerAddress adr = new ServerAddress("mongo-microservices-01.db00.pro06.eu.idealo.com:27017");
         //ServerAddress adr2 = new ServerAddress("mongo-microservices-02.db00.pro05.eu.idealo.com:27017");
-        ServerAddress adr = new ServerAddress("offerstore-de-mongo-n01.db00.pro00.eu.idealo.com:27017");
-        ServerAddress adr2 = new ServerAddress("offerstore-de-mongo-n02.db00.pro00.eu.idealo.com:27017");
+        //ServerAddress adr = new ServerAddress("offerstore-de-mongo-n01.db00.pro00.eu.idealo.com:27017");
+        //ServerAddress adr2 = new ServerAddress("offerstore-de-mongo-n02.db00.pro00.eu.idealo.com:27017");
+        //ServerAddress adr = new ServerAddress("localhost:32846");
+
+        //previously todo: keytool -importcert -file /Users/kay.agahd/Downloads/ca-idealo-intern-2020.crt -keystore cacerts
+        System.setProperty("javax.net.ssl.trustStore", "/Library/Java/JavaVirtualMachines/jdk-11.0.2.jdk/Contents/Home/lib/security/cacerts");
+        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+        ServerAddress adr = new ServerAddress("mongo-charlie01-01.db00.tst05.eu.idealo.com:27017");
+        MongoDbAccessor monitor = new MongoDbAccessor(1000, 1000, "admin", "<ADMINPW>", true, adr);
+
+        //MongoDbAccessor monitor = new MongoDbAccessor(null, null, adr, adr2);
+        //MongoDbAccessor monitor = new MongoDbAccessor("kay", "123", adr);
+        //monitor.find("offerStore", "test", 2);
 
 
-        MongoDbAccessor monitor = new MongoDbAccessor(null, null, adr, adr2);
         Document doc = monitor.runCommand("admin", new BasicDBObject("isMaster", "1"));
         LOG.info("doc: {}", doc);
         LOG.info("ismaster: {}",  doc.get("ismaster"));

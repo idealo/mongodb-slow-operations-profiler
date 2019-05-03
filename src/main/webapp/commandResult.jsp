@@ -21,7 +21,6 @@
             var header = <%= commandResult.getTableHeaderAsDatatableJson() %>;
             var ds = <%= commandResult.getTableBodyAsJson() %>;
 
-
             $(document).ready(function() {
                 $('#main').DataTable( {
                     data: ds.content,
@@ -29,7 +28,10 @@
                     "columnDefs": [
                         {
                             "render": function ( data, type, row ) {
-                                return "<pre>"+JSON.stringify(JSON.parse(data), undefined, 4)+"</pre>";
+                                if(data) {
+                                    return "<pre>" + JSON.stringify(JSON.parse(data), undefined, 4) + "</pre>";
+                                }
+                                return "";
                             }<%= commandResult.getJsonFormattedColumnAsDatatableCode() %>
                         }
                     ]

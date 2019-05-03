@@ -198,7 +198,8 @@ public class ConfigReader {
                 getString(doc, "collector.db", "profiling"),
                 getString(doc, "collector.collection", "slowops"),
                 getString(doc, "collector.adminUser", null),
-                getString(doc, "collector.adminPw", null)
+                getString(doc, "collector.adminPw", null),
+                getBoolean(doc, "collector.ssl", false)
         );
     }
 
@@ -229,6 +230,7 @@ public class ConfigReader {
                     nsList.toArray(new String[]{}),
                     getString(serverDoc, "adminUser", null),
                     getString(serverDoc, "adminPw", null),
+                    getBoolean(serverDoc, "ssl", false),
                     getLong(serverDoc, "slowMS", ConfigReader.getLong(doc, Util.DEFAULT_SLOW_MS, MongoDbAccessor.DEFAULT_SLOW_MS)),
                     (int)getLong(serverDoc, "responseTimeoutInMs", getLong(doc, Util.DEFAULT_RESPONSE_TIMEOUT_IN_MS, MongoDbAccessor.DEFAULT_CONNECT_TIMEOUT_MS))
             );

@@ -31,7 +31,7 @@ public class CmdCurrentOp implements ICommand {
                 "secs running",
                 "op",
                 "ns",
-                "query",
+                "command",
                 "planSummary",
                 "numYield",
                 "active"));
@@ -58,10 +58,10 @@ public class CmdCurrentOp implements ICommand {
                             row.add(profiledServerDto.getLabel());
                             row.add("" + entryDoc.get("opid"));
                             row.add(entryDoc.getLong("microsecs_running"));
-                            row.add(entryDoc.getInteger("secs_running"));
+                            row.add(entryDoc.getLong("secs_running"));
                             row.add(entryDoc.getString("op"));
                             row.add(entryDoc.getString("ns"));
-                            row.add(getJson(entryDoc, "query"));
+                            row.add(getJson(entryDoc, "command"));
                             row.add(entryDoc.getString("planSummary"));
                             row.add(entryDoc.getInteger("numYields", -1));
                             row.add(entryDoc.getBoolean("active"));
