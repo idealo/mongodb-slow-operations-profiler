@@ -27,6 +27,7 @@ public class ProfiledServerDto {
     private String[] ns;
     private String adminUser;
     private String adminPw;
+    private boolean ssl;
     private long slowMs;
     private int responseTimeout;
     private HashSet<ServerAddress> resolvedHosts;
@@ -35,13 +36,14 @@ public class ProfiledServerDto {
     private final Lock readLock = globalLock.readLock();
     private final Lock writeLock = globalLock.writeLock();
 
-    public ProfiledServerDto(boolean enabled, String label, ServerAddress[] hosts, String[] ns, String adminUser, String adminPw, long slowMs, int responseTimeout) {
+    public ProfiledServerDto(boolean enabled, String label, ServerAddress[] hosts, String[] ns, String adminUser, String adminPw, boolean ssl, long slowMs, int responseTimeout) {
         this.enabled = enabled;
         this.label = label;
         this.hosts = hosts;
         this.ns = ns;
         this.adminUser = adminUser;
         this.adminPw = adminPw;
+        this.ssl = ssl;
         this.slowMs = slowMs;
         this.responseTimeout = responseTimeout;
         this.resolvedHosts = new HashSet<ServerAddress>();
@@ -129,6 +131,12 @@ public class ProfiledServerDto {
 
     public void setAdminPw(String adminPw) { this.adminPw = adminPw; }
 
+    public boolean getSsl() {
+        return ssl;
+    }
+
+    public void setSsl(boolean ssl) { this.ssl = ssl; }
+
     public long getSlowMs() { return slowMs; }
 
     public void setSlowMs(long slowMs) { this.slowMs = slowMs; }
@@ -177,6 +185,7 @@ public class ProfiledServerDto {
         result = 31 * result + Arrays.hashCode(ns);
         result = 31 * result + (adminUser != null ? adminUser.hashCode() : 0);
         result = 31 * result + (adminPw != null ? adminPw.hashCode() : 0);
+        result = 31 * result + (Boolean.hashCode(ssl));
         result = 31 * result + (int) (slowMs ^ (slowMs >>> 32));
         result = 31 * result + (responseTimeout ^ (responseTimeout >>> 32));
         return result;

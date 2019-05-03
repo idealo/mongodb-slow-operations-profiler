@@ -117,7 +117,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
         for (ProfiledServerDto dto : profiledServers) {
             //use all hosts of the dto to let mongo-driver figure out which one is working to get all mongod addresses
-            final MongoResolver mongoResolver = new MongoResolver(-1, dto.getResponseTimeout(), dto.getAdminUser(), dto.getAdminPw(), dto.getHosts());
+            final MongoResolver mongoResolver = new MongoResolver(-1, dto.getResponseTimeout(), dto.getAdminUser(), dto.getAdminPw(), dto.getSsl(), dto.getHosts());
             final Future<MongoResolver> futureMongoResolver = hostExecutor.submit(mongoResolver);
 
             //get the result of the future by a separate thread within responseTimeout
@@ -653,7 +653,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
         CollectorServerDto dto = getCollectorServerDto();
         if(dto != null){
-            result.setCollectorServerDto(new CollectorServerDto(dto.getHosts(), dto.getDb(), dto.getCollection(), "", ""));//omit user/pw
+            result.setCollectorServerDto(new CollectorServerDto(dto.getHosts(), dto.getDb(), dto.getCollection(), "", "", dto.getSsl()));//omit user/pw
         }
 
         result.setNumberOfReads(getNumberOfReads());

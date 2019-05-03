@@ -32,9 +32,9 @@ public class CommandExecutor implements Callable<TableDto> {
     	MongoDbAccessor mongoDbAccessor = null;
     	try {
     		if(serverAdress!=null){
-                mongoDbAccessor = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), serverAdress);
+                mongoDbAccessor = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), profiledServerDto.getSsl(), serverAdress);
             }else{
-                mongoDbAccessor = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), profiledServerDto.getHosts());
+                mongoDbAccessor = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), profiledServerDto.getSsl(), profiledServerDto.getHosts());
             }
 
 			return command.runCommand(profiledServerDto, mongoDbAccessor);

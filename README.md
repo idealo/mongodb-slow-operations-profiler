@@ -3,7 +3,7 @@
 This java web application collects and stores slow operations from one or more mongoDB system(s) in order to visualize and analyze them.
 Since v2.0.0 it may be easily extended to an administration tool by implementing commands to be executed against the configured database system(s).
 The initial version of the software has been presented during the [MongoDB User Group Berlin on 4th of June 2013](http://www.meetup.com/MUGBerlin/events/119503502/).
-Slides of the presentation can be found [here](http://www.slideshare.net/Kay1A/slow-ops).
+Slides of the presentation can be found [here](http://www.slideshare.net/Kay1A/slow-ops). Version 2.4 has been presented in November 2018 at the [Percona Live Europe Conference](https://www.percona.com/live/e18/sessions/how-to-visually-spot-and-analyze-slow-mongodb-operations).
 
 The following first screenshot demonstrates how slow operations are visualized in the diagram: The higher a point or circle on the y-axis, the slower was the execution time of this operation. The greater the diameter of the circle, the more slow operations of this type were executed at this time.
 
@@ -116,10 +116,11 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
     "db":"profiling",
     "collection":"slowops",
     "adminUser":"",
-    "adminPw":""
+    "adminPw":"",
+    "ssl":false
   },
   "profiled":[
-    { "enabled": false,
+    { "enabled":false,
       "label":"dbs foo",
       "hosts":["someHost1:27017",
                "someHost2:27017",
@@ -127,8 +128,9 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
       "ns":["someDatabase.someCollection", "anotherDatabase.anotherCollection"],
       "adminUser":"",
       "adminPw":"",
+      "ssl":false,
       "slowMS":250,
-      "responseTimeoutInMs": 2000
+      "responseTimeoutInMs":2000
     },
     { "enabled": false,
       "label":"dbs bar",
@@ -136,15 +138,16 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
       "ns":["someDatabase.someCollection", "anotherDatabase.*"],
       "adminUser":"",
       "adminPw":"",
+      "ssl":false,
       "slowMS":250,
-      "responseTimeoutInMs": 2000
+      "responseTimeoutInMs":2000
     }
   ],
   "yAxisScale":"milliseconds",
   "adminToken":"mySecureAdminToken",
-  "defaultSlowMS" : 100,
-  "defaultResponseTimeoutInMs" : 2000,
-  "maxWeblogEntries" : 100
+  "defaultSlowMS":100,
+  "defaultResponseTimeoutInMs":2000,
+  "maxWeblogEntries":100
 }
 ```
 This example configuration defines first the `collector` running as a replica set consisting of 3 members on hosts "myCollectorHost_member[1|2|3]" on port 27017, using the collection "slowops" of database "profiling". Both `adminUser` and `adminPw` are empty because the mongodb instance runs without authentication. If mongod runs with authentication, the user must exist for the admin database with role "root".
@@ -162,6 +165,7 @@ Fields of `profiled` entries explained:
   * `*.*` collects from all collections from all databases
 * `adminUser`= if authentication is enabled, name of the user for database "admin" having role "root"
 * `adminPw`= if authentication is enabled, passwort of the user
+* `ssl`= if set to `true`, use ssl to connect to the server
 * `slowMS`= threshold of slow operations in milliseconds
 * `responseTimeoutInMs`= response timeout in ms
 
@@ -179,6 +183,10 @@ In v2.4.0 some new options have been introduced:
 
 ## Version history
 
+* v2.5.0
+   + new option: a boolean `ssl` (default: `false`) for `collector` and `profiled` entries in order to connect using ssl
+   + bugfix: `index access stats` command did not work anymore for newer versions of mongodb because some databases (admin, config, local) and collections (system.profile) are not allowed to be targeted
+   + bugfix: `current op` command did not work for newer mongodb versions because the output format has changed. This is also the reason that the whole `command` is now shown instead of `query`. The latter seems to be obsolete for newer mongodb versions. `command` is much more verbose than `query` and may/should be itemized in the future to fit better the tabular structure. The `command` output is json-formatted as before done with `query`.
 * v2.4.2
    + update: log at the bottom of the application status page when thread pool is going to be closed after max. response timeout although not all threads have terminated. This may be especially relevant if many mongoDB systems with many databases are to be profiled because for each of them one thread is getting server status updates (e.g. if the database profiler is running or stopped). However, if the webserver is limited in CPU cores, it can't handle all threads in parallel within the given max. response timeout. In such cases the user is now informed that not all threads could terminate, and hence the application status page might be incomplete. Adding more CPU cores, incrementing the max. response timeout (see options `responseTimeoutInMs` and `defaultResponseTimeoutInMs`) or profiling quicker responding or fewer mongoDB servers will alleviate or even avoid this issue.
 * v2.4.1
