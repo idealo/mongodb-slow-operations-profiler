@@ -7,7 +7,8 @@
     "db":"profiling",
     "collection":"slowops",
     "adminUser":"",
-    "adminPw":""
+    "adminPw":"",
+    "ssl":false
   },
   "profiled":[
     { "enabled": false,
@@ -21,6 +22,7 @@
         "anotherDatabase.anotherCollection"],
       "adminUser":"",
       "adminPw":"",
+      "ssl":false,
       "slowMS":250,
       "responseTimeoutInMs": 1500
     },
@@ -33,6 +35,7 @@
         "*.myCollection"],
       "adminUser":"",
       "adminPw":"",
+      "ssl":false,
       "slowMS":250,
       "responseTimeoutInMs": 3000
     },
@@ -42,6 +45,7 @@
       "ns":["*.*"],
       "adminUser":"",
       "adminPw":"",
+      "ssl":true,
       "slowMS":250,
       "responseTimeoutInMs": 3000
     }

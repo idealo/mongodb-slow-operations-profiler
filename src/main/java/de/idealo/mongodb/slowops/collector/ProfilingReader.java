@@ -171,7 +171,7 @@ public class ProfilingReader extends Thread implements Terminable{
     }
 
     public MongoDbAccessor getMongoDbAccessor() {
-        return new MongoDbAccessor(-1, profiledServerDto.getResponseTimeout(), profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), serverAddress);
+        return new MongoDbAccessor(-1, profiledServerDto.getResponseTimeout(), profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), profiledServerDto.getSsl(), serverAddress);
     }
 
 
@@ -475,7 +475,7 @@ public class ProfilingReader extends Thread implements Terminable{
         final ServerAddress address =  new ServerAddress("localhost",27017);
 
         BlockingQueue<ProfilingEntry> jobQueue = new LinkedBlockingQueue<ProfilingEntry>();
-        ProfiledServerDto dto = new ProfiledServerDto(true, "some label", new ServerAddress[]{new ServerAddress("127.0.0.1:27017")}, new String[]{"offerStore.*"}, null, null, 0, 2000);
+        ProfiledServerDto dto = new ProfiledServerDto(true, "some label", new ServerAddress[]{new ServerAddress("127.0.0.1:27017")}, new String[]{"offerStore.*"}, null, null, false, 0, 2000);
         ProfilingReader reader = new ProfilingReader(0, jobQueue, address, null, dto, "offerStore", Lists.newArrayList("*"), false, 0, 0);
         reader.start();
         //reader.setSlowMs(1, 3);

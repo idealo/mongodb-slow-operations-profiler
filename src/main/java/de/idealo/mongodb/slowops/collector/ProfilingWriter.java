@@ -70,7 +70,7 @@ public class ProfilingWriter extends Thread implements Terminable{
 
 
     public MongoDbAccessor getMongoDbAccessor(){
-        return new MongoDbAccessor(serverDto.getAdminUser(), serverDto.getAdminPw(), serverDto.getHosts());
+        return new MongoDbAccessor(serverDto.getAdminUser(), serverDto.getAdminPw(), serverDto.getSsl(), serverDto.getHosts());
     }
 
     private MongoCollection<Document> getProfileCollection(MongoDbAccessor mongo){

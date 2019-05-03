@@ -57,9 +57,11 @@ public class CmdIdxAccessStats implements ICommand {
                             final Document entryDoc = (Document) entry;
                             final List<Object> row = Lists.newArrayList();
                             final String dbName = entryDoc.getString("name");
-                            final TableDto idxStats = getIndexStats(mongoDbAccessor, profiledServerDto.getLabel(), dbName);
+                            if(!"admin".equals(dbName) && !"config".equals(dbName) && !"local".equals(dbName)) {
+                                final TableDto idxStats = getIndexStats(mongoDbAccessor, profiledServerDto.getLabel(), dbName);
 
-                            table.addRows(idxStats);
+                                table.addRows(idxStats);
+                            }
                         }
                     }
                 }
@@ -85,8 +87,10 @@ public class CmdIdxAccessStats implements ICommand {
 
         if(collNames != null){
             for(String collName : collNames){
-                final TableDto collStats = getIndexStats(mongoDbAccessor, dbsLabel, dbName, collName);
-                result.addRows(collStats);
+                if(!"system.profile".equals(collName)) {
+                    final TableDto collStats = getIndexStats(mongoDbAccessor, dbsLabel, dbName, collName);
+                    result.addRows(collStats);
+                }
             }
         }
         return result;

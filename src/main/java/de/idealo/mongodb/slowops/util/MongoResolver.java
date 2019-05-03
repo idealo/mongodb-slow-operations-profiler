@@ -21,6 +21,7 @@ public class MongoResolver implements Callable<MongoResolver> {
 
     private final String adminUser;
     private final String adminPassword;
+    private final boolean ssl;
     private final ServerAddress[] serverAddress;
     private int socketTimeout;
     private int responseTimeout;
@@ -28,14 +29,15 @@ public class MongoResolver implements Callable<MongoResolver> {
     private List<String> resolvedDatabases;
 
 
-    public MongoResolver(String adminUser, String adminPassword, ServerAddress serverAddress) {
-        this(-1, -1, adminUser, adminPassword, serverAddress);
+    public MongoResolver(String adminUser, String adminPassword, boolean ssl, ServerAddress serverAddress) {
+        this(-1, -1, adminUser, adminPassword, ssl, serverAddress);
     }
 
 
-    public MongoResolver(int socketTimeout, int responseTimeout, String adminUser, String adminPassword, ServerAddress... serverAddress) {
+    public MongoResolver(int socketTimeout, int responseTimeout, String adminUser, String adminPassword, boolean ssl, ServerAddress... serverAddress) {
         this.adminUser = adminUser;
         this.adminPassword = adminPassword;
+        this.ssl = ssl;
         this.serverAddress = serverAddress;
         this.socketTimeout = socketTimeout;
         this.responseTimeout = responseTimeout;
@@ -139,7 +141,7 @@ public class MongoResolver implements Callable<MongoResolver> {
 
     @Override
     public MongoResolver call() throws Exception {
-        final MongoDbAccessor mongo = new MongoDbAccessor(socketTimeout, responseTimeout, adminUser, adminPassword, serverAddress);
+        final MongoDbAccessor mongo = new MongoDbAccessor(socketTimeout, responseTimeout, adminUser, adminPassword, ssl, serverAddress);
 
         try {
             resolvedHosts.addAll(resolveMongodAddresses(mongo));
