@@ -571,9 +571,10 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
                         public void run() {
                             final MongoDbAccessor mongo = reader.getMongoDbAccessor();
                             try {
-                                //update only once the replSet status for all profilingReaders having unique serverAddresses
+                                //update only once the replSet status and host info for all profilingReaders having unique serverAddresses
                                 if (uniqueServerAdresses.putIfAbsent(reader.getServerAddress(), reader) == null) {
                                     reader.updateReplSetStatus(mongo);
+                                    reader.updateHostInfo(mongo);
                                 }
                                 reader.updateProfileStatus(mongo);
                             }finally {

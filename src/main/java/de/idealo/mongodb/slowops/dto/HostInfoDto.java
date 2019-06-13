@@ -19,12 +19,15 @@ public class HostInfoDto {
     private int maxOpenFiles;
     private long pageSize;
     private boolean numaEnabled;
+    private String hostName;
     private String osName;
     private String osVersion;
     private String versionString;
     private String libcVersion;
     private String kernelVersion;
-    private String cpuFreqMHz;
+    private long cpuFreqMHz;
+    private String cpuArch;
+    private String mongodbVersion;
     
     /**
      * @return the memSizeMB
@@ -98,6 +101,15 @@ public class HostInfoDto {
     public void setNumaEnabled(boolean numaEnabled) {
         this.numaEnabled = numaEnabled;
     }
+
+    public String getHostName() {
+        return hostName;
+    }
+
+    public void setHostName(String hostName) {
+        this.hostName = hostName;
+    }
+
     /**
      * @return the osName
      */
@@ -161,16 +173,28 @@ public class HostInfoDto {
     /**
      * @return the cpuFreqMHz
      */
-    public String getCpuFreqMHz() {
+    public long getCpuFreqMHz() {
         return cpuFreqMHz;
     }
     /**
      * @param cpuFreqMHz the cpuFreqMHz to set
      */
-    public void setCpuFreqMHz(String cpuFreqMHz) {
+    public void setCpuFreqMHz(long cpuFreqMHz) {
         this.cpuFreqMHz = cpuFreqMHz;
     }
-    
-    
 
+    public String getCpuArch() {
+        return this.cpuArch;
+    }
+    public void setCpuArch(String cpuArch) {
+        this.cpuArch = cpuArch;
+    }
+
+    public String getMongodbVersion() {
+        return this.mongodbVersion;
+    }
+
+    public void setMongodbVersion(String mongodbVersion) {
+        this.mongodbVersion = mongodbVersion;
+    }
 }
