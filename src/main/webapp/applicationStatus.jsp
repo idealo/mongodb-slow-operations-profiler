@@ -22,6 +22,10 @@
 					{"visible":true, "name": "ReplSet"},
 					{"visible":true, "name": "Status"},
 					{"visible":true, "name": "Host"},
+					{"visible":true, "name": "NumCores"},
+					{"visible":true, "name": "CpuFreqMHz"},
+					{"visible":true, "name": "MemSizeMB"},
+					{"visible":true, "name": "Mongodb"},
 					{"visible":true, "name": "Database"},
 					{"visible":true, "name": "Collections"},
 					{"visible":true, "name": "SlowMs"},
@@ -56,6 +60,10 @@
 						{ "data": "replSetName" },
 						{ "data": "replSetStatus" },
 						{ "data": "serverAddressAsString" },
+						{ "data": "numCores" },
+						{ "data": "cpuFreqMHz" },
+						{ "data": "memSizeMB" },
+						{ "data": "mongodbVersion" },
 						{ "data": "database" },
 						{ "data": "collections", "render" : "[, ]"},//create a comma separated list from an array of objects
 						{ "data": "slowMs" },
@@ -72,7 +80,7 @@
 						{ "data": "doneJobsHistory.7" }
 					],
 					"paging": false,
-					"order": [[ 1, "asc" ], [ 2, "asc" ],[ 3, "asc" ],[ 4, "asc" ],[ 5, "asc" ]],
+					"order": [[ 1, "asc" ], [ 2, "asc" ],[ 3, "asc" ],[ 4, "asc" ],[ 9, "asc" ]],
 					"columnDefs": columnDefs,
 					"footerCallback": function ( row, data, start, end, display ) {
 						var api = this.api(), data;
@@ -80,25 +88,25 @@
 						var intVal = function ( i ) {
 							return typeof i === 'string' ? i.replace(/[\$,]/g, '')*1 : typeof i === 'number' ? i : 0;
 						};
-						if(api.column( 11 ).data().length) {//don't compute sum on initial draw before data is loaded
+						if(api.column( 15 ).data().length) {//don't compute sum on initial draw before data is loaded
 							// Total over current page so that search results reflect the sum
-							var total1 = api.column( 11, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total2 = api.column( 12, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total3 = api.column( 13, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total4 = api.column( 14, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total5 = api.column( 15, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total6 = api.column( 16, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total7 = api.column( 17, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total8 = api.column( 18, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total1 = api.column( 15, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total2 = api.column( 16, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total3 = api.column( 17, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total4 = api.column( 18, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total5 = api.column( 19, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total6 = api.column( 20, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total7 = api.column( 21, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total8 = api.column( 22, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
 							// Update footer
-							$( api.column( 11 ).footer() ).html('Sum #SlowOps: '+ $.number(total1, 0, ".", ","));
-							$( api.column( 12 ).footer() ).html('Sum #10sec: '+ $.number(total2, 0, ".", ","));
-							$( api.column( 13 ).footer() ).html('Sum #1Min: '+ $.number(total3, 0, ".", ","));
-							$( api.column( 14 ).footer() ).html('Sum #10Min: '+ $.number(total4, 0, ".", ","));
-							$( api.column( 15 ).footer() ).html('Sum #30Min: '+ $.number(total5, 0, ".", ","));
-							$( api.column( 16 ).footer() ).html('Sum #1Hour: '+ $.number(total6, 0, ".", ","));
-							$( api.column( 17 ).footer() ).html('Sum #12Hours: '+ $.number(total7, 0, ".", ","));
-							$( api.column( 18 ).footer() ).html('Sum #1Day: '+ $.number(total8, 0, ".", ","));
+							$( api.column( 15 ).footer() ).html('Sum #SlowOps: '+ $.number(total1, 0, ".", ","));
+							$( api.column( 16 ).footer() ).html('Sum #10sec: '+ $.number(total2, 0, ".", ","));
+							$( api.column( 17 ).footer() ).html('Sum #1Min: '+ $.number(total3, 0, ".", ","));
+							$( api.column( 18 ).footer() ).html('Sum #10Min: '+ $.number(total4, 0, ".", ","));
+							$( api.column( 19 ).footer() ).html('Sum #30Min: '+ $.number(total5, 0, ".", ","));
+							$( api.column( 20 ).footer() ).html('Sum #1Hour: '+ $.number(total6, 0, ".", ","));
+							$( api.column( 21 ).footer() ).html('Sum #12Hours: '+ $.number(total7, 0, ".", ","));
+							$( api.column( 22 ).footer() ).html('Sum #1Day: '+ $.number(total8, 0, ".", ","));
 						}
 					},
 					"drawCallback": function ( settings ) {
@@ -200,6 +208,7 @@
                 $(".infoCurrentOps").tooltip({content:function(){return $("#infoCurrentOpsContent").html();}});
                 $(".infoListDbs").tooltip({content:function(){return $("#infoListDbsContent").html();}});
                 $(".infoIdxAccStats").tooltip({content:function(){return $("#infoIdxAccStatsContent").html();}});
+				$(".infoHostinfo").tooltip({content:function(){return $("#infoHostinfoContent").html();}});
                 $(".infoCollecting").tooltip({content:function(){return $("#infoCollectingContent").html();}});
 
 			} );
@@ -498,6 +507,7 @@ Status of <span id="clr_refresh_quantity"></span> mongod's refreshed at: <span i
                 <td class='infoCurrentOps'><a href="javascript:singleAction('cops');">current ops</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
                 <td class='infoListDbs'><a href="javascript:singleAction('lsdbs');">list db.collections</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
                 <td class='infoIdxAccStats'><a href="javascript:singleAction('idxacc');">index access stats</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
+				<td class='infoHostinfo'><a href="javascript:singleAction('hostinfo');">host info</a>&nbsp;<img src='img/info.gif' alt='info' title='info'></td>
                 <%  if(isAdmin){ %>
                 <td>
                     <table>
@@ -518,7 +528,7 @@ Status of <span id="clr_refresh_quantity"></span> mongod's refreshed at: <span i
             </tr>
 			<tr>
 				<td colspan="2">&nbsp;</td>
-				<td colspan="3">
+				<td colspan="4">
 					run command against:
 					<input type="radio" name="mode" value="dbs" <%=!"mongod".equals(request.getParameter("mode"))?"checked":""%>> dbs of selected node(s)
 					<input type="radio" name="mode" value="mongod" <%="mongod".equals(request.getParameter("mode"))?"checked":""%>> selected node(s)
@@ -550,6 +560,7 @@ Last log messages:<br>
 <span id="infoCurrentOpsContent" style="display:none">Show all current running operations of the selected node(s).</span>
 <span id="infoListDbsContent" style="display:none">Show all databases and their collections of the selected node(s).</span>
 <span id="infoIdxAccStatsContent" style="display:none">Show index access statistics of all databases and their collections of the selected node(s).<br><b>Attention</b>: May slow down the database system, especially if the database system has many collections and indexes!<br><b>Use with care!</b></span>
+<span id="infoHostinfoContent" style="display:none">Show info about the host.<br>Choose whether the command should be run against the DBS of the selected nodes (i.e. only router) or against all selected nodes (mongod's).</span>
 <span id="infoCollectingContent" style="display:none">Start or stop collecting slow operations of the selected node(s).</span>
 <span id="infoSlowMsContent" style="display:none">Set the treshold in milliseconds for operations to be profiled. Low slowMs values may slow down both the profiled mongod('s) and also the collector because more slow operations need to be read and written.<br>Negative values stop, positive values start profiling. A value of 0 will result in profiling <b>all</b> operations.</span>
 <span id="infoConfigContent" style="display:none">Apply a new configuration. Uploading a new config may be slow if many "profiled"-entries changed because all server addresses of a changed entry need to be resolved and will be (re)started.<br>The uploaded configuration is not persisted server side and will be lost upon webapp restart.</span>

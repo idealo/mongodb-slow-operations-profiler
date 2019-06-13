@@ -65,6 +65,8 @@ public class CommandResult extends HttpServlet {
                         command = new CmdListDbCollections();
                     }else if("idxacc".equals(cmd)){
                         command = new CmdIdxAccessStats();
+                    }else if("hostinfo".equals(cmd)){
+                        command = new CmdHostInfo();
                     }
 
                     result = executeCommand(command, readerList, mode);

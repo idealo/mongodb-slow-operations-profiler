@@ -67,6 +67,7 @@ Since v2.0.0. you may execute **commands** against the selected database system(
 + list databases and their collections
 + show currently running operations (requires mongodb v3.2 or newer)
 + show index access statistics of all databases and their collections (requires mongodb v3.2 or newer)
++ show host info such as, mongodb version, operating system, kernel & libc version, CPU info (number of cores, MHz, architecture), amount of RAM, Numa enabled, page size, number of pages, max open files
 
 The command result is shown in a new page in a filterable table. Columns are sortable as well, so you can detect immediately spikes. **Hint:** Hold shift key pressed while clicking the column headers in order to sort multiple columns.
 
@@ -183,6 +184,10 @@ In v2.4.0 some new options have been introduced:
 
 ## Version history
 
+
+* v2.5.1
+   + new: data table of the application status page has added some important host info such as CPU frequency, number of cores, amount of RAM and mongodb version. This is helpful if you want to check at a glance many servers or even clusters if they differ in some important specifications or configurations.
+   + new: command "host info" added to action panel in order to show even more info about the host
 * v2.5.0
    + new option: a boolean `ssl` (default: `false`) for `collector` and `profiled` entries in order to connect using ssl
    + bugfix: `index access stats` command did not work anymore for newer versions of mongodb because some databases (admin, config, local) and collections (system.profile) are not allowed to be targeted
