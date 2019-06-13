@@ -5,12 +5,16 @@ package de.idealo.mongodb.slowops.collector;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.mongodb.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.CursorType;
+import com.mongodb.MongoCommandException;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import de.idealo.mongodb.slowops.dto.ApplicationStatusDto;
 import de.idealo.mongodb.slowops.dto.CollectorStatusDto;
+import de.idealo.mongodb.slowops.dto.HostInfoDto;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
 import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
 import org.bson.Document;
@@ -45,6 +49,7 @@ public class ProfilingReader extends Thread implements Terminable{
 
     private final ServerAddress serverAddress;
     private final ProfiledServerDto profiledServerDto;
+    private volatile HostInfoDto hostInfoDto;
     private final String database;
     private final List<String> collections;
     private final AtomicLong doneJobs;
@@ -118,6 +123,7 @@ public class ProfilingReader extends Thread implements Terminable{
         this.jobQueue = jobQueue;
         this.serverAddress = adr;
         this.profiledServerDto = profiledServerDto;
+        this.hostInfoDto = new HostInfoDto();
         if(lastTs == null) {
             this.lastTs = new Date(0);
         }else {
@@ -350,6 +356,51 @@ public class ProfilingReader extends Thread implements Terminable{
         LOG.debug("<<< updateReplSetStatus");
     }
 
+    public synchronized void updateHostInfo(MongoDbAccessor mongo){
+        LOG.debug(">>> updateHostInfo");
+
+        try {
+
+            final Document hostInfoDoc = mongo.runCommand("admin", new BasicDBObject("hostInfo", 1));
+            final Document buildInfoDoc = mongo.runCommand("admin", new BasicDBObject("buildInfo", 1));
+
+            if (hostInfoDoc != null) {
+
+                Object system = hostInfoDoc.get("system");
+                Object os = hostInfoDoc.get("os");
+                Object extra = hostInfoDoc.get("extra");
+
+                if (system != null && os != null && extra != null
+                        && system instanceof Document && os instanceof Document && extra instanceof Document) {
+                    final Document systemDoc = (Document) system;
+                    final Document osDoc = (Document) os;
+                    final Document extraDoc = (Document) extra;
+                    hostInfoDto.setHostName(systemDoc.getString("hostname"));
+                    hostInfoDto.setCpuArch(systemDoc.getString("cpuArch"));
+                    hostInfoDto.setNumCores(systemDoc.getInteger("numCores"));
+                    hostInfoDto.setCpuFreqMHz((Math.round(Double.parseDouble(extraDoc.getString("cpuFrequencyMHz")))));
+                    hostInfoDto.setMemSizeMB(systemDoc.getInteger("memSizeMB"));
+                    hostInfoDto.setNumaEnabled(systemDoc.getBoolean("numaEnabled"));
+                    hostInfoDto.setPageSize(extraDoc.getLong("pageSize"));
+                    hostInfoDto.setNumPages(extraDoc.getInteger("numPages"));
+                    hostInfoDto.setMaxOpenFiles(extraDoc.getInteger("maxOpenFiles"));
+                    hostInfoDto.setOsName(osDoc.getString("name"));
+                    hostInfoDto.setOsVersion(osDoc.getString("version"));
+                    hostInfoDto.setLibcVersion(extraDoc.getString("libcVersion"));
+                }
+            }
+            if(buildInfoDoc != null) {
+                hostInfoDto.setMongodbVersion(buildInfoDoc.getString("version"));
+            }
+
+
+
+        } catch (MongoCommandException e) {
+            LOG.info("Could not determine host info on {}", serverAddress);
+        }
+        LOG.debug("<<< updateHostInfo");
+    }
+
     public void updateProfileStatus(MongoDbAccessor mongo){
         LOG.debug(">>> updateProfileStatus");
 
@@ -503,8 +554,11 @@ public class ProfilingReader extends Thread implements Terminable{
                 getSlowMs(),
                 getReplicaStatus().name(),
                 getLastTs(),
-                getDoneJobsHistory()
-        );
+                getDoneJobsHistory(),
+                hostInfoDto.getCpuArch(),
+                hostInfoDto.getNumCores(),
+                hostInfoDto.getCpuFreqMHz(),
+                hostInfoDto.getMemSizeMB(),
+                hostInfoDto.getMongodbVersion());
     }
-
 }
