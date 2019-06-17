@@ -356,6 +356,14 @@ public class ProfilingReader extends Thread implements Terminable{
         LOG.debug("<<< updateReplSetStatus");
     }
 
+    protected synchronized HostInfoDto getHostInfo(){
+        return hostInfoDto;
+    }
+
+    protected synchronized void setHostInfo(HostInfoDto hostInfoDto){
+        this.hostInfoDto = hostInfoDto;
+    }
+
     public synchronized void updateHostInfo(MongoDbAccessor mongo){
         LOG.debug(">>> updateHostInfo");
 
