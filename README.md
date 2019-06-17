@@ -186,6 +186,7 @@ In v2.4.0 some new options have been introduced:
 
 * v2.5.2
    + bugfix: `current op` command did not work properly for some mongodb versions because the format of field `secs_running` could be either of type `Long` or `Integer`
+   + bugfix: the data table of the application status page displayed the host info only for the first database entry for each host
 * v2.5.1
    + new: data table of the application status page has added some important host info such as CPU frequency, number of cores, amount of RAM and mongodb version. This is helpful if you want to check at a glance many servers or even clusters if they differ in some important specifications or configurations.
    + new: command "host info" added to action panel in order to show even more info about the host

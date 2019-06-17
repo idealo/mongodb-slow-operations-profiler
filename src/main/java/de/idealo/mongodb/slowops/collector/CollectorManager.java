@@ -636,11 +636,12 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
             readLock.lock();
             for (ProfilingReader reader : readers) {
                 if (idSet.size()==0 || idSet.contains(reader.getInstanceId())) {
-                    //copy the replSet status from the updatedReader to all profilingReaders having the same serverAddress
+                    //copy the replSet status and host info from the updatedReader to all profilingReaders having the same serverAddress
                     if (uniqueServerAdresses.containsKey(reader.getServerAddress())) {
                         final ProfilingReader updatedReader = uniqueServerAdresses.get(reader.getServerAddress());
                         reader.setReplSet(updatedReader.getReplSet());
                         reader.setReplSetStatus(updatedReader.getReplicaStatus());
+                        reader.setHostInfo(updatedReader.getHostInfo());
                     }
                     CollectorStatusDto cs = reader.getCollectorStatusDto();
                     result.addCollectorStatus(cs);
