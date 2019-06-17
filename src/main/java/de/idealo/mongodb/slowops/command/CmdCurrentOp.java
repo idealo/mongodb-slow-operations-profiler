@@ -58,7 +58,7 @@ public class CmdCurrentOp implements ICommand {
                             row.add(profiledServerDto.getLabel());
                             row.add("" + entryDoc.get("opid"));
                             row.add(entryDoc.getLong("microsecs_running"));
-                            row.add(entryDoc.getLong("secs_running"));
+                            row.add(entryDoc.get("secs_running", Number.class));//may be Long (v4) or Integer (v3.4)
                             row.add(entryDoc.getString("op"));
                             row.add(entryDoc.getString("ns"));
                             row.add(getJson(entryDoc, "command"));
@@ -66,6 +66,7 @@ public class CmdCurrentOp implements ICommand {
                             row.add(entryDoc.getInteger("numYields", -1));
                             row.add(entryDoc.getBoolean("active"));
                             table.addRow(row);
+
                         }
                     }
                 }
