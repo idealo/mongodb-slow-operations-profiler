@@ -44,6 +44,8 @@ public class ProfilingReader extends Thread implements Terminable{
     private static final int RETRY_AFTER_SECONDS = 60*60;//1 hour
     private static final int MAX_LOG_LINE_LENGTH = 1000;
 
+    private static int DEBUG_COUNTER = 0;
+
     private static AtomicInteger instances = new AtomicInteger(1);
 
 
@@ -177,7 +179,7 @@ public class ProfilingReader extends Thread implements Terminable{
     }
 
     public MongoDbAccessor getMongoDbAccessor() {
-        return new MongoDbAccessor(-1, profiledServerDto.getResponseTimeout(), profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), profiledServerDto.getSsl(), serverAddress);
+        return new MongoDbAccessor(-1, profiledServerDto.getResponseTimeout(), true, profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), profiledServerDto.getSsl(), serverAddress);
     }
 
 
@@ -256,7 +258,6 @@ public class ProfilingReader extends Thread implements Terminable{
             if(profileCursor != null) {
                 profileCursor.close();
             }
-            mongo.closeConnections();
         }
     }
 
@@ -313,10 +314,7 @@ public class ProfilingReader extends Thread implements Terminable{
             }
         } catch (MongoCommandException e) {
             LOG.error("Could not setSlowMs on {}/{}", new Object[]{serverAddress, database}, e);
-        }finally {
-            mongo.closeConnections();
         }
-
     }
 
     public boolean isProfiling(){
@@ -347,11 +345,15 @@ public class ProfilingReader extends Thread implements Terminable{
                 }
 
             } catch (MongoCommandException e) {
-                LOG.info("this mongod seems not to be a replSet member {}", serverAddress);
+                if(e.getErrorMessage().indexOf("error 13")!=-1){
+                    LOG.info("Not authorized to get replSet status for server {} (if it's an arbiter we may have run into this bug: https://jira.mongodb.org/browse/SERVER-5479 ) ", serverAddress, e);
+                }else {
+                    LOG.info("This mongod seems not to be a replSet member {}", serverAddress, e);
+                }
             }
 
         } catch (MongoCommandException e) {
-            LOG.info("Could not determine replSet status on {}", serverAddress);
+            LOG.info("Could not determine replSet status on {}", serverAddress, e);
         }
         LOG.debug("<<< updateReplSetStatus");
     }
@@ -387,7 +389,9 @@ public class ProfilingReader extends Thread implements Terminable{
                     hostInfoDto.setCpuArch(systemDoc.getString("cpuArch"));
                     hostInfoDto.setNumCores(systemDoc.getInteger("numCores"));
                     hostInfoDto.setCpuFreqMHz((Math.round(Double.parseDouble(extraDoc.getString("cpuFrequencyMHz")))));
-                    hostInfoDto.setMemSizeMB(systemDoc.getInteger("memSizeMB"));
+                    //hostInfoDto.setMemSizeMB(systemDoc.getInteger("memSizeMB"));
+                    //for debugging:
+                    hostInfoDto.setMemSizeMB(systemDoc.getInteger("memSizeMB").intValue()+DEBUG_COUNTER++);
                     hostInfoDto.setNumaEnabled(systemDoc.getBoolean("numaEnabled"));
                     hostInfoDto.setPageSize(extraDoc.getLong("pageSize"));
                     hostInfoDto.setNumPages(extraDoc.getInteger("numPages"));

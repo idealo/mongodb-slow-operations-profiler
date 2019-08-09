@@ -63,7 +63,7 @@ public class ConfigReader {
         boolean result = true;
         final CollectorServerDto collectorServer = getCollectorServer();
 
-        result = result && !getProfiledServers().isEmpty();
+        result = result && !getProfiledServers(CONFIG).isEmpty();
         result = result && collectorServer.getHosts().length > 0;
         result = result && !collectorServer.getDb().isEmpty();
         result = result && !collectorServer.getCollection().isEmpty();
@@ -201,18 +201,6 @@ public class ConfigReader {
                 getString(doc, "collector.adminPw", null),
                 getBoolean(doc, "collector.ssl", false)
         );
-    }
-
-    public static List<ProfiledServerDto> getProfiledServers(){
-        return getProfiledServers(CONFIG);
-    }
-
-    public static boolean isProfiledServer(ProfiledServerDto dto){
-        final List<ProfiledServerDto> servers = getProfiledServers(CONFIG);
-        for (ProfiledServerDto server : servers) {
-            if(server.equals(dto)) return true;
-        }
-        return false;
     }
 
 

@@ -3,9 +3,12 @@
  */
 package de.idealo.mongodb.slowops.collector;
 
-import javax.servlet.*;
+import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import org.slf4j.*;
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 
 /**
  * 
@@ -39,6 +42,7 @@ public class StartStopHook implements ServletContextListener{
     public void contextDestroyed(ServletContextEvent arg0) {
         LOG.info(">>> contextDestroyed");
         CollectorManagerInstance.terminate();
+        MongoDbAccessor.terminate();
         LOG.info("<<< contextDestroyed");
         
     }

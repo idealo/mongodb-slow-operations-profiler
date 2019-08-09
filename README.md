@@ -184,6 +184,12 @@ In v2.4.0 some new options have been introduced:
 
 ## Version history
 
+* v2.6.0
+   + new: clicking "upload new config" in the application status page will resolve all members of all defined database systems. So use this functionality also if shards or replica set servers have been removed or added and your configured access points are unchanged.
+   + update: only one instance of `MonogClient` per server:port and its configured settings (timeouts, ssl, user/pw etc.) is used and won't be closed after usage so connections can be pooled and re-used
+   + update: tried to show status of arbiters running with authentication which is not possible due to a mongodb bug [SERVER-5479](https://jira.mongodb.org/browse/SERVER-5479) though. Therefore, connecting to arbiters is not possible hence the status `UNKNOWN` is still shown.
+   + update: condensed monitoring log output
+   + update: java mongodb driver updated from v3.8.0 to v3.10.2
 * v2.5.2
    + bugfix: `current op` command did not work properly for some mongodb versions because the format of field `secs_running` could be either of type `Long` or `Integer`
    + bugfix: the data table of the application status page displayed the host info only for the first database entry for each host
