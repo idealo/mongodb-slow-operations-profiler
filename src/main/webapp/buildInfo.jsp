@@ -5,10 +5,10 @@
 	java.util.jar.Attributes attributes = manifest.getMainAttributes();
 %>
 <small>
-	<%=attributes.getValue("Implementation-Title")%><br/>
+	<%=attributes.getValue("Implementation-Title")%>, opensource, please <a href="https://github.com/idealo/mongodb-slow-operations-profiler">contribute</a><br/>
 	Version: <%=attributes.getValue("Implementation-Version")%><br/>
 	Build-Time: <%=attributes.getValue("Build-Time")%><br/>
 	Build-Jdk: <%=attributes.getValue("Build-Jdk")%>
 </small>
 
-opensource, <a href="https://github.com/idealo/mongodb-slow-operations-profiler">contribute</a>
+
