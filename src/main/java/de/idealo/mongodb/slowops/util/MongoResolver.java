@@ -133,8 +133,6 @@ public class MongoResolver implements Callable<MongoResolver> {
         }
         catch (Exception e){
             LOG.warn("Exception while running command listDatabases", e);
-        } finally {
-            if(mongoDbAccessor != null ) mongoDbAccessor.closeConnections();
         }
         return result;
     }
@@ -149,8 +147,6 @@ public class MongoResolver implements Callable<MongoResolver> {
 
         } catch (MongoException e) {
             LOG.error("Couldn't start mongo node at address {}", serverAddress, e);
-        } finally {
-            mongo.closeConnections();
         }
         return this;
     }

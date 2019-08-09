@@ -63,8 +63,6 @@ public class ProfilingWriter extends Thread implements Terminable{
 
         } catch (MongoException e) {
             LOG.error("Exception while connecting to: {}", serverDto.getHosts(), e);
-        }finally {
-            if(mongo!=null) mongo.closeConnections();
         }
     }
 
@@ -191,7 +189,6 @@ public class ProfilingWriter extends Thread implements Terminable{
                 
                 if(!stop) {
                     try {
-                        LOG.debug("sleeping...");
                         Thread.sleep(1000*RETRY_AFTER_SECONDS);
                         
                     } catch (InterruptedException e) {
@@ -202,7 +199,6 @@ public class ProfilingWriter extends Thread implements Terminable{
             }
         }finally {
             ApplicationStatusDto.addWebLog("ProfilingWriter terminated");
-            if(mongo != null) mongo.closeConnections();
             terminate();
         }
         LOG.info("Run terminated.");

@@ -25,6 +25,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static de.idealo.mongodb.slowops.util.ConfigReader.CONFIG;
+import static de.idealo.mongodb.slowops.util.ConfigReader.getProfiledServers;
+
 
 /**
  * 
@@ -48,8 +51,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
     private final ReadWriteLock globalLock = new ReentrantReadWriteLock();
     private final Lock readLock;
     private final Lock writeLock;
-    private String logLine1 = null;
-    private String logLine2 = null;
+    private String logLine = null;
 
 
     CollectorManager() {
@@ -62,41 +64,45 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         writeLock = globalLock.writeLock();
 
         registerMBean();
-        addShutdownHook();
     }
 
     public void reloadConfig(String cfg){
         if(ConfigReader.reloadConfig(cfg)){
             LOG.info("new config has been applied");
 
-            terminateReadersAndWriters(false);
-            startWriter();
-            startReaders();
+            restartWriter();
+
+            final List<ProfiledServerDto> profiledServers = getProfiledServers(CONFIG);
+
+            resolveMongodAdresses(profiledServers);
+
+            removeReadersNotInProfiledServers(profiledServers);
+
+            createProfilingReaders(profiledServers);
+
         }else{
             LOG.warn("new config was not applied");
         }
     }
     
-    private void startWriter() {
-        LOG.info(">>> start writer");
-        boolean isSameWriter = writer != null && ConfigReader.getCollectorServer().equals(writer.getCollectorServerDto());
-        if(!isSameWriter) {
-            LOG.info("old and new writer are different, so start a new one");
+    private void restartWriter() {
+        LOG.info(">>> restart writer");
+
+        try {
+            if (writer != null) {
+                boolean isSameWriter = ConfigReader.getCollectorServer().equals(writer.getCollectorServerDto());
+                if(!isSameWriter) {
+                    writer.terminate();
+                }
+            }
+            LOG.info("start a new writer");
             writer = new ProfilingWriter(jobQueue);
             writer.start();
-
+        } catch (Throwable e) {
+            LOG.error("Error while (re)starting writer ", e);
         }
-        LOG.info("<<< writer");
-    }
 
-    private void startReaders() {
-        LOG.info(">>> start readers");
-
-        final List<ProfiledServerDto> profiledServers = ConfigReader.getProfiledServers();
-        resolveMongodAdresses(profiledServers);
-        createProfilingReaders(profiledServers);
-
-        LOG.info("<<< start readers");
+        LOG.info("<<< restart writer");
     }
 
     /**
@@ -171,7 +177,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         if(writer!=null){
             writerMongo = writer.getMongoDbAccessor();
         }else{
-            LOG.error("profilingWriter ist null but should not");
+            LOG.error("profilingWriter is null but should not");
         }
 
         for (ProfiledServerDto dto : profiledServers) {
@@ -236,7 +242,6 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
                 ApplicationStatusDto.addWebLog(errMsg);
             }
             profilingReaderExecutor.shutdownNow();
-            if(writerMongo!=null) writerMongo.closeConnections();
         }
 
     }
@@ -307,46 +312,77 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
     
     
     private void registerMBean() {
-        
+        String nameForLog="";
         try {
             final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
             final ObjectName name = new ObjectName(this.getClass().getPackage().getName() + ":type=" + this.getClass().getSimpleName());
             final StandardMBean mbean = new StandardMBean(this, CollectorManagerMBean.class, false);
-            server.registerMBean(mbean, name);
+            nameForLog = name.toString();
+            if(!server.isRegistered(name)){
+                server.registerMBean(mbean, name);
+                LOG.debug("MBean {} registered", nameForLog);
+            }
         } catch (MalformedObjectNameException | InstanceAlreadyExistsException | NotCompliantMBeanException | MBeanRegistrationException | NullPointerException e) {
-            LOG.error("Error while registering MBean", e);
+            LOG.error("Error while registering MBean {} ", nameForLog, e);
         }
     }
     
     private void unregisterMBean() {
+        String nameForLog="";
         try {
             final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
             final ObjectName name = new ObjectName(this.getClass().getPackage().getName() + ":type=" + this.getClass().getSimpleName());
-            server.unregisterMBean(name);
+            nameForLog = name.toString();
+            if(server.isRegistered(name)){
+                server.unregisterMBean(name);
+                LOG.debug("MBean {} unregistered", nameForLog);
+            }
         } catch (MalformedObjectNameException | MBeanRegistrationException | InstanceNotFoundException | IllegalStateException e) {
-            LOG.error("Error while unregistering MBean", e);
+            LOG.error("Error while unregistering MBean {}", nameForLog, e);
         }
     }
 
+    /**
+     * removes all readers that are not contained in the given profiledServers
+     *
+     * @param profiledServers
+     */
+    private void removeReadersNotInProfiledServers(List<ProfiledServerDto> profiledServers){
 
-    
+        final List<ProfilingReader> readersToBeRemoved = Lists.newArrayList();
+        try{
 
-    
-    
-    private void addShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                terminate();
+            readLock.lock();
+            for (ProfilingReader r : readers) {
+                boolean readerInUse = false;
+                for (ProfiledServerDto dto : profiledServers) {
+                    final HashMap<String, List<String>> collectionsPerDb = dto.getCollectionsPerDatabase();
+                    for (ServerAddress mongodAddress : dto.getResolvedHosts()) {
+                        for (String db : collectionsPerDb.keySet()) {
+                            if (r.getServerAddress().equals(mongodAddress) && r.getDatabase().equals(db)) {
+                                readerInUse = true;
+                                break;
+                            }
+                        }
+                        if(readerInUse) break;
+                    }
+                    if(readerInUse) break;
+                }
+                if(!readerInUse) {
+                    readersToBeRemoved.add(r);
+                }
             }
-        });
+        }finally {
+            readLock.unlock();
+        }
+        terminateReaders(readersToBeRemoved);
     }
 
 
-    private void terminateReadersAndWriters(boolean terminateAll) {
-        LOG.info(">>> terminateReadersAndWriters {}", terminateAll );
+    private void terminateReaders(List<ProfilingReader> readersToBeTerminated) {
+        LOG.info(">>> terminateReaders");
 
-        final int poolSize = 1 + Math.min(readers.size(), Util.MAX_THREADS);
+        final int poolSize = 1 + Math.min(readersToBeTerminated.size(), Util.MAX_THREADS);
         LOG.info("Terminator poolSize:{} ", poolSize );
 
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
@@ -358,22 +394,19 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
         try {
 
-            final LinkedList<ProfilingReader> toBeRemoved = Lists.newLinkedList();
+            final LinkedList<ProfilingReader> toBeRemoved = new LinkedList<>();
 
             try{
                 readLock.lock();
-                for (ProfilingReader r : readers) {
-                    boolean isSameReader = ConfigReader.isProfiledServer(r.getProfiledServerDto());
-                    if(terminateAll || !isSameReader) {
-                        try {
-                            Terminator terminator = new Terminator(r);
-                            Future<Long> result = terminatorExecutor.submit(terminator);
-                            futureTerminatorList.add(result);
-                            LOG.info("will remove reader for {}/{}", r.getServerAddress(), r.getDatabase());
-                            toBeRemoved.add(r);
-                        } catch (Throwable e) {
-                            LOG.error("Error while terminating reader ", e);
-                        }
+                for (ProfilingReader r : readersToBeTerminated) {
+                    try {
+                        Terminator terminator = new Terminator(r);
+                        Future<Long> result = terminatorExecutor.submit(terminator);
+                        futureTerminatorList.add(result);
+                        LOG.info("will remove reader for {}/{}", r.getServerAddress(), r.getDatabase());
+                        toBeRemoved.add(r);
+                    } catch (Throwable e) {
+                        LOG.error("Error while terminating reader ", e);
                     }
                 }
             }finally {
@@ -382,8 +415,8 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
             try{
                 writeLock.lock();
-                readers.removeAll(toBeRemoved);
-                LOG.info("readers.size after remove: {} ", readers.size());
+                this.readers.removeAll(toBeRemoved);
+                LOG.info("readers.size after remove: {} ", this.readers.size());
             }finally {
                 writeLock.unlock();
             }
@@ -393,19 +426,6 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
             LOG.error("Error while terminating readers ", e);
         }
 
-
-        boolean isSameWriter = ConfigReader.getCollectorServer().equals(writer.getCollectorServerDto());
-        if(terminateAll || !isSameWriter) {
-            try {
-                if (writer != null) {
-                    Terminator terminator = new Terminator(writer);
-                    Future<Long> result = terminatorExecutor.submit(terminator);
-                    futureTerminatorList.add(result);
-                }
-            } catch (Throwable e) {
-                LOG.error("Error while terminating writers ", e);
-            }
-        }
 
         long doneJobs = 0;
         for(Future<Long> futureTerminator : futureTerminatorList){
@@ -419,25 +439,32 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         }
         terminatorExecutor.shutdown();
 
-        if(terminateAll || !isSameWriter) {//take into account writerJobs if writer is terminated
-            doneJobsOfRemovedReaders += (doneJobs - writer.getDoneJobs());
-            doneJobsOfRemovedWriters += writer.getDoneJobs();
-        }else{
-            doneJobsOfRemovedReaders += doneJobs;
-        }
+        doneJobsOfRemovedReaders += doneJobs;
 
-
-
-        LOG.info("<<< terminateReadersAndWriters");
+        LOG.info("<<< terminateReaders");
 
     }
 
+    private void terminateWriter() {
+        LOG.info(">>> terminateWriter ");
 
+            try {
+                if (writer != null) {
+                    writer.terminate();
+                    doneJobsOfRemovedWriters += writer.getDoneJobs();
+                }
+            } catch (Throwable e) {
+                LOG.error("Error while terminating writer", e);
+            }
+        LOG.info("<<< terminateWriter");
+    }
 
     public void terminate() {
 
-        terminateReadersAndWriters(true);
-        
+        terminateReaders(readers);
+
+        terminateWriter();
+
         try {
             unregisterMBean();
         } catch (Throwable e) {
@@ -461,11 +488,8 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         stop = false;
         try {
         
-            startWriter();
-            
-            startReaders();
-        
-        
+            reloadConfig(ConfigReader.getConfig());
+
             while(!stop) {
                 monitor();
                 
@@ -539,6 +563,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
             readLock.unlock();
         }
         LOG.info("<<< getApplicationStatus isAuthenticated: {} ", isAuthenticated);
+
         return getApplicationStatus(idList, isAuthenticated);
     }
 
@@ -565,21 +590,18 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
             readLock.lock();
             LOG.info("readers.size: {} ", readers.size());
             for (ProfilingReader reader : readers) {
-                if (idSet.size()==0 || idSet.contains(reader.getInstanceId())) {
+                if (idSet.contains(reader.getInstanceId())) {
 
                     final Future future = executorService.submit(new Runnable() {
                         public void run() {
                             final MongoDbAccessor mongo = reader.getMongoDbAccessor();
-                            try {
-                                //update only once the replSet status and host info for all profilingReaders having unique serverAddresses
-                                if (uniqueServerAdresses.putIfAbsent(reader.getServerAddress(), reader) == null) {
-                                    reader.updateReplSetStatus(mongo);
-                                    reader.updateHostInfo(mongo);
-                                }
-                                reader.updateProfileStatus(mongo);
-                            }finally {
-                                mongo.closeConnections();
+                            //update only once the replSet status and host info for all profilingReaders having unique serverAddresses
+                            if (uniqueServerAdresses.putIfAbsent(reader.getServerAddress(), reader) == null) {
+                                reader.updateReplSetStatus(mongo);
+                                reader.updateHostInfo(mongo);
                             }
+                            reader.updateProfileStatus(mongo);
+
                         }
                     });
 
@@ -635,13 +657,16 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         try{
             readLock.lock();
             for (ProfilingReader reader : readers) {
-                if (idSet.size()==0 || idSet.contains(reader.getInstanceId())) {
+                if (idSet.contains(reader.getInstanceId())) {
                     //copy the replSet status and host info from the updatedReader to all profilingReaders having the same serverAddress
                     if (uniqueServerAdresses.containsKey(reader.getServerAddress())) {
                         final ProfilingReader updatedReader = uniqueServerAdresses.get(reader.getServerAddress());
-                        reader.setReplSet(updatedReader.getReplSet());
-                        reader.setReplSetStatus(updatedReader.getReplicaStatus());
-                        reader.setHostInfo(updatedReader.getHostInfo());
+                            if(reader != updatedReader) {
+                                LOG.debug("copy info of server {} from reader of db {} to reader of db {} ", new Object[]{reader.getServerAddress(), updatedReader.getDatabase(), reader.getDatabase()});
+                                reader.setReplSet(updatedReader.getReplSet());
+                                reader.setReplSetStatus(updatedReader.getReplicaStatus());
+                                reader.setHostInfo(updatedReader.getHostInfo());
+                            }
                     }
                     CollectorStatusDto cs = reader.getCollectorStatusDto();
                     result.addCollectorStatus(cs);
@@ -763,32 +788,21 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
     
     private void monitor() {
         long allReadersDoneJobs = 0;
-        final List<ProfilingReader> stoppedReaders = Lists.newArrayList();
-        StringBuffer sb = new StringBuffer();
+        long stoppedReaders=0;
         try{
             readLock.lock();
             for (ProfilingReader r : readers) {
                 allReadersDoneJobs += r.getDoneJobs();
-                sb.append(r.getServerAddress()+"/"+r.getDatabase());
                 if(r.isStopped()) {
-                    sb.append("(stopped)");
-                    stoppedReaders.add(r);
+                    stoppedReaders++;
                 }
-                sb.append("=");
-                sb.append(r.getDoneJobs());
-                sb.append(" ");
             }
         }finally {
             readLock.unlock();
         }
-
-        if(!sb.toString().equals(logLine1)) {
-            logLine1 = sb.toString();
-            LOG.info("Read {}", logLine1);
-        }
-        final String logLine = "Read all: " + (allReadersDoneJobs+ doneJobsOfRemovedReaders) + " Written: " + writer.getDoneJobs() + " Stopped: " + stoppedReaders.size();
-        if(!logLine.equals(logLine2)) {
-            logLine2 = logLine; 
+        final String logLine = "Readers (all/active/stopped): " + readers.size() + "/" +(readers.size()-stoppedReaders) + "/" + stoppedReaders + " Reads: " + (allReadersDoneJobs+ doneJobsOfRemovedReaders) + " Writes: " + (writer!=null?writer.getDoneJobs():0) ;
+        if(!logLine.equals(this.logLine)) {
+            this.logLine = logLine;
             LOG.info(logLine);
         }
     }
@@ -798,7 +812,5 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         final CollectorManager result = new CollectorManager();
         result.startup();
     }
-
-
 
 }

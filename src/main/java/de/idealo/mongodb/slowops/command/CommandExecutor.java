@@ -30,16 +30,13 @@ public class CommandExecutor implements Callable<TableDto> {
     @Override
     public TableDto call() throws Exception {
     	MongoDbAccessor mongoDbAccessor = null;
-    	try {
-    		if(serverAdress!=null){
-                mongoDbAccessor = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), profiledServerDto.getSsl(), serverAdress);
-            }else{
-                mongoDbAccessor = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), profiledServerDto.getSsl(), profiledServerDto.getHosts());
-            }
+        if(serverAdress!=null){
+            mongoDbAccessor = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), profiledServerDto.getSsl(), serverAdress);
+        }else{
+            mongoDbAccessor = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), profiledServerDto.getSsl(), profiledServerDto.getHosts());
+        }
 
-			return command.runCommand(profiledServerDto, mongoDbAccessor);
-		} finally {
-			if(mongoDbAccessor!=null) mongoDbAccessor.closeConnections();
-		}
+        return command.runCommand(profiledServerDto, mongoDbAccessor);
+
     }
 }

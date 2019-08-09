@@ -563,7 +563,7 @@ Last log messages:<br>
 <span id="infoHostinfoContent" style="display:none">Show info about the host.<br>Choose whether the command should be run against the DBS of the selected nodes (i.e. only router) or against all selected nodes (mongod's).</span>
 <span id="infoCollectingContent" style="display:none">Start or stop collecting slow operations of the selected node(s).</span>
 <span id="infoSlowMsContent" style="display:none">Set the treshold in milliseconds for operations to be profiled. Low slowMs values may slow down both the profiled mongod('s) and also the collector because more slow operations need to be read and written.<br>Negative values stop, positive values start profiling. A value of 0 will result in profiling <b>all</b> operations.</span>
-<span id="infoConfigContent" style="display:none">Apply a new configuration. Uploading a new config may be slow if many "profiled"-entries changed because all server addresses of a changed entry need to be resolved and will be (re)started.<br>The uploaded configuration is not persisted server side and will be lost upon webapp restart.</span>
+<span id="infoConfigContent" style="display:none">Apply a new configuration. It resolves also all members of all defined database systems. So use this functionality also if shards or replica set servers have been removed or added and your configured access points are unchanged.<br>The uploaded configuration is not persisted server side and will be lost upon webapp restart.</span>
 
 <%@ include file="buildInfo.jsp" %>
 </body>
