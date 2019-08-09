@@ -10,3 +10,5 @@
 	Build-Time: <%=attributes.getValue("Build-Time")%><br/>
 	Build-Jdk: <%=attributes.getValue("Build-Jdk")%>
 </small>
+
+opensource, <a href="https://github.com/idealo/mongodb-slow-operations-profiler">contribute</a>
