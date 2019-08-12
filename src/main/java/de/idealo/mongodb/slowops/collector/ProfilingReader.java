@@ -43,11 +43,7 @@ public class ProfilingReader extends Thread implements Terminable{
     private static final Logger LOG = LoggerFactory.getLogger(ProfilingReader.class);
     private static final int RETRY_AFTER_SECONDS = 60*60;//1 hour
     private static final int MAX_LOG_LINE_LENGTH = 1000;
-
-    private static int DEBUG_COUNTER = 0;
-
     private static AtomicInteger instances = new AtomicInteger(1);
-
 
     private final ServerAddress serverAddress;
     private final ProfiledServerDto profiledServerDto;
@@ -389,9 +385,7 @@ public class ProfilingReader extends Thread implements Terminable{
                     hostInfoDto.setCpuArch(systemDoc.getString("cpuArch"));
                     hostInfoDto.setNumCores(systemDoc.getInteger("numCores"));
                     hostInfoDto.setCpuFreqMHz((Math.round(Double.parseDouble(extraDoc.getString("cpuFrequencyMHz")))));
-                    //hostInfoDto.setMemSizeMB(systemDoc.getInteger("memSizeMB"));
-                    //for debugging:
-                    hostInfoDto.setMemSizeMB(systemDoc.getInteger("memSizeMB").intValue()+DEBUG_COUNTER++);
+                    hostInfoDto.setMemSizeMB(systemDoc.getInteger("memSizeMB"));
                     hostInfoDto.setNumaEnabled(systemDoc.getBoolean("numaEnabled"));
                     hostInfoDto.setPageSize(extraDoc.getLong("pageSize"));
                     hostInfoDto.setNumPages(extraDoc.getInteger("numPages"));
