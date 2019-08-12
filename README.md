@@ -184,6 +184,8 @@ In v2.4.0 some new options have been introduced:
 
 ## Version history
 
+* v2.6.1
+   + bugfix: removed debug code for the application status page which resulted in a MemSizeMB value incremented by 1
 * v2.6.0
    + new: clicking "upload new config" in the application status page will resolve all members of all defined database systems. So use this functionality also if shards or replica set servers have been removed or added and your configured access points are unchanged.
    + update: only one instance of `MonogClient` per server:port and its configured settings (timeouts, ssl, user/pw etc.) is used and won't be closed after usage so connections can be pooled and re-used
