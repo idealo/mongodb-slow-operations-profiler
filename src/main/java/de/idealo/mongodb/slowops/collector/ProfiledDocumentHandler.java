@@ -3,10 +3,7 @@ package de.idealo.mongodb.slowops.collector;
 import com.mongodb.ServerAddress;
 import org.bson.Document;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by kay.agahd on 24.10.16.
@@ -20,7 +17,7 @@ public class ProfiledDocumentHandler {
         this.serverAddress = serverAddress;
     }
 
-    //4 examples of how the field "query" may be formatted:
+    //5 examples of how the field "query" may be formatted:
     //query:
     //{ "query" : { "shopId" : 279073, "onlineProductIds" : { "$ne" : null } }, "user" : "" }
     //query.query:
@@ -33,6 +30,9 @@ public class ProfiledDocumentHandler {
     //since v3
     // query.filter:
     //{"query" : {"find" : "offer", "filter" : {"shopId" : 4640}, "sort" : {"_id" : 1}, "projection" : {"_id" : 1}}
+    // query.filter.$operator:
+    // "query" : { "find" : "offerlistSummary", "filter" : { "$and" : [ { "_id.siteId" : 4 }, { "_id.features" : [ ] }, { "$or" : [ { "_id.productId" : NumberLong(3795357) }, { "parentProductId" : NumberLong(3795357) } ] } ] }
+
     /*
     Queries:
 
@@ -127,8 +127,24 @@ public class ProfiledDocumentHandler {
 			"_id" : 1
 		}
 	},
+  //query.filter.$operator:
+  "query" :
+  { "find" : "offerlistSummary",
+    "filter" :
+    { "$and" :
+      [
+        { "_id.siteId" : 4 },
+        { "_id.features" : [ ] },
+        { "$or" :
+          [
+            { "_id.productId" : NumberLong(3795357) },
+            { "parentProductId" : NumberLong(3795357) }
+           ]
+         }
+       ]
+    },
 
-Unterscheidlichche Formate fuer getmore trotz gleicher Version 3.2.10:
+Unterschiedlichche Formate fuer getmore trotz gleicher Version 3.2.10:
 Auf unterscheidlichen Maschinen:
 offerStoreUK3:PRIMARY> db.system.profile.find({op:"getmore", "query.getMore":{$exists:true}}).pretty()
 	{
@@ -596,9 +612,23 @@ db.find.distinct("classifierCatalogCategory") sieht so in system.profile aus:
             Document dbObj = (Document)obj;
             for(String key : dbObj.keySet()){
                 Object subObj = dbObj.get(key);
-                if(subObj != null && subObj instanceof Document) {
-                    for(String sKey : ((Document) subObj).keySet()){
-                        key += "." + sKey;
+                if(subObj != null) {
+                    if(subObj instanceof Document) {
+                        for(String sKey : ((Document) subObj).keySet()){
+                            key += "." + sKey;
+                        }
+                    }else if(subObj instanceof Collection){
+                        String collKey="";
+                        for(Document sDoc : (Collection<Document>)subObj){
+
+                            Set<String> subDoc = getFields(sDoc);
+                            for(String sKey : subDoc){
+                                collKey += sKey + "|";
+                            }
+
+                        }
+                        if(!collKey.isEmpty()) collKey=collKey.substring(0, collKey.length()-1); //cut last |
+                        key = collKey + "." + key;
                     }
                 }
                 result.add(key);

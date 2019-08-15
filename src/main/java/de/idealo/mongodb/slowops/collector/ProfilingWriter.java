@@ -3,13 +3,17 @@
  */
 package de.idealo.mongodb.slowops.collector;
 
+import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
+import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.InsertManyOptions;
 import de.idealo.mongodb.slowops.dto.ApplicationStatusDto;
 import de.idealo.mongodb.slowops.dto.CollectorServerDto;
 import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
@@ -19,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -39,7 +44,6 @@ public class ProfilingWriter extends Thread implements Terminable{
     
     private boolean stop = false;
     private AtomicLong doneJobs = new AtomicLong(0);
-    private ProfilingEntry lastJob;
     private CollectorServerDto serverDto;
     private final Date runningSince;
 
@@ -157,13 +161,33 @@ public class ProfilingWriter extends Thread implements Terminable{
 
         final MongoCollection<Document> profileCollection = getProfileCollection(mongo);
         try {
+            final int maxBatchSize = 100;
+            final List<ProfilingEntry> jobList = Lists.newArrayListWithCapacity(maxBatchSize);
+            final List<Document> docList = Lists.newArrayListWithCapacity(maxBatchSize);
+            final InsertManyOptions options = new InsertManyOptions();
+            options.ordered(false);
+
             while(!stop) {
-                if(lastJob == null) {
-                    lastJob = jobQueue.take();
+                if(jobQueue.size() > 0) {
+                    jobQueue.drainTo(jobList, maxBatchSize);
+                    for (ProfilingEntry entry: jobList) {
+                        docList.add(entry.getDocument());
+                    }
+                    try {
+                        profileCollection.insertMany(docList, options);
+                        doneJobs.addAndGet(docList.size());
+                    }catch (MongoBulkWriteException e){
+                        BulkWriteResult wr = e.getWriteResult();
+                        doneJobs.addAndGet(wr.getInsertedCount());
+                        LOG.error("Only {} of {} slow operations could be written to the collector.", new Object[]{wr.getInsertedCount(), jobList.size(), e});
+                    }finally {
+                        jobList.clear();
+                        docList.clear();
+                    }
+                }else{
+                    profileCollection.insertOne(jobQueue.take().getDocument());
+                    doneJobs.incrementAndGet();
                 }
-                profileCollection.insertOne(lastJob.getDocument());
-                doneJobs.incrementAndGet();
-                lastJob = null;
             }
         }catch(Exception e) {
             LOG.error("Exception occurred, will return and try again.", e);
@@ -181,7 +205,7 @@ public class ProfilingWriter extends Thread implements Terminable{
         try {
             while(!stop) {
                 
-                if(lastJob != null || jobQueue.size() > 0) {
+                if(jobQueue.size() > 0) {
                     mongo = getMongoDbAccessor();
                     init(mongo);
                     writeEntries(mongo);

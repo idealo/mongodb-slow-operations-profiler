@@ -613,7 +613,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
                             try{
                                 Object ok = future.get(dto.getResponseTimeout(), TimeUnit.MILLISECONDS);
                                 if(ok == null){
-                                    LOG.error("Task finished correctly for '"+dto.getLabel()+"' at " + reader.getServerAddress());
+                                    LOG.info("Task finished correctly for '"+dto.getLabel()+"' at " + reader.getServerAddress());
                                 }else{
                                     LOG.error("Task did not finish correctly for '"+dto.getLabel()+"' at " + reader.getServerAddress());
                                 }
@@ -707,42 +707,39 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
         final LinkedList<ProfilingReader> toBeAdded = Lists.newLinkedList();
         final LinkedList<ProfilingReader> toBeRemoved = Lists.newLinkedList();
-        for(int id : idList){
-            try{
-                readLock.lock();
-                for (ProfilingReader reader : readers) {
-                    if(id == reader.getInstanceId()){
-                        if(stop){
-                            reader.terminate();
-                        }else if(reader.isStopped()){
-                            ProfilingReader newReader = new ProfilingReader(
-                                    reader.getInstanceId(),
-                                    jobQueue,
-                                    reader.getServerAddress(),
-                                    reader.getLastTs(),
-                                    reader.getProfiledServerDto(),
-                                    reader.getDatabase(),
-                                    reader.getCollections(),
-                                    stop,
-                                    reader.getDoneJobs(),
-                                    reader.getSlowMs()
-                            );
-                            LOG.info("will add reader for {}/{}", newReader.getServerAddress(), newReader.getDatabase());
-                            toBeAdded.add(newReader);
-                            LOG.info("will remove reader for {}/{}", reader.getServerAddress(), reader.getDatabase());
-                            toBeRemoved.add(reader);
-
-                            newReader.start();
-                        }
-
-                        break;
+        final HashSet<Integer> idSet = new HashSet<>(idList.size());
+        idSet.addAll(idList);
+        try{
+            readLock.lock();
+            for (ProfilingReader reader : readers) {
+                if(idSet.contains(reader.getInstanceId())){
+                    if(stop){
+                        reader.terminate();
+                    }else if(reader.isStopped()){
+                        ProfilingReader newReader = new ProfilingReader(
+                                reader.getInstanceId(),
+                                jobQueue,
+                                reader.getServerAddress(),
+                                reader.getLastTs(),
+                                reader.getProfiledServerDto(),
+                                reader.getDatabase(),
+                                reader.getCollections(),
+                                stop,
+                                reader.getDoneJobs(),
+                                reader.getSlowMs()
+                        );
+                        LOG.info("will remove stopped reader for {}/{}", reader.getServerAddress(), reader.getDatabase());
+                        toBeRemoved.add(reader);
+                        LOG.info("will add and start new reader for {}/{}", newReader.getServerAddress(), newReader.getDatabase());
+                        toBeAdded.add(newReader);
+                        newReader.start();
                     }
                 }
-            }finally {
-                readLock.unlock();
             }
-
+        }finally {
+            readLock.unlock();
         }
+
         try{
             writeLock.lock();
             readers.removeAll(toBeRemoved);

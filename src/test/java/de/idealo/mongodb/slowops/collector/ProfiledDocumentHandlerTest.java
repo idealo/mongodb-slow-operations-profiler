@@ -30,6 +30,8 @@ public class ProfiledDocumentHandlerTest {
             "fieldMustExist" : {$exists:1},
             "fieldWithRange" : {$gt:20, $lt:30},
             "fieldWithIn" : {$in:[1,2,3,4]},
+            "$and" : {$and:[{x:3},{y:5}]},
+            "$and$or" : {$and:[{x:3},{$or: [{a:7},{b:9}] }]},
             "fieldWithElemMatch" : {$elemMatch: {
                                         "f1" : "v1",
                                         "f2" : "v2",
@@ -37,11 +39,14 @@ public class ProfiledDocumentHandlerTest {
           }
 
 
+
          extracted fields (max 1 level deep) should be:
             "fieldSingleValue",
             "fieldMustExist.$exists",
             "fieldWithRange.$gt.$lt"},
             "fieldWithIn.$in",
+            "$and: x|y.$and" //more than 1 level deep
+            "$and$or: x|a|b.$or.$and" //more than 1 level deep
             "fieldWithElemMatch.$elemMatch"
          this would be too detailed:
             "fieldWithElemMatch.$elemMatch.f1.f2.year.$gt"
@@ -51,9 +56,12 @@ public class ProfiledDocumentHandlerTest {
                 .append("fieldMustExist", new Document("$exists", 1))
                 .append("fieldWithRange", new Document("$gt", 20).append("$lt", 30))
                 .append("fieldWithIn", new Document("$in", Lists.newArrayList(1,2,3,4)))
+                .append("$and", Lists.newArrayList(new Document("x", 1),new Document("y", 2)))
+                .append("$and2", Lists.newArrayList(new Document("x", 3),new Document("$or", Lists.newArrayList(new Document("a", 7),new Document("b", 9))   )))
                 .append("fieldWithElemMatch", new Document("$elemMatch", new Document("f1", "v1")
                         .append("f2", "v2")
-                        .append("year", new Document("$gt", 2015))));
+                        .append("year", new Document("$gt", 2015))))
+        ;
 
 
         Set<String> fieldsExpected = new HashSet<String>();
@@ -61,7 +69,10 @@ public class ProfiledDocumentHandlerTest {
         fieldsExpected.add("fieldMustExist.$exists");
         fieldsExpected.add("fieldWithRange.$gt.$lt");
         fieldsExpected.add("fieldWithIn.$in");
+        fieldsExpected.add("x|y.$and");
+        fieldsExpected.add("x|a|b.$or.$and2");
         fieldsExpected.add("fieldWithElemMatch.$elemMatch");
+
 
         Document doc = new Document("query",
                                fields
