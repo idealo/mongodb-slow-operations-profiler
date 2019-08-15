@@ -5,10 +5,7 @@ package de.idealo.mongodb.slowops.collector;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.mongodb.BasicDBObject;
-import com.mongodb.CursorType;
-import com.mongodb.MongoCommandException;
-import com.mongodb.ServerAddress;
+import com.mongodb.*;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -41,7 +38,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ProfilingReader extends Thread implements Terminable{
 
     private static final Logger LOG = LoggerFactory.getLogger(ProfilingReader.class);
-    private static final int RETRY_AFTER_SECONDS = 60*60;//1 hour
+    private static final long MIN_RETRY_TIMEOUT_MSEC = 1000;//1 second
+    private static final long MAX_RETRY_TIMEOUT_MSEC = 60*60*1000;//1 hour
     private static final int MAX_LOG_LINE_LENGTH = 1000;
     private static AtomicInteger instances = new AtomicInteger(1);
 
@@ -185,7 +183,7 @@ public class ProfilingReader extends Thread implements Terminable{
             try {
                 scheduler.awaitTermination(schedulePeriodInSeconds+1, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
-                LOG.error("InterruptedException while shuting down scheduler", e );
+                LOG.error("InterruptedException while shutting down scheduler", e );
             }finally {
                 scheduler.shutdownNow();
             }
@@ -231,10 +229,11 @@ public class ProfilingReader extends Thread implements Terminable{
     private void readSystemProfile() {
 
         final MongoDbAccessor mongo = getMongoDbAccessor();
-        final MongoCursor<Document> profileCursor = getProfileCursor(mongo);//get tailable cursor from oldest to newest profile entry
+
+        MongoCursor<Document> profileCursor=null;
 
         try {
-
+            profileCursor = getProfileCursor(mongo);//get tailable cursor from oldest to newest profile entry
             if(profileCursor.hasNext()) {
                 while(!stop && profileCursor.hasNext()) {
 
@@ -249,6 +248,7 @@ public class ProfilingReader extends Thread implements Terminable{
             }
         }catch(Exception e) {
             LOG.error("Exception occurred on {}/{} , will return and try again.", new Object[]{serverAddress, database}, e);
+            throw(e);
         }finally {
             LOG.info("profileCursor being closed for database {} at {}", database, serverAddress);
             if(profileCursor != null) {
@@ -506,17 +506,27 @@ public class ProfilingReader extends Thread implements Terminable{
     public void run() {
         LOG.info("Run started {}", serverAddress);
         try {
+            double errorCount = 0;
             while(!stop) {
-                readSystemProfile();
-                if(!stop) {
-                    try {
-                        LOG.info("{} sleeping...", serverAddress);
-                        Thread.sleep(1000*RETRY_AFTER_SECONDS);
 
-                    } catch (InterruptedException e) {
-                        LOG.error("InterruptedException while sleeping.");
-                        stop = true;
+                try {
+                    readSystemProfile();
+
+                    errorCount = 0;
+
+                    sleepIfNotStopped(MAX_RETRY_TIMEOUT_MSEC);
+
+                }catch (Exception e){
+                    errorCount++;
+                    final long sleepMs = Math.min( (long)Math.pow(2, errorCount) * MIN_RETRY_TIMEOUT_MSEC, MAX_RETRY_TIMEOUT_MSEC); //double sleep time with each error up to MAX_RETRY_TIMEOUT_MSEC
+                    String reason = "";
+                    if(e instanceof MongoQueryException && e.getMessage().indexOf("error code 96")!=-1){
+                        reason = " The error happened because the number of profiled operations was too high or the system.profile collection too small. You may increase the slow operations threshold (slowMs), decrease the number of running operations and/or increase the size of the system.profile collection.";
                     }
+                    final String msg = "ProfilingReader for '"+profiledServerDto.getLabel()+"' at " + serverAddress + "/" + database + " threw an error and will be restarted in " + (sleepMs/1000) + " seconds." + reason;
+                    ApplicationStatusDto.addWebLog(msg);
+                    LOG.info(msg);
+                    sleepIfNotStopped(sleepMs);
                 }
             }
         }finally {
@@ -524,6 +534,19 @@ public class ProfilingReader extends Thread implements Terminable{
             terminate();
         }
         LOG.info("Run terminated {}", serverAddress);
+    }
+
+    private void sleepIfNotStopped(long ms){
+        if (!stop) {
+            try {
+                LOG.info("{} sleeping...", serverAddress);
+                Thread.sleep(ms);
+
+            } catch (InterruptedException e) {
+                LOG.error("InterruptedException while sleeping.");
+                stop = true;
+            }
+        }
     }
 
 

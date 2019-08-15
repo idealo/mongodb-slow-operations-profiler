@@ -70,8 +70,8 @@ public class Action {
 			
 			try {
 				final ObjectMapper mapper = new ObjectMapper();
-				LOG.info("getApplicationJSON result:");
-				LOG.info(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result));
+				LOG.debug("getApplicationJSON result:");
+				LOG.debug(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result));
 			} catch (IOException e) {
 				LOG.error("IOException while logging ApplicationStatusDto", e);
 			}
