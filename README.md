@@ -184,9 +184,11 @@ In v2.4.0 some new options have been introduced:
 
 ## Version history
 
-
+* v2.8.0
+   + new: slow operation query fields having sub documents are clearer noted i.e. a query like `field:{foo:{bar:3,baz:5}}` was formerly shown as `field.foo.bar.baz` but now it's `field.foo{bar,baz}`. The same goes for operators as for example `$elemMatch`: a query like `field:{$elemMatch:{foo:1, bar:2, baz:{$gt:3}}}` was formerly shown just as `field.$elemMatch` but now it's `field.$elemMatch{baz.$gt,foo,bar}`
+   + update: the in v2.7.0 introduced recursively field detection is improved i.e. a query like `{$and:[{x:3},{$or:[{y:5},{z:7}]}]}` was shown in v2.7.0 as `x|y|z.$or.$and` but now it's `[x,[y,z.$or].$and]` in order to clearly point out which operator belongs to which field(s)
 * v2.7.0
-   + new: query fields are now recursively detected i.e. a criterion of a query like `{field:{$and:[{x:3},{$or:[{y:5},{z:7}]}]}}` was formerly shown just as `$and` (only 1 level deep) but now, also deeper nested levels are shown, e.g. `x|y|z.$or.$and`
+   + new: slow operation query fields are now recursively detected i.e. a criterion of a query like `{$and:[{x:3},{$or:[{y:5},{z:7}]}]}` was formerly shown just as `$and` (only 1 level deep) but now, also deeper nested levels are shown, e.g. `x|y|z.$or.$and`
    + new: the fingerprint of a query is better distinguished i.e. a query like `{field:{$or:[{x:3},{y:5}]}}` was formerly fingerprinted just as `$or` but now it's `field.$or` which is helpful to spot queries using operators which may cause performance issues
    + new: write slow operations into the collector database by using batches (BulkWrites), which increases the insert rate and consumes less resources
    + new: on the application status page show a log message if the system.profile collection could not be read fast enough because the insertion rate of slow operations was too high or the system.profile collection too small, so decrease the operations to be profiled (e.g. by lowering the slowMs threshold) and/or increase the size of system.profile collection
