@@ -30,6 +30,8 @@ public class ProfiledDocumentHandlerTest {
             "fieldMustExist" : {$exists:1},
             "fieldWithRange" : {$gt:20, $lt:30},
             "fieldWithIn" : {$in:[1,2,3,4]},
+            "fieldWithSubDoc" : {"productId":123, "siteId":2},
+            "fieldWithSubSubDoc" : {"productId":{"foo":123, "siteId":2}},
             "$and" : {$and:[{x:3},{y:5}]},
             "$and$or" : {$and:[{x:3},{$or: [{a:7},{b:9}] }]},
             "fieldWithElemMatch" : {$elemMatch: {
@@ -40,22 +42,24 @@ public class ProfiledDocumentHandlerTest {
 
 
 
-         extracted fields (max 1 level deep) should be:
+         extracted fields should be:
             "fieldSingleValue",
             "fieldMustExist.$exists",
-            "fieldWithRange.$gt.$lt"},
+            "fieldWithRange{$gt,$lt}",
             "fieldWithIn.$in",
-            "$and: x|y.$and" //more than 1 level deep
-            "$and$or: x|a|b.$or.$and" //more than 1 level deep
-            "fieldWithElemMatch.$elemMatch"
-         this would be too detailed:
-            "fieldWithElemMatch.$elemMatch.f1.f2.year.$gt"
+            "fieldWithSubDoc{productId,siteId}"
+            "fieldWithSubSubDoc.productId{foo,siteId}"
+            "[x,y.$and]"
+            "[x,[a,b.$or].$and]"
+            "fieldWithElemMatch.$elemMatch{year.$gt,f1,f2}"
          */
 
         Document fields = new Document("fieldSingleValue", 123)
                 .append("fieldMustExist", new Document("$exists", 1))
                 .append("fieldWithRange", new Document("$gt", 20).append("$lt", 30))
                 .append("fieldWithIn", new Document("$in", Lists.newArrayList(1,2,3,4)))
+                .append("fieldWithSubDoc", new Document("productId", 123).append("siteId", 2))
+                .append("fieldWithSubSubDoc", new Document("productId", new Document("foo", 123).append("siteId", 2)))
                 .append("$and", Lists.newArrayList(new Document("x", 1),new Document("y", 2)))
                 .append("$and2", Lists.newArrayList(new Document("x", 3),new Document("$or", Lists.newArrayList(new Document("a", 7),new Document("b", 9))   )))
                 .append("fieldWithElemMatch", new Document("$elemMatch", new Document("f1", "v1")
@@ -67,11 +71,13 @@ public class ProfiledDocumentHandlerTest {
         Set<String> fieldsExpected = new HashSet<String>();
         fieldsExpected.add("fieldSingleValue");
         fieldsExpected.add("fieldMustExist.$exists");
-        fieldsExpected.add("fieldWithRange.$gt.$lt");
+        fieldsExpected.add("fieldWithRange{$gt,$lt}");
         fieldsExpected.add("fieldWithIn.$in");
-        fieldsExpected.add("x|y.$and");
-        fieldsExpected.add("x|a|b.$or.$and2");
-        fieldsExpected.add("fieldWithElemMatch.$elemMatch");
+        fieldsExpected.add("fieldWithSubDoc{productId,siteId}");
+        fieldsExpected.add("fieldWithSubSubDoc.productId{foo,siteId}");
+        fieldsExpected.add("[x,y.$and]");
+        fieldsExpected.add("[x,[a,b.$or].$and2]");
+        fieldsExpected.add("fieldWithElemMatch.$elemMatch{year.$gt,f1,f2}");
 
 
         Document doc = new Document("query",
@@ -183,7 +189,7 @@ public class ProfiledDocumentHandlerTest {
         fieldsExpected = new HashSet<String>();
         fieldsExpected.add("$match.matchingFP");
         fieldsExpected.add("$group._id");
-        fieldsExpected.add("$group._id.count");
+        fieldsExpected.add("$group{count.$sum,_id}");
         assertEquals(fieldsExpected, entry.fields);
         //the same using hamcrest:
         MatcherAssert.assertThat(fieldsExpected, CoreMatchers.is(entry.fields));

@@ -614,21 +614,33 @@ db.find.distinct("classifierCatalogCategory") sieht so in system.profile aus:
                 Object subObj = dbObj.get(key);
                 if(subObj != null) {
                     if(subObj instanceof Document) {
-                        for(String sKey : ((Document) subObj).keySet()){
-                            key += "." + sKey;
-                        }
+                    	if(((Document) subObj).keySet().size() > 1){//multiple keys in subObj, so reflect the document with {} instead of using dot notation
+	                    	key += "{";
+	                    	Set<String> subDocKeys = getFields(subObj);
+	                    	for(String sKey : subDocKeys){
+	                            key += sKey + ",";
+	                        }
+	                    	key = key.substring(0, key.length()-1); //cut last ,
+	                    	key += "}";
+                    	}else{ //only one key so we can use dot notation
+                    		Set<String> subDocKeys = getFields(subObj);
+	                    	for(String sKey : subDocKeys){
+	                            key += "." + sKey;
+	                        }
+                    	}
                     }else if(subObj instanceof Collection){
+                    	
                         String collKey="";
-                        for(Document sDoc : (Collection<Document>)subObj){
-
+                        for(Object sDoc : (Collection<Object>)subObj){
                             Set<String> subDoc = getFields(sDoc);
                             for(String sKey : subDoc){
-                                collKey += sKey + "|";
+                                collKey += sKey + ",";
                             }
-
                         }
-                        if(!collKey.isEmpty()) collKey=collKey.substring(0, collKey.length()-1); //cut last |
-                        key = collKey + "." + key;
+                        if(!collKey.isEmpty()){
+                        	collKey=collKey.substring(0, collKey.length()-1); //cut last |
+                        	key = "[" + collKey + "." + key + "]";
+                        }
                     }
                 }
                 result.add(key);
