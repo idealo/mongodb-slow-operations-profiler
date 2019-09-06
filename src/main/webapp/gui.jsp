@@ -409,9 +409,9 @@ a:hover {
                     var total1 = api.column(1, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
                     var total5 = api.column(5, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
                     var total10 = api.column(10, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
-                    var total14 = api.column(12, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
-                    var total15 = api.column(13, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
-                    var total16 = api.column(14, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    var total14 = api.column(14, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    var total15 = api.column(15, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    var total16 = api.column(16, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
                     // Update footer
                     $(api.column(1).footer()).html('Total count: ' + formatNumber(total1));
                     $(api.column(5).footer()).html('Total ms: ' + formatNumber(total5));
