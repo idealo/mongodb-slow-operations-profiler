@@ -71,13 +71,13 @@ public class ProfiledDocumentHandlerTest {
         Set<String> fieldsExpected = new HashSet<String>();
         fieldsExpected.add("fieldSingleValue");
         fieldsExpected.add("fieldMustExist.$exists");
-        fieldsExpected.add("fieldWithRange{$gt,$lt}");
+        fieldsExpected.add("fieldWithRange{$gt, $lt}");
         fieldsExpected.add("fieldWithIn.$in");
-        fieldsExpected.add("fieldWithSubDoc{productId,siteId}");
-        fieldsExpected.add("fieldWithSubSubDoc.productId{foo,siteId}");
-        fieldsExpected.add("[x,y.$and]");
-        fieldsExpected.add("[x,[a,b.$or].$and2]");
-        fieldsExpected.add("fieldWithElemMatch.$elemMatch{year.$gt,f1,f2}");
+        fieldsExpected.add("fieldWithSubDoc{productId, siteId}");
+        fieldsExpected.add("fieldWithSubSubDoc.productId{foo, siteId}");
+        fieldsExpected.add("[x, y.$and]");
+        fieldsExpected.add("[x, [a, b.$or].$and2]");
+        fieldsExpected.add("fieldWithElemMatch.$elemMatch{year.$gt, f1, f2}");
 
 
         Document doc = new Document("query",
@@ -189,7 +189,7 @@ public class ProfiledDocumentHandlerTest {
         fieldsExpected = new HashSet<String>();
         fieldsExpected.add("$match.matchingFP");
         fieldsExpected.add("$group._id");
-        fieldsExpected.add("$group{count.$sum,_id}");
+        fieldsExpected.add("$group{count.$sum, _id}");
         assertEquals(fieldsExpected, entry.fields);
         //the same using hamcrest:
         MatcherAssert.assertThat(fieldsExpected, CoreMatchers.is(entry.fields));

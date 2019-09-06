@@ -516,11 +516,17 @@ db.find.distinct("classifierCatalogCategory") sieht so in system.profile aus:
         Object queryOrCommand = tmp;
         Set<String> fields = null;
         Set<String> sort = null;
-        String command = "" + doc.get("op");
+        String op = "" + doc.get("op");
         if(queryOrCommand != null  && queryOrCommand instanceof Document) {
             Document queryObj = (Document)queryOrCommand;
-            if(isCommand) command += "." + getFirstKey(queryObj);
-            Object innerQuery = queryObj.get("query");//test if "query.query" or "command.query"
+            if(isCommand && "command".equals(op)) op += "." + getFirstKey(queryObj);//if op is "command" specify it
+            Object innerQuery = null;
+            if("getmore".equals(op)){
+                Object getmoreObj = doc.get("originatingCommand"); //for "getmore" use "originatingCommand" to get the fields
+                if(getmoreObj!= null && getmoreObj instanceof Document) queryObj = (Document)getmoreObj;
+            }else{
+                innerQuery = queryObj.get("query");//test if "query.query" or "command.query"
+            }
             if(innerQuery != null && innerQuery instanceof Document) {//format is "query.query" or "command.query"
                 fields = getFields(innerQuery);
                 Object orderbyObj = queryObj.get("orderby");
@@ -530,7 +536,7 @@ db.find.distinct("classifierCatalogCategory") sieht so in system.profile aus:
                 if(fields.isEmpty() && queryObj.get("key") != null){//command.query is empty but command.key is not, i.e. db.find.distinct("someField");
                     fields.add(queryObj.get("key").toString());
                 }
-            }else {//format is "query.$query" or "command.$query" or "query.filter" or "query" or "command"
+            }else {//format is "query.$query" or "command.$query" or "query.filter" or "query" or "command" or "getmore"
                 Object innerDollarQuery = queryObj.get("$query");
                 if(innerDollarQuery != null) {
                     fields = getFields(innerDollarQuery);
@@ -574,9 +580,20 @@ db.find.distinct("classifierCatalogCategory") sieht so in system.profile aus:
             col = ns.substring(ns.indexOf(".")+1);
         }
 
-        return new ProfilingEntry((Date)doc.get("ts"), serverAddress, db, col,
-                command, "" + doc.get("user"), fields, sort, getInteger(doc, "nreturned"),
-                getInteger(doc, "responseLength"), getInteger(doc, "millis"), getLong(doc, "cursorId"));
+        return new ProfilingEntry((Date) doc.get("ts"), serverAddress, db, col,
+                op, "" + doc.get("user"), fields, sort,
+                getField(Integer.class, doc, "nreturned"),
+                getField(Integer.class, doc, "responseLength"),
+                getField(Integer.class, doc, "millis"),
+                getField(Long.class, doc, "cursorId"),
+                getField(Integer.class, doc, "keysExamined"),
+                getField(Integer.class, doc, "docsExamined"),
+                getField(Boolean.class, doc, "hasSortStage"),
+                getField(Integer.class, doc, "ndeleted"),
+                getField(Integer.class, doc, "ninserted"),
+                getField(Integer.class, doc, "nModified")
+
+        );
     }
 
     private String getFirstKey(Document doc){
@@ -586,21 +603,11 @@ db.find.distinct("classifierCatalogCategory") sieht so in system.profile aus:
         return "";
     }
 
-    private Integer getInteger(Document dbObj, String name) {
+    private <T extends Object> T getField(Class<T> type, Document dbObj, String name) {
         if(dbObj != null) {
             final Object obj = dbObj.get(name);
             if(obj != null) {
-                return (Integer)(obj);
-            }
-        }
-        return null;
-    }
-
-    private Long getLong(Document dbObj, String name) {
-        if(dbObj != null) {
-            Object obj = dbObj.get(name);
-            if(obj != null) {
-                return (Long)(obj);
+                return (type.cast(obj));
             }
         }
         return null;
@@ -618,9 +625,9 @@ db.find.distinct("classifierCatalogCategory") sieht so in system.profile aus:
 	                    	key += "{";
 	                    	Set<String> subDocKeys = getFields(subObj);
 	                    	for(String sKey : subDocKeys){
-	                            key += sKey + ",";
+	                            key += sKey + ", ";
 	                        }
-	                    	key = key.substring(0, key.length()-1); //cut last ,
+	                    	key = key.substring(0, key.length()-2); //cut last ,
 	                    	key += "}";
                     	}else{ //only one key so we can use dot notation
                     		Set<String> subDocKeys = getFields(subObj);
@@ -634,11 +641,11 @@ db.find.distinct("classifierCatalogCategory") sieht so in system.profile aus:
                         for(Object sDoc : (Collection<Object>)subObj){
                             Set<String> subDoc = getFields(sDoc);
                             for(String sKey : subDoc){
-                                collKey += sKey + ",";
+                                collKey += sKey + ", ";
                             }
                         }
                         if(!collKey.isEmpty()){
-                        	collKey=collKey.substring(0, collKey.length()-1); //cut last |
+                        	collKey=collKey.substring(0, collKey.length()-2); //cut last ,
                         	key = "[" + collKey + "." + key + "]";
                         }
                     }

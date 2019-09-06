@@ -12,7 +12,7 @@
 	<script type="text/javascript" src="js/jquery-ui.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="css/jquery.dataTables.css">
 	<link rel="stylesheet" type="text/css" href="css/jquery-ui.css">
-	<title>slow operations</title>
+	<title>application status of slow-operations-profiler</title>
 		<script type="text/javascript" >
 			var mainTable;
 			$(document).ready(function() {
