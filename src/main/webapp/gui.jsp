@@ -16,7 +16,7 @@
   <link rel="stylesheet" type="text/css" href="css/jquery.dataTables.css">
   <link href="css/bootstrap-combined.css" rel="stylesheet">
   <link href="css/bootstrap-datetimepicker.min.css" rel="stylesheet" type="text/css" media="screen" >
-  <title>slow operations</title>
+  <title>analyzing slow operations</title>
 </head>
 <%!boolean isEmpty(HttpServletRequest request, String param) {
     return request.getParameter(param) == null || request.getParameter(param).trim().length() == 0; 
@@ -157,7 +157,17 @@ function setCountAsSqrt(checkButton){
 //min=2
 //max=3
 //sum=4
-var initialYIndex=[0,0,1,2,3,4];//initial order of fields: timestamp,avg,count,min,max,sum
+//stdDevMs=5
+//nRet=6
+//minRet=7
+//maxRet=8
+//avgRet=9
+//stdDevRet=10
+//rKeys=11
+//rDocs=12
+//wDocs=13
+//memSort=14
+var initialYIndex=[0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14];//initial order of fields: timestamp,avg,count,min,max,sum
 var currentYIndex=initialYIndex;
 function setYAxis(newYIndex){
     currentYIndex = interchangeIndexes(initialYIndex, newYIndex);//save current order to show the correct values in the legend
@@ -183,8 +193,18 @@ function drawLegend(){
                 var minSec = g.getValue(row, seriesProps.column + currentYIndex[3]);
                 var maxSec = g.getValue(row, seriesProps.column + currentYIndex[4]);
                 var sumSec = g.getValue(row, seriesProps.column + currentYIndex[5]);
+                var stdDevMs = g.getValue(row, seriesProps.column + currentYIndex[6]);
+                var nRet = g.getValue(row, seriesProps.column + currentYIndex[7]);
+                var minRet = g.getValue(row, seriesProps.column + currentYIndex[8]);
+                var maxRet = g.getValue(row, seriesProps.column + currentYIndex[9]);
+                var avgRet = g.getValue(row, seriesProps.column + currentYIndex[10]);
+                var stdDevRet = g.getValue(row, seriesProps.column + currentYIndex[11]);
+                var rKeys = g.getValue(row, seriesProps.column + currentYIndex[12]);
+                var rDocs = g.getValue(row, seriesProps.column + currentYIndex[13]);
+                var wDocs = g.getValue(row, seriesProps.column + currentYIndex[14]);
+                var memSort = g.getValue(row, seriesProps.column + currentYIndex[15]);
                 if (pts[i].yval != 0 && count != 0) {//0-values are necessary to put into the data matrix (instead of empty values) but they are not shown in the legend
-                    legend.push([seriesProps.color, pts[i], avg, count, minSec, maxSec, sumSec]);
+                    legend.push([seriesProps.color, pts[i], avg, count, minSec, maxSec, sumSec, stdDevMs, nRet, minRet, maxRet, avgRet, stdDevRet, rKeys, rDocs, wDocs, memSort]);
                 }
             }
         }
@@ -197,9 +217,19 @@ function drawLegend(){
                 return b[1].yval - a[1].yval
             });//sort by y-values
         }
+
+        var header="";
+        var body ="";
         for (var i = 0; i < legend.length; i++) {
-            text += "<span style='font-weight: bold; color: " + legend[i][0] + ";'> " + legend[i][1].name + "</span><br/><span>" + Dygraph.dateString_(legend[i][1].xval) + " count:" + formatNumber(legend[i][3]) + " <b>Duration</b> min:" + formatNumber(legend[i][4]) + " max:" + formatNumber(legend[i][5]) + " avg:" + formatNumber(legend[i][2]) + " sum:" + formatNumber(legend[i][6]) + "</span><br/>";
+            header = "<span><b>Timestamp</b> " + Dygraph.dateString_(legend[i][1].xval)+"</span><br/>";
+            body += "<span style='font-weight: bold; color: " + legend[i][0] + ";'> " + legend[i][1].name + "</span><br/><span>" +
+                "<b>Slow-ops </b> count:" + formatNumber(legend[i][3]) +
+                "<br/><b>Duration</b> min:" + formatNumber(legend[i][4]) + " max:" + formatNumber(legend[i][5]) + " avg:" + formatNumber(legend[i][2]) + " sum:" + formatNumber(legend[i][6]) + " stdDev:" + formatNumber(legend[i][7]) +
+                "<br/><b>Returned </b> min:" + formatNumber(legend[i][9]) + " max:" + formatNumber(legend[i][10]) + " avg:" + formatNumber(legend[i][11]) + " sum:" + formatNumber(legend[i][8]) + " stdDev:" + formatNumber(legend[i][12]) +
+                "<br/><b>R/W </b> rKeys:" + formatNumber(legend[i][13]) + " rDocs:" + formatNumber(legend[i][14]) + " wDocs:" + formatNumber(legend[i][15]) + " memSort: " + (legend[i][16]=="1"?"true":"false") +
+                "</span><br/>";
         }
+        text += header + body;
         document.getElementById("status").innerHTML = text;
     }
 }
@@ -338,12 +368,19 @@ a:hover {
                         {"visible":true, "name": "Max ms"},
                         {"visible":true, "name": "Avg ms"},
                         {"visible":true, "name": "Sum ms"},
+                        {"visible":true, "name": "StdDev ms"},
                         {"visible":true, "name": "Min ret"},
                         {"visible":true, "name": "Max ret"},
                         {"visible":true, "name": "Avg ret"},
                         {"visible":true, "name": "Sum ret"},
+                        {"visible":true, "name": "StdDev ret"},
                         {"visible":true, "name": "ret/ms"},
-                        {"visible":true, "name": "ms/ret"}
+                        {"visible":true, "name": "ms/ret"},
+                        {"visible":true, "name": "rKeys"},
+                        {"visible":true, "name": "rDocs"},
+                        {"visible":true, "name": "wDocs"},
+                        {"visible":true, "name": "memSort"}
+
         ];
         
         var columnDefs = [];
@@ -371,11 +408,17 @@ a:hover {
                     // Total over current page so that search results reflect the sum
                     var total1 = api.column(1, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
                     var total5 = api.column(5, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
-                    var total9 = api.column(9, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    var total10 = api.column(10, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    var total14 = api.column(12, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    var total15 = api.column(13, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    var total16 = api.column(14, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
                     // Update footer
                     $(api.column(1).footer()).html('Total count: ' + formatNumber(total1));
                     $(api.column(5).footer()).html('Total ms: ' + formatNumber(total5));
-                    $(api.column(9).footer()).html('Total ret: ' + formatNumber(total9));
+                    $(api.column(10).footer()).html('Total ret: ' + formatNumber(total10));
+                    $(api.column(14).footer()).html('Total rKeys: ' + formatNumber(total14));
+                    $(api.column(15).footer()).html('Total rDocs: ' + formatNumber(total15));
+                    $(api.column(16).footer()).html('Total wDocs: ' + formatNumber(total16));
                 }
             }
         });
@@ -420,12 +463,18 @@ a:hover {
             <td valign="top"><%=labelSerie.getMaxMs() %></td>
             <td valign="top"><%=labelSerie.getMillis()/labelSerie.getCount() %></td>
             <td valign="top"><%=labelSerie.getMillis() %></td>
+            <td valign="top"><%=labelSerie.getStdDevMs() %></td>
             <td valign="top"><%=labelSerie.getMinRet() %></td>
             <td valign="top"><%=labelSerie.getMaxRet() %></td>
             <td valign="top"><%=labelSerie.getNRet()/labelSerie.getCount() %></td>
             <td valign="top"><%=labelSerie.getNRet() %></td>
+            <td valign="top"><%=labelSerie.getStdDevRet() %></td>
             <td valign="top"><%=labelSerie.getMillis()>0?(labelSerie.getNRet()/labelSerie.getMillis()):"" %></td>
             <td valign="top"><%=labelSerie.getNRet()>0?(labelSerie.getMillis()/labelSerie.getNRet()):"" %></td>
+            <td valign="top"><%=labelSerie.getKeys() %></td>
+            <td valign="top"><%=labelSerie.getDocs() %></td>
+            <td valign="top"><%=labelSerie.getDocsWrittenCount() %></td>
+            <td valign="top"><%=labelSerie.hasSortStage() %></td>
         </tr>
     <%}%>
   <tbody>

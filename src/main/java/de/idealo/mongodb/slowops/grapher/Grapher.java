@@ -79,7 +79,9 @@ public class Grapher {
 
     public SlowOpsDto aggregateSlowQueries(StringBuffer filter, Object[] params, StringBuffer groupExp, StringBuffer groupTime) {
         final SlowOpsDto result = new SlowOpsDto();
-        final String[] customFields = new String[] {"count", "minSec", "maxSec", "sumSec"};
+        final String[] customFields = new String[] {"count", "minSec", "maxSec", "sumSec", "stdDevMs",
+                "nRet", "minRet", "maxRet", "avgRet", "stdDevRet", "rKeys", "rDocs", "wDocs", "memSort"};
+
         //List<AggregatedProfiling> queryResult = null;
         ResultsIterator<AggregatedProfiling> queryResult = null;
 
@@ -102,11 +104,19 @@ public class Grapher {
                     "avgMs : { $avg : '$millis' }," +
                     "minMs : { $min : '$millis' }," +
                     "maxMs : { $max : '$millis' }," +
+                    "stdDevMs : { $stdDevPop : '$millis' }," +
                     "nRet : { $sum : '$nret' }," +
                     "avgRet : { $avg : '$nret' }," +
                     "minRet : { $min : '$nret' }," +
                     "maxRet : { $max : '$nret' }," +
-                    "firstts : { $first : '$ts' }" +
+                    "stdDevRet : { $stdDevPop : '$nret' }," +
+                    "firstts : { $first : '$ts' }," +
+                    "keys : { $sum : '$keys' }," +
+                    "docs : { $sum : '$docs' }," +
+                    "del : { $sum : '$del' }," +
+                    "ins : { $sum : '$ins' }," +
+                    "mod : { $sum : '$mod' }," +
+                    "sortstages : { $addToSet : '$sortstg' }" +
                     "}" +
                     "}" +
                   "}"
@@ -208,6 +218,17 @@ public class Grapher {
         dataGrid.append(decimalFormat.format(maxMinMs/-scale)).append(",");//first group MinMs
         dataGrid.append(decimalFormat.format(maxMaxMs/-scale)).append(",");//first group MaxMs
         dataGrid.append(decimalFormat.format(maxSumMs/-scale)).append(",");//first group SumMs
+        dataGrid.append("0,");//first group StdDevMs
+        dataGrid.append("0,");//first group NRet
+        dataGrid.append("0,");//first group MinRet
+        dataGrid.append("0,");//first group MaxRet
+        dataGrid.append("0,");//first group AvgRet
+        dataGrid.append("0,");//first group StdDevRet
+        dataGrid.append("0,");//first group rKeys
+        dataGrid.append("0,");//first group rDocs
+        dataGrid.append("0,");//first group wDocs
+        dataGrid.append("0,");//first group memSort
+
         final int lineSize = (groups.size()-1)*(customFields.length+1);//first group already added, thus -1
         for (int i = 0; i < lineSize; i++) {
             dataGrid.append("0").append(",");
@@ -234,6 +255,19 @@ public class Grapher {
                 values[startIdx + 2] = decimalFormat.format(entry.getMinMs()/scale);
                 values[startIdx + 3] = decimalFormat.format(entry.getMaxMs()/scale);
                 values[startIdx + 4] = decimalFormat.format(entry.getMillis()/scale);
+                values[startIdx + 5] = decimalFormat.format(entry.getStdDevMs());
+                //NRet:
+                values[startIdx + 6] = decimalFormat.format(entry.getNRet());
+                values[startIdx + 7] = decimalFormat.format(entry.getMinRet());
+                values[startIdx + 8] = decimalFormat.format(entry.getMaxRet());
+                values[startIdx + 9] = decimalFormat.format(entry.getAvgRet());
+                values[startIdx + 10] = decimalFormat.format(entry.getStdDevRet());
+                //Perf:
+                values[startIdx + 11] = ""+entry.getKeys();
+                values[startIdx + 12] = ""+entry.getDocs();
+                values[startIdx + 13] = ""+(entry.getDel() + entry.getIns() + entry.getMod());
+                values[startIdx + 14] = entry.hasSortStage()?"1":"0";
+
             }
             for (int i = 0; i < values.length; i++) {
               dataGrid.append(values[i]==null?"0":values[i]).append(",");

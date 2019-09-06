@@ -134,14 +134,14 @@ public class AggregatedProfilingId {
         result.append(getField("col", col, isHtml));
         result.append(getField("op", op, isHtml));
         result.append(getField("user", user, isHtml));
-        result.append(getField("fields", fields!=null?fields.toString():null, isHtml));
-        result.append(getField("sort", sort!=null?sort.toString():null, isHtml));
+        result.append(getField("fields", getStringList(fields), isHtml));
+        result.append(getField("sort", getStringList(sort), isHtml));
         
         if(result.length() > 0) {
             if(isHtml) {
                 result.delete(result.length() - 4, result.length());//remove last <br>
             }else {
-                result.deleteCharAt(result.length() - 1);//remove last ;
+                result.deleteCharAt(result.length() - 2);//remove last ;SPACE
             }
         }else {
             result.append("empty");
@@ -149,14 +149,25 @@ public class AggregatedProfilingId {
         
         return result.toString();
     }
+
+    private String getStringList(Set<String> str){
+        if(str == null) return null;
+        final StringBuffer result = new StringBuffer();
+        for (String s: str) {
+            result.append("'").append(s).append("'").append("; ");
+        }
+        if(result.length()>0) result.deleteCharAt(result.length() - 2);//remove last ;SPACE
+
+        return result.toString();
+    }
     
     private String getField(String name, String field, boolean isHtml) {
         if(field != null && field.length() > 0) {
             final StringBuffer result = new StringBuffer();
             if(isHtml){
-                result.append(name).append("=").append(field.replace(',', ';')).append("<br>");
+                result.append(name).append("=").append(field).append("<br>");
             }else {
-                result.append(name).append("=").append(field.replace(',', ';')).append(";");
+                result.append(name).append("=").append(field).append("; ");
             }
             return result.toString();
         }

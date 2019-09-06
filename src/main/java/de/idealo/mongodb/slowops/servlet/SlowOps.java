@@ -175,7 +175,7 @@ public class SlowOps extends HttpServlet {
      */
     private String getStringArray(String parameter) {
         final StringBuffer result = new StringBuffer();
-        final String[] params = parameter.replace(';', ',').split(",");
+        final String[] params = parameter.replaceAll("'", "").split(";");
         for (int i = 0; i < params.length; i++) {
             result.append("\"").append(params[i].trim()).append("\",");
         }

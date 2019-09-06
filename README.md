@@ -45,6 +45,24 @@ Here is a reduced screenshot of the table where all columns are shown, sorted by
 
 ![Screenshot](img/slow_operations_gui_table.jpg "Screenshot of the table")
 
+<a name="sumtable_v2.9.0"></a>
+Since version 2.9.0 the analysis page shows additional metrics about:
+* number of read keys from the index (`rKeys`)
+* number of read documents (`rDocs`)
+* number of written documents (`wDocs`)
+* if an in-memory sort happend (`memSort`)
+* standard deviation of the execution times (`stdDev ms`)
+* standard deviation of the number of returned documents (`stdDev ret`) 
+
+If `rKeys` is 0 then no index has been used, resulting in a collection scan. In this case you should consider adding an index. If `rKeys`is much higher than the number of returned documents (column `Sum ret`), the database is scanning many index keys to find the result documents. Consider creating or adjusting indexes to improve query performance.
+
+If `rDocs` is 0 then the query was "covered" which means that all information needed could be retrieved from the index, thus no document had to be fetched into memory. For write operations, if `rDocs`is higher than `wDocs`then some documents didn't need to be (re)written because they were already up-to-date.
+
+The value of `wDocs` is the sum of how many documents have been deleted, inserted or modified by the corresponding slow operation type. This being said, you may tick **Operation**  in your **Group by** settings to know the number of written docs for the corresponding write-operation type (i.e. `remove`, `insert`, `update`).
+
+The value of `memSort`is `true` if no index could be used to sort the documents. In this case you should consider adding or adjusting indexes so that no in-memory sort is needed anymore.
+
+
 
 ## Applicaton status page
 
@@ -183,7 +201,20 @@ In v2.4.0 some new options have been introduced:
 
 
 ## Version history
+* v2.9.0
+   + new: for `getmore` operations the profiler analyzes `originatingCommand` from the profiling entries, so `getmore` operations can now be related to the originating query (only for mongodb versions 3.6 and newer)
+   + new: the profiler retrieves additional fields from the profiling entries such as `keysExamined`, `docsExamined`, `hasSortStage`, `ndeleted`, `ninserted` and `nModified` (the first three fields are available only for monogdb versions 3.2 and newer)
+   + update: in the analysis page, the legend of the diagram is reformatted for better readability
+   + new: the analysis page shows additional metrics about:
+     * number of read keys from the index (`rKeys`)
+     * number of read documents (`rDocs`)
+     * number written documents (`wDocs`)
+     * if an in-memory sort happened (`memSort`)
+     * standard deviation of the execution time (`StdDev ms`)
+     * standard deviation of the number of returned documents (`StdDev ret`)
 
+     For more details [see above](#sumtable_v2.9.0)
+   + bugfix: on the analysis page in `Filter by`, searching for `Queried fields` or `Sorted fields` may have required special formatting in order to match these fields, mainly for embedded or complex fields, but now, queried and sorted fields can be copied as they are shown in the analysis page and pasted "as is" in the search form `Filter by` to filter by them    
 * v2.8.0
    + new: slow operation query fields having sub documents are clearer noted i.e. a query like `field:{foo:{bar:3,baz:5}}` was formerly shown as `field.foo.bar.baz` but now it's `field.foo{bar,baz}`. The same goes for operators as for example `$elemMatch`: a query like `field:{$elemMatch:{foo:1, bar:2, baz:{$gt:3}}}` was formerly shown just as `field.$elemMatch` but now it's `field.$elemMatch{baz.$gt,foo,bar}`
    + update: the in v2.7.0 introduced recursively field detection is improved i.e. a query like `{$and:[{x:3},{$or:[{y:5},{z:7}]}]}` was shown in v2.7.0 as `x|y|z.$or.$and` but now it's `[x,[y,z.$or].$and]` in order to clearly point out which operator belongs to which field(s)

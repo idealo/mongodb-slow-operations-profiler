@@ -525,7 +525,7 @@ public class ProfilingReader extends Thread implements Terminable{
                     }
                     final String msg = "ProfilingReader for '"+profiledServerDto.getLabel()+"' at " + serverAddress + "/" + database + " threw an error and will be restarted in " + (sleepMs/1000) + " seconds." + reason;
                     ApplicationStatusDto.addWebLog(msg);
-                    LOG.info(msg);
+                    LOG.warn(msg, e);
                     sleepIfNotStopped(sleepMs);
                 }
             }
