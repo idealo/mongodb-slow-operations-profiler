@@ -23,7 +23,7 @@ In this example, during 8 minutes from 23:58 o'clock occurred 5 different slow o
 
 In this screenshot, the slowest operation type at 00:03 o'clock happened on collection `apiOfferlist` by executing a `query` on both fields `_id.productId` and `_id.siteId`. This slow operation type occurred 112 times at this precise minute, its minimum duration was 2 ms, maximum 47 ms, average 10 ms and the sum of all these queries was 1.115 ms.
 
-Below you see how many documents (min, max, avg, sum, stdDev) were returned by this operation. And last but not least you have some metrics about how many index keys were read (`rKeys`), how many documents were read (`rDocs`) and written (`wDocs`) and also that no in-memory sort had to be done (no sort at all in this case since no `sort`field was defined). 
+Below you see how many documents (min, max, avg, sum, stdDev) were returned by this operation. And last but not least you have some metrics about how many index keys were read (`rKeys`), how many documents were read (`rDocs`) and written (`wDocs`) and also that no in-memory sort (`memSort`) had to be done (no sort at all in this case since no `sort`field was defined). 
 
 The second slowest operation type in this screenshot is a `getmore` operation. Since v2.9.0 the application shows also the originating query of the `getmore`operation. In this example, the query logically combined both fields `_id.productId`and `parentProductId` by OR and its result was logically combined by AND with the field `_id.siteId`.
 
