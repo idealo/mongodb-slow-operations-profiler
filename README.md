@@ -16,16 +16,18 @@ The more "Group by" checkboxes are checked, the more details constitute slow ope
 
 ### Example
 
-For example, the following screenshot shows that only one databases has been **filtered**, defined by its label, server addresses, replica set and database name for a specific time period.
-Since the slow operations are **grouped by** their collections, operations, queried and sorted fields, the legend below on the right shows these 4 details grouped together for the time period which is being hovered over by the mouse, here at 00:03 o'clock. As the the **resolution** is set to `Minute`, all slow operations occurred during within the minute hovered over by the mouse, here from 00:03 until 00:04 o'clock, are shown on the right-hand side in the legend.
+For example, the following screenshot shows that only one database has been **filtered**, defined in the search form by its label, server addresses, replica set and database name for a specific time period.
+Since the slow operations are defined in the search form to be **grouped by** their collections, operations, queried and sorted fields, the legend below on the right shows these 4 details grouped together for the time period which is being hovered over by the mouse, here at 00:03 o'clock. As the the **resolution** is set to `Minute`, all slow operations occurred during within the minute hovered over by the mouse, here from 00:03 until 00:04 o'clock, are shown on the right-hand side in the legend.
 
-In this example, during 8 minutes from 23:58 o'clock occurred 5 different slow operation types. As the legend is sorted by y-axis, thus duration, the slowest operation type is shown first. Instead, you may select "sort legend by:" `count-value` to see in the legend the most profiled slow operation types first.
+In this example, from 23:58 to 00:06 o'clock occurred 5 different slow operation types which are printed in different colors in both the diagram and the legend. As the legend is sorted by y-axis, thus execution time in milliseconds, the **slowest** operation type is shown first. Instead, you may select "sort legend by:" `count-value` to see in the legend the **most profiled** slow operation types first (which correspond to the biggest circles).
 
 In this screenshot, the slowest operation type at 00:03 o'clock happened on collection `apiOfferlist` by executing a `query` on both fields `_id.productId` and `_id.siteId`. This slow operation type occurred 112 times at this precise minute, its minimum duration was 2 ms, maximum 47 ms, average 10 ms and the sum of all these queries was 1.115 ms.
 
-Below you see how many documents (min, max, avg, sum, stdDev) were returned by this operation. And last but not least you have some metrics about how many index keys were read (`rKeys`), how many documents were read (`rDocs`) and written (`wDocs`) and also that no in-memory sort (`memSort`) had to be done (no sort at all in this case since no `sort`field was defined). 
+Below you see how many documents (min, max, avg, sum, stdDev) were returned by this operation. And last but not least you have some metrics about how many index keys were read (`rKeys`), how many documents were read (`rDocs`) and written (`wDocs`) and also that no in-memory sort (`memSort`) had to be done (no sort at all in this case since no `sort` field was defined). 
 
-The second slowest operation type in this screenshot is a `getmore` operation. Since v2.9.0 the application shows also the originating query of the `getmore`operation. In this example, the query logically combined both fields `_id.productId`and `parentProductId` by OR and its result was logically combined by AND with the field `_id.siteId`.
+The second slowest operation type in this screenshot is a `getmore` operation. Since v2.9.0 the application shows also the originating query of the `getmore`operation. In this example, the query logically combined both fields `_id.productId`and `parentProductId` by OR and its result was logically combined by AND with the field `_id.siteId`. 
+
+In general, multiple fields belonging to an operator expression are enclosed in square brackets `[]` and the last field is suffixed by `.$operator` e.g. `[a, b.$or]`. If the operator applies to only one field, square brackets are omitted, e.g. `a.$gt`.
 
 The metrics about execution times, returned documents, read and written documents and/or index keys are to read in the same manner as above.
 
@@ -44,9 +46,9 @@ For example, to see the most expensive slow operations first, just sort descendi
 
 Here is a reduced screenshot of the table without any filter on rows because the `Search` textbox is empty. However not all columns are shown. You can toggle a column to be shown or hidden by clicking its name in the table header. The table here is sorted by column `Sum ms`, so we see in the first row the most **expensive** slow operation type: either there were many of this type or they were generally slow. 
 
-Let's interprete the first row to get you familar with. In the column `Group` you see the attributes you've grouped by (selected above in the search form). Here again, the collection (`col`) is called "apiOfferlist", the operations (`op`) were "updates" and the field (`fields`) to select the documents to be modified was an `_id` field having a sub-document querying the 3 fields `productId`, `siteId` and `segments`. Sub-documents being queried on more than one field are enclosed by curly brackets `{}`. However, if only one sub-document field was queried, dot-notation is used.
+Let's interprete the first row to get you familar with. In the column `Group` you see the attributes you've grouped by (selected in the search form above). Here again, the slow ops occurred in the collection (`col`) "apiOfferlist". The slow operations (`op`) were "updates" and the field (`fields`) to select the documents to be modified was an `_id` field having a sub-document querying the 3 fields `productId`, `siteId` and `segments`. Sub-documents being queried on more than one field are enclosed by curly brackets `{}`. However, if only one sub-document field was queried, dot-notation is preferably used.
 
-The following columns in the data table should be self-explanatory. High values in the column `ms/ret` (and vice versa low values in column `ret/ms`) may indicate a performance problem for operations which return documents, because these columns show the time in ms needed to return 1 document respectively the number of documents returned within 1 ms.
+The rest of the columns in the data table should be self-explanatory. High values in the column `ms/ret` (and vice versa low values in column `ret/ms`) may indicate a performance problem for operations which return documents, because these columns show the time in ms needed to return 1 document respectively the number of documents returned within 1 ms.
 
 ![Screenshot](img/slow_operations_gui_table_low.png "Screenshot of the table")
 
@@ -208,7 +210,7 @@ In v2.4.0 some new options have been introduced:
 ## Version history
 * v2.9.0
    + new: for `getmore` operations the profiler analyzes `originatingCommand` from the profiling entries, so `getmore` operations can now be related to the originating query (only for mongodb versions 3.6 and newer)
-   + new: the profiler retrieves additional fields from the profiling entries such as `keysExamined`, `docsExamined`, `hasSortStage`, `ndeleted`, `ninserted` and `nModified` (the first three fields are available only for monogdb versions 3.2 and newer)
+   + new: the profiler retrieves additional fields from the profiling entries such as `keysExamined`, `docsExamined`, `hasSortStage`, `ndeleted`, `ninserted` and `nModified` (don't blame me for the inconsitent camel case - it's mongodb.org's carelessness). The first three fields are available only for monogdb versions 3.2 and newer. 
    + update: in the analysis page, the legend of the diagram is reformatted for better readability
    + new: the analysis page shows additional metrics about:
      * number of read keys from the index (`rKeys`)
