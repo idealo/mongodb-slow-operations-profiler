@@ -16,24 +16,25 @@ The more "Group by" checkboxes are checked, the more details constitute slow ope
 
 ### Example
 
-For example, the following screenshot shows that only a few databases have been **filtered**, defined by their labels, server address, replica set name, database and collection for a specific time period of one day.
-Since they are **grouped by** their label, operation, queried and sorted fields, the legend below on the right shows these 4 details grouped together for the time period which is being hovered over by the mouse, here at 04:00 o'clock. As the the **resolution** is set to `Hour`, all slow operations occurred during within the hour hovered over by the mouse, here from 04:00 until 04:59.59 o'clock, are shown.
+For example, the following screenshot shows that only one databases has been **filtered**, defined by its label, server addresses, replica set and database name for a specific time period.
+Since the slow operations are **grouped by** their collections, operations, queried and sorted fields, the legend below on the right shows these 4 details grouped together for the time period which is being hovered over by the mouse, here at 00:03 o'clock. As the the **resolution** is set to `Minute`, all slow operations occurred during within the minute hovered over by the mouse, here from 00:03 until 00:04 o'clock, are shown on the right-hand side in the legend.
 
-In this example, during 1 hour from 04:00 o'clock occurred 4 different slow operation types, two on `offerstore-it` and two on `offerstore-en`. As the legend is sorted by y-axis, thus duration, the slowest operation type is shown first.
+In this example, during 8 minutes from 23:58 o'clock occurred 5 different slow operation types. As the legend is sorted by y-axis, thus duration, the slowest operation type is shown first. Instead, you may select "sort legend by:" `count-value` to see in the legend the most profiled slow operation types first.
 
-The slowest operation type happened on `offerstore-it` by executing a `count` command on both fields `missingSince`, using an `$ne` expression, and field `shopId`, using a concrete value. This slow operation type occurred 9 times, its minimum duration was 3,583 ms, its maximum 40,784 ms and its average 11,880.56 ms.
+In this screenshot, the slowest operation type at 00:03 o'clock happened on collection `apiOfferlist` by executing a `query` on both fields `_id.productId` and `_id.siteId`. This slow operation type occurred 112 times at this precise minute, its minimum duration was 2 ms, maximum 47 ms, average 10 ms and the sum of all these queries was 1.115 ms.
 
-The second slowest operation type happened on `offerstore-en` by fetching a next batch (op=`getmore`). The queried fields are unknown for a getmore operation but the query itself, including its used fields, may have been recorded earlier already because there is no reason that the query itself has been faster than its followed getmore operation.
+Below you see how many documents (min, max, avg, sum, stdDev) were returned by this operation. And last but not least you have some metrics about how many index keys were read (`rKeys`), how many documents were read (`rDocs`) and written (`wDocs`) and also that no in-memory sort had to be done (no sort at all in this case since no `sort`field was defined). 
 
-The third slowest operation type happened on `offerstore-it` by executing a `count` command on both fields `shopId`, using a concrete value, and on field `bokey` using a range query with both operators `$lte` and `$gte`.
+The second slowest operation type in this screenshot is a `getmore` operation. Since v2.9.0 the application shows also the originating query of the `getmore`operation. In this example, the query logically combined both fields `_id.productId`and `parentProductId` by OR and its result was logically combined by AND with the field `_id.siteId`.
 
-The fourth and last slowest operation type in this example from 04:00 until 04:59 o'clock happened on `offerstore-en` by executing a query on both fields `exportIFP.IDEALO`, using an `$exists` operator and on field `shopId`, using a concrete value.
+The metrics about execution times, returned documents, read and written documents and/or index keys are to read in the manner as above.
+
 
 
 ## Example screenshot of the analysis page
 
 
-![Screenshot](img/slow_operations_gui_diagram.jpg "Screenshot of the analysis page")
+![Screenshot](img/slow_operations_gui_diagram_low.png "Screenshot of the analysis page")
 
 ### Summarized table
 
@@ -41,9 +42,13 @@ Since v1.0.3 the user analysis page, besides the diagram, has also a table of al
 
 For example, to see the most expensive slow operations first, just sort descending by column `Sum ms`.
 
-Here is a reduced screenshot of the table where all columns are shown, sorted by column `Max ms`, without any filter on rows.
+Here is a reduced screenshot of the table without any filter on rows because the `Search` textbox is empty. However not all columns are shown. You can toggle a column to be shown or hidden by clicking its name in the table header. The table here is sorted by column `Sum ms`, so we see in the first row the most **expensive** slow operation type: either there were many of this type or they were generally slow. 
 
-![Screenshot](img/slow_operations_gui_table.jpg "Screenshot of the table")
+Let's interprete the first row to get you familar with. In the column `Group` you see the attributes you've grouped by (selected above in the search form). Here again, the collection (`col`) is called "apiOfferlist", the operations (`op`) were "updates" and the field (`fields`) to select the documents to be modified was an `_id` field having a sub-document querying the 3 fields `productId`, `siteId` and `segments`. Sub-documents being queried on more than one field are enclosed by curly brackets `{}`. However, if only one sub-document field was queried, dot-notation is used.
+
+The following columns in the data table should be self-explanatory. High values in the column `ms/ret` (and vice versa low values in column `ret/ms`) may indicate a performance problem for operations which return documents, because these columns show the time in ms needed to return 1 document respectively the number of documents returned within 1 ms.
+
+![Screenshot](img/slow_operations_gui_table_low.png "Screenshot of the table")
 
 <a name="sumtable_v2.9.0"></a>
 Since version 2.9.0 the analysis page shows additional metrics about:
