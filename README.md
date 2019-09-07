@@ -27,7 +27,7 @@ Below you see how many documents (min, max, avg, sum, stdDev) were returned by t
 
 The second slowest operation type in this screenshot is a `getmore` operation. Since v2.9.0 the application shows also the originating query of the `getmore`operation. In this example, the query logically combined both fields `_id.productId`and `parentProductId` by OR and its result was logically combined by AND with the field `_id.siteId`.
 
-The metrics about execution times, returned documents, read and written documents and/or index keys are to read in the manner as above.
+The metrics about execution times, returned documents, read and written documents and/or index keys are to read in the same manner as above.
 
 
 
