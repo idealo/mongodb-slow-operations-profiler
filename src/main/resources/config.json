@@ -1,7 +1,8 @@
 {
   "collector":{
     "hosts":[
-      "profiler-db:27017"],
+      "collector-db:27017"
+    ],
     "db":"mongodba",
     "collection":"slowops",
     "adminUser":"",
@@ -9,10 +10,11 @@
   },
   "profiled":[
     { "enabled": false,
-      "label":"offerListService",
+      "label":"test-db",
       "hosts":[
-        "profiler-db:27017"],
-      "ns":["mongodba.*"],
+        "test-db:27018"
+      ],
+      "ns":["*.*"],
       "adminUser":"",
       "adminPw":""
     }
