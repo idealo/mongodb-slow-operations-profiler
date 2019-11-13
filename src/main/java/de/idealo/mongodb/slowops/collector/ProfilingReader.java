@@ -77,7 +77,9 @@ public class ProfilingReader extends Thread implements Terminable{
         ARBITER(7),
         DOWN(8),
         ROLLBACK(9),
-        REMOVED(10);
+        REMOVED(10),
+        //added to distinguish single nodes from replSets
+        SINGLE(20);
 
         private int value;
 
@@ -107,6 +109,8 @@ public class ProfilingReader extends Thread implements Terminable{
                     return ROLLBACK;
                 case 10:
                     return REMOVED;
+                case 20:
+                    return SINGLE;
             }
             return UNKNOWN;
         }
@@ -345,6 +349,7 @@ public class ProfilingReader extends Thread implements Terminable{
                     LOG.info("Not authorized to get replSet status for server {} (if it's an arbiter we may have run into this bug: https://jira.mongodb.org/browse/SERVER-5479 ) ", serverAddress, e);
                 }else {
                     LOG.info("This mongod seems not to be a replSet member {}", serverAddress, e);
+                    replSetStatus = ReplicaStatus.SINGLE;
                 }
             }
 
