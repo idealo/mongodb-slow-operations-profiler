@@ -12,7 +12,7 @@
     { "enabled": false,
       "label":"test-db",
       "hosts":[
-        "test-db:27018"
+        "test-db:27017"
       ],
       "ns":["*.*"],
       "adminUser":"",
