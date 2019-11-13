@@ -1,58 +1,25 @@
 {
   "collector":{
     "hosts":[
-      "myCollectorHost_member1:27017",
-      "myCollectorHost_member2:27017",
-      "myCollectorHost_member3:27017"],
-    "db":"profiling",
+      "profiler-db:27017"],
+    "db":"mongodba",
     "collection":"slowops",
     "adminUser":"",
-    "adminPw":"",
-    "ssl":false
+    "adminPw":""
   },
   "profiled":[
     { "enabled": false,
-      "label":"dbs foo",
+      "label":"offerListService",
       "hosts":[
-        "someHost1:27017",
-        "someHost2:27017",
-        "someHost3:27017"],
-      "ns":[
-        "someDatabase.someCollection",
-        "anotherDatabase.anotherCollection"],
+        "profiler-db:27017"],
+      "ns":["mongodba.*"],
       "adminUser":"",
-      "adminPw":"",
-      "ssl":false,
-      "slowMS":250,
-      "responseTimeoutInMs": 1500
-    },
-    { "enabled": false,
-      "label":"dbs bar",
-      "hosts":["someMongoRouter:27017"],
-      "ns":[
-        "someDatabase.someCollection",
-        "anotherDatabase.*",
-        "*.myCollection"],
-      "adminUser":"",
-      "adminPw":"",
-      "ssl":false,
-      "slowMS":250,
-      "responseTimeoutInMs": 3000
-    },
-    { "enabled": false,
-      "label":"dbs with many databases to be profiled",
-      "hosts":["someOtherMongoRouter:27017"],
-      "ns":["*.*"],
-      "adminUser":"",
-      "adminPw":"",
-      "ssl":true,
-      "slowMS":250,
-      "responseTimeoutInMs": 3000
+      "adminPw":""
     }
   ],
   "yAxisScale":"milliseconds",
-  "adminToken": "mySecureAdminToken",
-  "defaultSlowMS" : 100,
-  "defaultResponseTimeoutInMs" : 2000,
-  "maxWeblogEntries" : 100
+  "adminToken": "dba",
+  "defaultSlowMS" : 3000,
+  "defaultResponseTimeoutInMs" : 3000,
+  "maxWeblogEntries" : 300
 }
