@@ -348,7 +348,7 @@ public class ProfilingReader extends Thread implements Terminable{
                 if(e.getErrorMessage().indexOf("error 13")!=-1){
                     LOG.info("Not authorized to get replSet status for server {} (if it's an arbiter we may have run into this bug: https://jira.mongodb.org/browse/SERVER-5479 ) ", serverAddress, e);
                 }else {
-                    LOG.info("This mongod seems not to be a replSet member {}", serverAddress, e);
+                    LOG.info("This mongod seems not to be a replSet member {}", serverAddress);
                     replSetStatus = ReplicaStatus.SINGLE;
                 }
             }
