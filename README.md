@@ -128,7 +128,7 @@ Or:
 
 #### Starting up by using Docker
 
-1. Download both `docker-compose.yaml` and `Dockerfile` files from
+1. Download both files `Dockerfile` and `docker-compose.yaml` from
    github:
    - `https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/Dockerfile`
      e.g. by issuing the command `curl -O
