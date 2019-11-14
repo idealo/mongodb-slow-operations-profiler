@@ -40,7 +40,7 @@ The metrics about execution times, returned documents, read and written document
 
 ### Summarized table
 
-Since v1.0.3 the user analysis page, besides the diagram, has also a table of all selected slow operation types. The table is filterable. Columns are sortable and selectable to be hidden or shown. The sum over the values of columns, where it makes sense, is shown at the bottom of the columns.
+Since v1.0.3 the user analysis page, besides the diagram, has also a table of all selected slow operation types. The table is filterable. Columns are sortable and selectable to be hidden or shown. Wherever it makes sense, the sum of the values per column is displayed at the bottom of the column.
 
 For example, to see the most expensive slow operations first, just sort descending by column `Sum ms`.
 
@@ -75,7 +75,7 @@ The value of `memSort`is `true` if no index could be used to sort the documents.
 
 Since v1.0.3 there is also a page to show the application status. Besides showing the status of the collector, means where and how many slow operations have been collected (read and written) since application restart, it shows also every registered database in a table. Since profiling works per database, each database to be profiled is in one row.
 
-The table is filterable. Columns are sortable and selectable to be hidden or shown. The sum over the values of columns, where it makes sense, is shown at the bottom of the columns. The table is by default sorted by the columns `Label`, `ReplSet` and `Status` which gives a very good overview over a whole bunch of clusters. **Hint:** Hold shift key pressed while clicking the column headers in order to sort multiple columns.
+The table is filterable. Columns are sortable and selectable to be hidden or shown. Wherever it makes sense, the sum of the values per column is displayed at the bottom of the column. The table is by default sorted by the columns `Label`, `ReplSet` and `Status` which gives a very good overview over a whole bunch of clusters. **Hint:** Hold shift key pressed while clicking the column headers in order to sort multiple columns.
 
 Here is a reduced screenshot of some first rows of the table, ordered by columns `ReplSet` and `Status`, with a filter "datastore" applied on rows:
 
