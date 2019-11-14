@@ -128,12 +128,15 @@ Or:
 
 #### Starting up by using Docker
 
-1. Download the `docker-compose.yaml` file:
-   `https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/docker-compose.yaml`
-   e.g. by issuing the command `curl -O
-   https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/docker-compose.yaml`
-2. Being in the folder of the downloaded `docker-compose.yaml` file,
-   spin up the docker containers: `docker-compose up -d` 
+1. Download both `docker-compose.yaml` and `Dockerfile` files from
+   github:
+   - `https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/Dockerfile`
+     e.g. by issuing the command `curl -O
+     https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/Dockerfile`
+   - `https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/docker-compose.yaml` e.g. by issuing the command `curl -O
+     https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/docker-compose.yaml`
+2.  Being in the folder of the downloaded file, spin up the docker
+    containers: `docker-compose up -d`
 3. The application can be accessed through a web browser by the URL
    `http://localhost:8080/mongodb-slow
    -operations-profiler/app?adminToken=mySecureAdminToken` On the bottom
