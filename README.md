@@ -187,10 +187,10 @@ their containers. Also SSL/TLS is not enabled.
    - `mvn package`
 4. Deploy the resulted war file (e.g. "`mongodb-slow-operations-profiler-1.0.3.war`") on a java webserver (e.g. tomcat). Dependent on the above mentionned `config.json`, it may automatically start collecting slow operations. If no slow operations exist yet on the mongod's, the collector(s) will sleep 1 hour before retrying.
 5. The application can be accessed through a web browser by the URL:
-   - [http://your-server:your-port/mongodb-slow-operations-profiler\[your-version-number-if-less-than-2.10\]/app](http://your-server:your-port/mongodb-slow-operations-profiler[your-version-number-if-less-than-2.10]/app)
-6. To visualize and analyze slow operations either select one or more
-   entries and click "analyse" or use the following URL:
-   - [http://your-server:your-port/mongodb-slow-operations-profiler\[your-version-number-if-less-than-2.10\]/gui](http://your-server:your-port/mongodb-slow-operations-profiler[your-version-number-if-less-than-2.10]/gui)
+   - [http://your-server:your-port/mongodb-slow-operations-profiler[VERSION-NUMBER-if-less-than-2.10]/app](http://your-server:your-port/mongodb-slow-operations-profiler/app)
+6. To visualize and analyze slow operations either select one or more entries and click "analyse" or use the following
+   URL:
+   - [http://your-server:your-port/mongodb-slow-operations-profiler[VERSION-NUMBER-if-less-than-2.10]/gui](http://your-server:your-port/mongodb-slow-operations-profiler/gui)
 
 ### <a name="config"></a> Configuration
 
@@ -272,11 +272,10 @@ In v2.4.0 some new options have been introduced:
 
 ## Version history
 * v2.10.0
-   + new: `Dockerfile` and `docker-compose.yaml` added which allows to spin up both the webapp and the collector
-    database in docker containers. Only Docker needs to be installed to run the application in this way. All the
-     other dependencies (java, maven, mongodb) will be handled by Docker automatically and thus don't have to be set
-      up by the
-      user.  
+  +  new: `Dockerfile` and `docker-compose.yaml` added which allows to spin up both the webapp and the collector
+     database in docker containers. Only Docker needs to be installed to run the application in this way. All the other
+     dependencies (git, java, maven, mongodb) will be handled by Docker automatically and thus don't have to be set up
+     by the user.
    + new: change default `config.json` so that  
    + new: show status of single nodes as SINGLE
    + new: show log message in the application status page when the profiling writer was started or stopped 
