@@ -114,11 +114,64 @@ The uploaded config is **not** persisted server side and will be lost upon webap
 
 ### Preconditions
 
+Either:
+
 1. java 1.8 or newer
 2. maven 2.0 or newer
 3. mongoDB 2.0 or newer
 
+Or:
+
+1. Docker
+
 ### Starting up
+
+#### Starting up by using Docker
+
+1. Download the `docker-compose.yaml` file:
+   `https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/docker-compose.yaml`
+   e.g. by issuing the command `curl -O
+   https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/docker-compose.yaml`
+2. Being in the folder of the downloaded `docker-compose.yaml` file,
+   spin up the docker containers: `docker-compose up -d` 
+3. The application can be accessed through a web browser by the URL
+   `http://localhost:8080/mongodb-slow
+   -operations-profiler/app?adminToken=mySecureAdminToken` On the bottom
+   of this page you can edit the current configuration and apply it by
+   pressing the button `upload new config` 
+4. To visualize and analyze slow operations either select one or more entries and click "analyse" or use the
+ following URL `http://localhost:8080/mongodb-slow-operations-profiler/gui`
+ 
+##### Docker does automatically the following:
+
+* clone the project from github to your local computer in a temporary 
+  docker container
+* build the project by maven in a temporary docker container
+* spin up one container named `collector-db` running one single mongod
+  instance serving as collector database
+* spin up one container named `test-db` running one single mongod
+  instance serving as test database
+* spin up one container named `profiler-webapp` running running a web 
+  server (tomcat) to serve the webapp
+* expose port 8080 to access the webapp
+
+##### Some helpful Docker commands:
+
+* access a running docker container: `docker exec -it <CONTAINER-NAME>
+  /bin/bash` e.g. `docker exec -it test-db /bin/bash`
+* stop a running docker container: `docker stop <CONTAINER-NAME>` e.g.
+  `docker stop profiler-webapp`
+* rebuild and start all stopped docker container belonging to this
+  project: `docker-compose up -d --build`
+* stop all stopped docker container belonging to this project:
+  `docker-compose down`
+  
+Be aware that neither both mongod instances (`collector-db` and
+`test-db`) nor the web server (`profiler-webapp`) are secured. This
+means that mongodb can be accessed without authentication from within
+their containers. Also SSL/TLS is not enabled.
+  
+#### Starting up by having already installed git, java, maven and mongodb
 
 1. Clone the project:
 `git clone https://github.com/idealo/mongodb-slow-operations-profiler.git`
@@ -126,8 +179,11 @@ The uploaded config is **not** persisted server side and will be lost upon webap
 3. While being in the in the project folder "`mongodb-slow-operations-profiler/`", build a war file by executing in a shell:
 `mvn package`
 4. Deploy the resulted war file (e.g. "`mongodb-slow-operations-profiler-1.0.3.war`") on a java webserver (e.g. tomcat). Dependent on the above mentionned `config.json`, it may automatically start collecting slow operations. If no slow operations exist yet on the mongod's, the collector(s) will sleep 1 hour before retrying.
-5. The application can be accessed through a web browser by the URL `http://your-server:your-port/mongodb-slow-operations-profiler-[your-version]/app`
-6. To visualize and analyze slow operations either select one or more entries and click "analyse" or use the following URL `http://your-server:your-port/mongodb-slow-operations-profiler-[your-version]/gui`
+5. The application can be accessed through a web browser by the URL `http://your-server:your-port/mongodb-slow
+-operations-profiler[your-version-number-if-less-than-2.10]/app`
+6. To visualize and analyze slow operations either select one or more entries and click "analyse" or use the
+ following URL `http://your-server:your-port/mongodb-slow-operations-profiler[your-version-number-if-less-than-2.10
+ ]/gui`
 
 ### <a name="config"></a> Configuration
 
@@ -199,7 +255,7 @@ Fields of `profiled` entries explained:
 The field `yAxisScale` is to be set either to the value "milliseconds" or "seconds". It defines the scale of the y-axis in the diagram of the analysis page.
 
 In v2.0.0 the field `adminToken` has been introduced to restrict access to administrative functionalities i.e. stop/start of collecting slow operations, setting the threshold `slowMs`, seeing the currently used configuration or uploading a new configuration.
-To grant access to these functionalities, add the parameter `adminToken=` followed by your configured value, i.e. `mySecureAdminToken`, to the URL of the application status page, i.e. `http://your-server:your-port/mongodb-slow-operations-profiler-[your-version]/app?adminToken=mySecureAdminToken`.
+To grant access to these functionalities, add the parameter `adminToken=` followed by your configured value, i.e. `mySecureAdminToken`, to the URL of the application status page, i.e. `http://your-server:your-port/mongodb-slow-operations-profiler[your-version-number-if-less-than-2.10]/app?adminToken=mySecureAdminToken`.
 
 In v2.4.0 some new options have been introduced:
 * `defaultResponseTimeoutInMs` defines a default response timeout for all `profiled` entries that don't have specified `responseTimeoutInMs` (default: 2000 ms)
@@ -208,6 +264,17 @@ In v2.4.0 some new options have been introduced:
 
 
 ## Version history
+* v2.10.0
+   + new: `Dockerfile` and `docker-compose.yaml` added which allows to spin up both the webapp and the collector
+    database in docker containers. Only Docker needs to be installed to run the application in this way. All the
+     other dependencies (java, maven, mongodb) will be handled by Docker automatically and thus don't have to be set
+      up by the
+      user.  
+   + new: change default `config.json` so that  
+   + new: show status of single nodes as SINGLE
+   + new: show log message in the application status page when the profiling writer was started or stopped 
+   + update: version number is omitted in war file so that the URL to access the webapp stay the same when the
+    version number changes
 * v2.9.0
    + new: for `getmore` operations the profiler analyzes `originatingCommand` from the profiling entries, so `getmore` operations can now be related to the originating query (only for mongodb versions 3.6 and newer)
    + new: the profiler retrieves additional fields from the profiling entries such as `keysExamined`, `docsExamined`, `hasSortStage`, `ndeleted`, `ninserted` and `nModified` (don't blame me for the inconsitent camel case - it's mongodb.org's carelessness). The first three fields are available only for monogdb versions 3.2 and newer. 

@@ -1,0 +1,21 @@
+version: '3.7'
+services:
+  collector-db:
+    image: mongo:4.2
+    container_name: collector-db
+  test-db:
+    image: mongo:4.2
+    container_name: test-db
+  profiler-webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: profiler-webapp
+    depends_on:
+      - collector-db
+      - test-db
+    ports:
+      - "127.0.0.1:8080:8080"
+    links:
+      - "collector-db"
+      - "test-db"
