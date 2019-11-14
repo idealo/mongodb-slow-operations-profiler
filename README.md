@@ -128,12 +128,12 @@ Or:
 
 #### Starting up by using Docker
 
-1. Download both files `Dockerfile` and `docker-compose.yaml` from
-   github:
-   - `https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/Dockerfile`
-     e.g. by issuing the command `curl -O
+1. Download both files
+   [Dockerfile](https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/Dockerfile)
+   and [docker-compose.yaml](https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/docker-compose.yaml) from github:
+   - `curl -O
      https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/Dockerfile`
-   - `https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/docker-compose.yaml` e.g. by issuing the command `curl -O
+   - `curl -O
      https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/docker-compose.yaml`
 2.  Being in the folder of both downloaded files, spin up the docker
     containers by issuing the commad: `docker-compose up -d`
