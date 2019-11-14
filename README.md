@@ -138,13 +138,15 @@ Or:
 2.  Being in the folder of both downloaded files, spin up the docker
     containers by issuing the command: 
     - `docker-compose up -d`
-3. The application can be accessed through a web browser by the URL
-   `http://localhost:8080/mongodb-slow
-   -operations-profiler/app?adminToken=mySecureAdminToken` On the bottom
-   of this page you can edit the current configuration and apply it by
-   pressing the button `upload new config` 
-4. To visualize and analyze slow operations either select one or more entries and click "analyse" or use the
- following URL `http://localhost:8080/mongodb-slow-operations-profiler/gui`
+3. The application can be accessed through a web browser by the URL:
+   -  [http://localhost:8080/mongodb-slow
+   -operations-profiler/app?adminToken=mySecureAdminToken](http://localhost:8080/mongodb-slow-operations-profiler/app?adminToken=mySecureAdminToken)
+      
+      On the bottom of this page you can edit the current configuration
+      and apply it by pressing the button `upload new config`
+4. To visualize and analyze slow operations either select one or more
+   entries and click "analyse" or use the following URL:
+   - [http://localhost:8080/mongodb-slow-operations-profiler/gui](http://localhost:8080/mongodb-slow-operations-profiler/gui)
  
 ##### Docker does automatically the following:
 
@@ -178,16 +180,17 @@ their containers. Also SSL/TLS is not enabled.
 #### Starting up by having already installed git, java, maven and mongodb
 
 1. Clone the project:
-`git clone https://github.com/idealo/mongodb-slow-operations-profiler.git`
+  - `git clone
+     https://github.com/idealo/mongodb-slow-operations-profiler.git`
 2. Enter the server addresses, database and collection names in file "`mongodb-slow-operations-profiler/src/main/resources/config.json`" (see [Configuration](#config) below)
 3. While being in the in the project folder "`mongodb-slow-operations-profiler/`", build a war file by executing in a shell:
-`mvn package`
+   - `mvn package`
 4. Deploy the resulted war file (e.g. "`mongodb-slow-operations-profiler-1.0.3.war`") on a java webserver (e.g. tomcat). Dependent on the above mentionned `config.json`, it may automatically start collecting slow operations. If no slow operations exist yet on the mongod's, the collector(s) will sleep 1 hour before retrying.
-5. The application can be accessed through a web browser by the URL `http://your-server:your-port/mongodb-slow
--operations-profiler[your-version-number-if-less-than-2.10]/app`
-6. To visualize and analyze slow operations either select one or more entries and click "analyse" or use the
- following URL `http://your-server:your-port/mongodb-slow-operations-profiler[your-version-number-if-less-than-2.10
- ]/gui`
+5. The application can be accessed through a web browser by the URL:
+   - [http://your-server:your-port/mongodb-slow-operations-profiler\[your-version-number-if-less-than-2.10\]/app](http://your-server:your-port/mongodb-slow-operations-profiler[your-version-number-if-less-than-2.10]/app)
+6. To visualize and analyze slow operations either select one or more
+   entries and click "analyse" or use the following URL:
+   - [http://your-server:your-port/mongodb-slow-operations-profiler\[your-version-number-if-less-than-2.10\]/gui](http://your-server:your-port/mongodb-slow-operations-profiler[your-version-number-if-less-than-2.10]/gui)
 
 ### <a name="config"></a> Configuration
 
