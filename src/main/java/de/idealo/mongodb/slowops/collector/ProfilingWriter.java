@@ -97,9 +97,10 @@ public class ProfilingWriter extends Thread implements Terminable{
             profileCollection.createIndex(new BasicDBObject("ts",-1).append("lbl", 1), indexOptions);
             LOG.info("Create index {adr:1, db:1, ts:-1} in the background if it does not yet exists");
             profileCollection.createIndex(new BasicDBObject("adr",1).append("db",1).append("ts", -1), indexOptions);
-
+            ApplicationStatusDto.addWebLog("ProfilingWriter is successfully connected to its collector database.");
         } catch (MongoException e) {
             LOG.error("Exception while connecting to: {}", serverDto.getHosts(), e);
+            ApplicationStatusDto.addWebLog("ProfilingWriter could not connect to its collector database.");
         }
         
         LOG.info("<<< init");
@@ -174,8 +175,10 @@ public class ProfilingWriter extends Thread implements Terminable{
                         docList.add(entry.getDocument());
                     }
                     try {
+                        LOG.debug("try to insertMany {} before: {}", docList.size(), doneJobs.get());
                         profileCollection.insertMany(docList, options);
                         doneJobs.addAndGet(docList.size());
+                        LOG.debug("try to insertMany after: {}", doneJobs.get());
                     }catch (MongoBulkWriteException e){
                         BulkWriteResult wr = e.getWriteResult();
                         doneJobs.addAndGet(wr.getInsertedCount());
@@ -185,9 +188,12 @@ public class ProfilingWriter extends Thread implements Terminable{
                         docList.clear();
                     }
                 }else{
+                    LOG.debug("try to insertOne before: {}", doneJobs.get());
                     profileCollection.insertOne(jobQueue.take().getDocument());
                     doneJobs.incrementAndGet();
+                    LOG.debug("try to insertOne after: {}", doneJobs.get());
                 }
+                LOG.debug("doneJobs: {}", doneJobs.get());
             }
         }catch(Exception e) {
             LOG.error("Exception occurred, will return and try again.", e);
@@ -200,7 +206,7 @@ public class ProfilingWriter extends Thread implements Terminable{
      */
     @Override
     public void run() {
-
+        LOG.info("Run started.");
         MongoDbAccessor mongo = null;
         try {
             while(!stop) {

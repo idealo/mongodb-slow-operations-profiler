@@ -4,9 +4,7 @@
       "collector-db:27017"
     ],
     "db":"mongodba",
-    "collection":"slowops",
-    "adminUser":"",
-    "adminPw":""
+    "collection":"slowops"
   },
   "profiled":[
     { "enabled": false,
@@ -14,13 +12,11 @@
       "hosts":[
         "test-db:27017"
       ],
-      "ns":["*.*"],
-      "adminUser":"",
-      "adminPw":""
+      "ns":["*.*"]
     }
   ],
   "yAxisScale":"milliseconds",
-  "adminToken": "dba",
+  "adminToken": "mySecureAdminToken",
   "defaultSlowMS" : 3000,
   "defaultResponseTimeoutInMs" : 3000,
   "maxWeblogEntries" : 300

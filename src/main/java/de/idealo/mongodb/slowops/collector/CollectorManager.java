@@ -92,6 +92,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
             if (writer != null) {
                 boolean isSameWriter = ConfigReader.getCollectorServer().equals(writer.getCollectorServerDto());
                 if(!isSameWriter) {
+                    LOG.info("terminate old writer to start a different one");
                     writer.terminate();
                 }
             }
@@ -539,6 +540,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         if(writer != null) {
             return writer.getDoneJobs();
         }
+        LOG.debug("writer.getDoneJobs() is null");
         return 0;
     }
 
