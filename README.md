@@ -192,10 +192,10 @@ their containers. Also SSL/TLS is not enabled.
    - `mvn package`
 4. Deploy the resulted war file (e.g. "`mongodb-slow-operations-profiler-1.0.3.war`") on a java webserver (e.g. tomcat). Dependent on the above mentionned `config.json`, it may automatically start collecting slow operations. If no slow operations exist yet on the mongod's, the collector(s) will sleep 1 hour before retrying.
 5. The application can be accessed through a web browser by the URL:
-   - [http://your-server:your-port/mongodb-slow-operations-profiler[VERSION-NUMBER-if-less-than-2.10]/app](http://your-server:your-port/mongodb-slow-operations-profiler/app)
+   - [http://your-server:your-port/mongodb-slow-operations-profiler[-VERSION-NUMBER-if-less-than-2.10]/app](http://your-server:your-port/mongodb-slow-operations-profiler/app)
 6. To visualize and analyze slow operations either select one or more entries and click "analyse" or use the following
    URL:
-   - [http://your-server:your-port/mongodb-slow-operations-profiler[VERSION-NUMBER-if-less-than-2.10]/gui](http://your-server:your-port/mongodb-slow-operations-profiler/gui)
+   - [http://your-server:your-port/mongodb-slow-operations-profiler[-VERSION-NUMBER-if-less-than-2.10]/gui](http://your-server:your-port/mongodb-slow-operations-profiler/gui)
 
 ### <a name="config"></a> Configuration
 
@@ -266,8 +266,11 @@ Fields of `profiled` entries explained:
 
 The field `yAxisScale` is to be set either to the value "milliseconds" or "seconds". It defines the scale of the y-axis in the diagram of the analysis page.
 
-In v2.0.0 the field `adminToken` has been introduced to restrict access to administrative functionalities i.e. stop/start of collecting slow operations, setting the threshold `slowMs`, seeing the currently used configuration or uploading a new configuration.
-To grant access to these functionalities, add the parameter `adminToken=` followed by your configured value, i.e. `mySecureAdminToken`, to the URL of the application status page, i.e. `http://your-server:your-port/mongodb-slow-operations-profiler[your-version-number-if-less-than-2.10]/app?adminToken=mySecureAdminToken`.
+In v2.0.0 the field `adminToken` has been introduced to restrict access to administrative functionalities i.e.
+stop/start of collecting slow operations, setting the threshold `slowMs`, seeing the currently used configuration or
+uploading a new configuration. To grant access to these functionalities, add the parameter `adminToken=` followed by
+your configured value, i.e. `mySecureAdminToken`, to the URL of the application status page, i.e.
+`http://your-server:your-port/mongodb-slow-operations-profiler/app?adminToken=mySecureAdminToken`.
 
 In v2.4.0 some new options have been introduced:
 * `defaultResponseTimeoutInMs` defines a default response timeout for all `profiled` entries that don't have specified `responseTimeoutInMs` (default: 2000 ms)
