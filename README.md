@@ -162,8 +162,7 @@ Or:
   instance serving as collector database
 * spin up one container named `test-db` running one single mongod
   instance serving as test database
-* spin up one container named `profiler-webapp` running running a web 
-  server (tomcat) to serve the webapp
+* spin up one container named `profiler-webapp` running a web server (tomcat) to serve the webapp
 * expose port 8080 to access the webapp
 
 ##### Some helpful Docker commands:
