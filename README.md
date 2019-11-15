@@ -167,19 +167,15 @@ Or:
 
 ##### Some helpful Docker commands:
 
-* access a running docker container: `docker exec -it <CONTAINER-NAME>
-  /bin/bash` e.g. `docker exec -it test-db /bin/bash`
-* stop a running docker container: `docker stop <CONTAINER-NAME>` e.g.
-  `docker stop profiler-webapp`
-* rebuild and start all stopped docker container belonging to this
-  project: `docker-compose up -d --build`
-* stop all stopped docker container belonging to this project:
-  `docker-compose down`
+* access a running docker container: `docker exec -it <CONTAINER-NAME> /bin/bash` e.g. `docker exec -it test-db
+  /bin/bash`
+* stop a running docker container: `docker stop <CONTAINER-NAME>` e.g. `docker stop profiler-webapp`
+* rebuild and start all stopped docker containers belonging to this project: `docker-compose up -d --build`
+* stop all docker containers belonging to this project: `docker-compose down`
   
-Be aware that neither both mongod instances (`collector-db` and
-`test-db`) nor the web server (`profiler-webapp`) are secured. This
-means that mongodb can be accessed without authentication from within
-their containers. Also SSL/TLS is not enabled.
+Be aware that neither both mongod instances (`collector-db` and `test-db`) nor the web server (`profiler-webapp`) are
+secured. This means that mongodb can be accessed without authentication from within their containers. Also SSL/TLS is
+not enabled.
   
 #### Starting up by having already installed git, java, maven and mongodb
 
