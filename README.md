@@ -275,15 +275,14 @@ In v2.4.0 some new options have been introduced:
 
 ## Version history
 * v2.10.0
-  +  new: `Dockerfile` and `docker-compose.yaml` added which allows to spin up both the webapp and the collector
-     database in docker containers. Only Docker needs to be installed to run the application in this way. All the other
-     dependencies (git, java, maven, mongodb) will be handled by Docker automatically and thus don't have to be set up
-     by the user.
-   + new: change default `config.json` so that  
-   + new: show status of single nodes as SINGLE
+   +  new: `Dockerfile` and `docker-compose.yaml` added which allows to spin up both the webapp and the collector
+      database in docker containers. Only Docker needs to be installed to run the application in this way. All the other
+      dependencies (git, java, maven, mongodb) will be handled by Docker automatically and thus don't have to be set up
+      by the user.
+   + new: change default `config.json` so that Docker can use it right away
+   + new: show status of single nodes as SINGLE (instead of UNKNOWN)
    + new: show log message in the application status page when the profiling writer was started or stopped 
-     + update: version number is omitted in war file so that the URL to access the webapp stays the same when the
-       version number changes
+   + update: version number is omitted in war file so that the URL to access the webapp stays the same when the version number changes
 * v2.9.0
    + new: for `getmore` operations the profiler analyzes `originatingCommand` from the profiling entries, so `getmore` operations can now be related to the originating query (only for mongodb versions 3.6 and newer)
    + new: the profiler retrieves additional fields from the profiling entries such as `keysExamined`, `docsExamined`, `hasSortStage`, `ndeleted`, `ninserted` and `nModified` (don't blame me for the inconsitent camel case - it's mongodb.org's carelessness). The first three fields are available only for monogdb versions 3.2 and newer. 
