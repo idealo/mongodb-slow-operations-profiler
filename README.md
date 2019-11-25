@@ -274,6 +274,8 @@ In v2.4.0 some new options have been introduced:
 
 
 ## Version history
+* v2.10.1
+   + bugfix: when uploading a new collector configuration, the number of written slow operations was set to 0, so the total number of written slows ops was also incorrectly shown in the statistics of the collector on the application status page
 * v2.10.0
    +  new: `Dockerfile` and `docker-compose.yaml` added which allows to spin up both the webapp and the collector
       database in docker containers. Only Docker needs to be installed to run the application in this way. All the other
