@@ -70,7 +70,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         if(ConfigReader.reloadConfig(cfg)){
             LOG.info("new config has been applied");
 
-            restartWriter();
+            restartChangedWriter();
 
             final List<ProfiledServerDto> profiledServers = getProfiledServers(CONFIG);
 
@@ -85,15 +85,15 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         }
     }
     
-    private void restartWriter() {
-        LOG.info(">>> restart writer");
-
+    private void restartChangedWriter() {
         try {
             if (writer != null) {
                 boolean isSameWriter = ConfigReader.getCollectorServer().equals(writer.getCollectorServerDto());
-                if(!isSameWriter) {
+                if(isSameWriter) {
+                    return;
+                }else{
                     LOG.info("terminate old writer to start a different one");
-                    writer.terminate();
+                    terminateWriter();
                 }
             }
             LOG.info("start a new writer");
@@ -102,8 +102,6 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         } catch (Throwable e) {
             LOG.error("Error while (re)starting writer ", e);
         }
-
-        LOG.info("<<< restart writer");
     }
 
     /**
