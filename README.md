@@ -274,6 +274,10 @@ In v2.4.0 some new options have been introduced:
 
 
 ## Version history
+* v2.10.2
+  +  update: the action `current ops` shows the originating command (if it exists) because getMore operations will just
+     show the cursor id in the `command` field whereas the field `originating command` contains the queried fields which
+     are more interesting to know than the cursor id
 * v2.10.1
    + bugfix: when uploading a new collector configuration, the number of written slow operations was set to 0, so the total number of written slows ops was also incorrectly shown in the statistics of the collector on the application status page
 * v2.10.0

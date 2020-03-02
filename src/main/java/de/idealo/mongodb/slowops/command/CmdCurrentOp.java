@@ -61,7 +61,8 @@ public class CmdCurrentOp implements ICommand {
                             row.add(entryDoc.get("secs_running", Number.class));//may be Long (v4) or Integer (v3.4)
                             row.add(entryDoc.getString("op"));
                             row.add(entryDoc.getString("ns"));
-                            row.add(getJson(entryDoc, "command"));
+                            final String originatingCommand = getJson(entryDoc, "originatingCommand");
+                            row.add(originatingCommand.equals("")?getJson(entryDoc, "command"):originatingCommand);
                             row.add(entryDoc.getString("planSummary"));
                             row.add(entryDoc.getInteger("numYields", -1));
                             row.add(entryDoc.getBoolean("active"));

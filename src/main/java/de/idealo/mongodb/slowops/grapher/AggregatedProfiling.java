@@ -233,9 +233,9 @@ public class AggregatedProfiling {
 
     public static void main(String[] args) {
         int [][] samples = {
-                {2,4,4,4,5,5,7,9,10,10},//first sample, avg=5, sigma=2
-                {20,40,40,40,50,50,70,90,30,30},//second sample, , avg=50, sigma=20
-                {2,4,4,4,5,5,7,9,20,40,40,40,50,50,70,90,10,30,30,10}//both samples merged together to one sample, , avg=27.5, sigma=26.6
+                {2,4,4,4,5,5,7,9},//first sample, avg=5, sigma=2
+                {20,40,40,40,50,50,70,90},//second sample, , avg=50, sigma=20
+                {2,4,4,4,5,5,7,9,20,40,40,40,50,50,70,90}//both samples merged together to one sample, , avg=27.5, sigma=26.6
         };
 
 
@@ -265,8 +265,8 @@ public class AggregatedProfiling {
         //double sigmaBoth = Math.sqrt( ((Math.pow(avg[0]+sigma[0]-avg[2], 2.0) )*samples[0].length + (Math.pow(avg[1]+sigma[1]-avg[2], 2.0) )*samples[1].length)/samples[2].length );
         double sample1Odd = samples[0].length%2==0?0:(Math.pow(avg[0]-avg[2], 2.0) );
         double sample2Odd = samples[1].length%2==0?0:(Math.pow(avg[1]-avg[2], 2.0) );
-        double sample1Len = samples[0].length%2==0?(samples[0].length/2):((samples[0].length-1)/2);
-        double sample2Len = samples[1].length%2==0?(samples[1].length/2):((samples[1].length-1)/2);
+        double sample1Len = samples[0].length%2==0?(samples[0].length/2.0):((samples[0].length-1)/2.0);
+        double sample2Len = samples[1].length%2==0?(samples[1].length/2.0):((samples[1].length-1)/2.0);
         double sumBoth = (
                 ((Math.pow(avg[0]+sigma[0]-avg[2], 2.0) )*sample1Len) +
                 ((Math.pow(avg[0]-sigma[0]-avg[2], 2.0) )*sample1Len) +
@@ -289,7 +289,7 @@ public class AggregatedProfiling {
         if(sigmaBoth - sigma[2] == 0){
             System.out.println("Combined stdev of both samples are equal to stddev of merged samples.");
         }else{
-            System.out.println("Combined stddev of both samples are not equal to stddev of merged samples, but should.");
+            System.out.println("Combined stddev of both samples are not equal to stddev of merged samples, but should. Diff: " + (sigmaBoth - sigma[2]));
         }
 
     }
