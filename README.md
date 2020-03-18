@@ -274,6 +274,9 @@ In v2.4.0 some new options have been introduced:
 
 
 ## Version history
+* v2.11.0
+  + new: in the analysis page, in the column `Resolution by` the option `Second` was added, which allows a finer grained analysis. However, only use a fine grained resolution if the selected time period is short enough to return data that fit in the maximum allowed BSON document size (16 MB).
+  + new: some info tooltips have been added
 * v2.10.2
   +  update: the action `current ops` shows the originating command (if it exists) because getMore operations will just
      show the cursor id in the `command` field whereas the field `originating command` contains the queried fields which

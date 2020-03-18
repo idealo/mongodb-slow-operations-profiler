@@ -247,6 +247,13 @@ public class SlowOps extends HttpServlet {
             result.append("dayOfMonth:{$dayOfMonth:'$ts'},");
             result.append("hour:{$hour:'$ts'},");
             result.append("minute:{$minute:'$ts'}");
+        }else if("second".equals(resolution)) {
+            result.append("year:{$year:'$ts'},");
+            result.append("month:{$month:'$ts'},");
+            result.append("dayOfMonth:{$dayOfMonth:'$ts'},");
+            result.append("hour:{$hour:'$ts'},");
+            result.append("minute:{$minute:'$ts'},");
+            result.append("second:{$second:'$ts'}");
         }else { //default:
             result.append("year:{$year:'$ts'},");
             result.append("month:{$month:'$ts'},");

@@ -13,7 +13,9 @@
   <script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
   <script type="text/javascript" src="js/jquery.dataTables.sum.js"></script>
   <script type="text/javascript" src="js/jquery.number.min.js"></script>
+  <script type="text/javascript" src="js/jquery-ui.min.js"></script>
   <link rel="stylesheet" type="text/css" href="css/jquery.dataTables.css">
+  <link rel="stylesheet" type="text/css" href="css/jquery-ui.css">
   <link href="css/bootstrap-combined.css" rel="stylesheet">
   <link href="css/bootstrap-datetimepicker.min.css" rel="stylesheet" type="text/css" media="screen" >
   <title>analyzing slow operations</title>
@@ -53,7 +55,7 @@
 					</td></tr>
 				</table>
 			</td>
-			<td valign="top"><strong>Group by</strong>
+			<td valign="top" class="infoGroup"><strong>Group by</strong> <img src="img/info.gif" alt="info" title="info">
 				<table>
 					<tr><td><input type="checkbox" name="byLbl" value="lbl" <%   	if(!isEmpty(request,"byLbl")){out.print("checked=\"checked\"");}%> > Label</td></tr>
 					<tr><td><input type="checkbox" name="byAdr" value="adr" <%   	if(!isEmpty(request,"byAdr")){out.print("checked=\"checked\"");}%> > Server address</td></tr>
@@ -66,7 +68,7 @@
 					<tr><td><input type="checkbox" name="bySort" value="sort" <% 	if(!isEmpty(request,"bySort")){out.print("checked=\"checked\"");}%> > Sorted fields</td></tr>
 				</table>
 			</td>
-			<td valign="top"><strong>Resolution by</strong>
+			<td valign="top" class="infoResolution"><strong>Resolution by</strong> <img src="img/info.gif" alt="info" title="info">
 				<table>
 					<tr><td><input type="radio" name="resolution" value="year" <%   if("year".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%> > Year</td></tr>
 					<tr><td><input type="radio" name="resolution" value="month" <%  if("month".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%> > Month</td></tr>
@@ -74,6 +76,7 @@
 					<tr><td><input type="radio" name="resolution" value="day" <%    if("day".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%> > Day</td></tr>
 					<tr><td><input type="radio" name="resolution" value="hour" <%   if("hour".equals(request.getParameter("resolution")) || isEmpty(request, "resolution")){out.print("checked=\"checked\"");}%> > Hour</td></tr>
 					<tr><td><input type="radio" name="resolution" value="minute" <% if("minute".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%>> Minute</td></tr>
+                    <tr><td><input type="radio" name="resolution" value="second" <% if("second".equals(request.getParameter("resolution"))){out.print("checked=\"checked\"");}%>> Second</td></tr>
                     <tr><td>&nbsp;</td></tr>
                     <tr><td>&nbsp;</td></tr>
                     <tr><td>&nbsp;</td></tr>
@@ -439,6 +442,10 @@ a:hover {
             column.visible( ! isVisible );
         } );
         })
+
+        $(".infoResolution").tooltip({content:function(){return $("#infoResolutionContent").html();}});
+        $(".infoGroup").tooltip({content:function(){return $("#infoGroupContent").html();}});
+
     } );
 </script>
 
@@ -479,6 +486,10 @@ a:hover {
     <%}%>
   <tbody>
  </table>
+
+<span id="infoGroupContent" style="display:none">The more criteria are selected, the more characteristics allow to distinguish between the different slow-operation types.</span>
+<span id="infoResolutionContent" style="display:none">Only use a fine grained resolution if the selected time period is short enough to return data that fit in the maximum allowed BSON document size (16 MB).</span>
+
 <%@ include file="buildInfo.jsp" %>
 </body>
 </html>
