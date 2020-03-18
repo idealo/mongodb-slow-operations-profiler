@@ -502,6 +502,80 @@ db.find.distinct("classifierCatalogCategory") sieht so in system.profile aus:
 	"user" : ""
 }
 
+am 2020-03-18:
+mongos> db.slowops.distinct("op")
+[
+	"command",
+	"command.$truncated",
+	"command.aggregate",
+	"command.collStats",
+	"command.collstats",
+	"command.count",
+	"command.dbStats",
+	"command.dbstats",
+	"command.deleteIndexes",
+	"command.distinct",
+	"command.dropIndexes",
+	"command.explain",
+	"command.findAndModify",
+	"command.findandmodify",
+	"command.killCursors",
+	"command.listIndexes",
+	"command.query",
+	"getmore",
+	"getmore.getMore",
+	"insert",
+	"insert.insert",
+	"killcursors",
+	"killcursors.",
+	"query",
+	"query.$truncated",
+	"query.find",
+	"remove",
+	"remove.q",
+	"update",
+	"update.q"
+]
+
+Changed in version 3.6.
+
+A document containing the full command object associated with this operation. If the command document exceeds 50 kilobytes, the document has the following form:
+
+"command" : {
+  "$truncated": <string>,
+  "comment": <string>
+}
+
+Bsp:
+offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update"})
+{
+	"op" : "update",
+	"ns" : "offerlistservicefrontend.apiOfferlist",
+	"command" : {
+		"$truncated" : "{ q: { _id: { productId: 4850344, siteId: 2, segments: [ \"NOT_USED\" ] } }, u: { _id: { productId: 4850344, siteId: 2, segments: [ \"NOT_USED\" ] }, offerListId:...
+
+update ohne $truncate:
+offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$truncated":{$exists:false}})
+{
+	"op" : "update",
+	"ns" : "offerlistservicefrontend.rawPriceHistory",
+	"command" : {
+		"q" : {
+			"_id" : {
+				"productId" : NumberLong(6963948),
+				"siteId" : 11,
+				"historyDate" : ISODate("2020-03-18T00:00:00Z")
+			}
+		},
+		"u" : {
+			"_id" : {
+				"productId" : NumberLong(6963948),
+				"siteId" : 11,
+				"historyDate" : ISODate("2020-03-18T00:00:00Z")
+			},
+			"priceHistoryEntries" : [
+
+
 */
 
 
@@ -563,6 +637,9 @@ db.find.distinct("classifierCatalogCategory") sieht so in system.profile aus:
                                 fields.addAll(pFieldsSet);
                             }
                         }else{
+                            if("update".equals(op)){//for update operations, remove the updated document because it may be quite huge and does it does not matter for the analysis
+                                ((Document) queryOrCommand).remove("u");
+                            }
                             fields = getFields(queryOrCommand);
                             sort = null;
                         }

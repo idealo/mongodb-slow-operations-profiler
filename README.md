@@ -275,6 +275,7 @@ In v2.4.0 some new options have been introduced:
 
 ## Version history
 * v2.11.0
+  + new: for update operations, the updated document is removed because it may be quite huge and it does not matter for the analysis, and most important, it may produce lots of different slow-op types only because there may be many different updated document structures 
   + new: in the analysis page, in the column `Resolution by` the option `Second` was added, which allows a finer grained analysis. However, only use a fine grained resolution if the selected time period is short enough to return data that fit in the maximum allowed BSON document size (16 MB).
   + new: some info tooltips have been added
 * v2.10.2
