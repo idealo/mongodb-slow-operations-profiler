@@ -34,6 +34,7 @@ public class Util {
     public final static String ADMIN_TOKEN = "adminToken";
     public final static String DEFAULT_RESPONSE_TIMEOUT_IN_MS = "defaultResponseTimeoutInMs";
     public final static String DEFAULT_SLOW_MS = "defaultSlowMS";
+    public final static String DEFAULT_EXCLUDED_DBS = "defaultExcludedDBs";
     public final static String MAX_WEBLOG_ENTRIES = "maxWeblogEntries";
     public final static String CONFIG_FILE = "config.json";
 

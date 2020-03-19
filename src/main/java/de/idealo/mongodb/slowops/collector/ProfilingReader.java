@@ -560,7 +560,7 @@ public class ProfilingReader extends Thread implements Terminable{
         final ServerAddress address =  new ServerAddress("localhost",27017);
 
         BlockingQueue<ProfilingEntry> jobQueue = new LinkedBlockingQueue<ProfilingEntry>();
-        ProfiledServerDto dto = new ProfiledServerDto(true, "some label", new ServerAddress[]{new ServerAddress("127.0.0.1:27017")}, new String[]{"offerStore.*"}, null, null, false, 0, 2000);
+        ProfiledServerDto dto = new ProfiledServerDto(true, "some label", new ServerAddress[]{new ServerAddress("127.0.0.1:27017")}, new String[]{"offerStore.*"}, null, null, false, 0, 2000, Lists.newArrayList());
         ProfilingReader reader = new ProfilingReader(0, jobQueue, address, null, dto, "offerStore", Lists.newArrayList("*"), false, 0, 0);
         reader.start();
         //reader.setSlowMs(1, 3);

@@ -32,7 +32,8 @@
       "ns":[
         "someDatabase.someCollection",
         "anotherDatabase.*",
-        "*.myCollection"],
+        "*.myCollection",
+        "!excludedDb"],
       "adminUser":"",
       "adminPw":"",
       "ssl":false,
@@ -42,7 +43,7 @@
     { "enabled": false,
       "label":"dbs with many databases to be profiled",
       "hosts":["someOtherMongoRouter:27017"],
-      "ns":["*.*"],
+      "ns":["*.*", "!excludedDb"],
       "adminUser":"",
       "adminPw":"",
       "ssl":true,
@@ -54,5 +55,6 @@
   "adminToken": "mySecureAdminToken",
   "defaultSlowMS" : 100,
   "defaultResponseTimeoutInMs" : 2000,
+  "defaultExcludedDBs": ["admin", "local", "config"],
   "maxWeblogEntries" : 100
 }

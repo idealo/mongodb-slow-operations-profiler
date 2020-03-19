@@ -224,7 +224,7 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
     { "enabled": false,
       "label":"dbs bar",
       "hosts":["someMongoRouter:27017"],
-      "ns":["someDatabase.someCollection", "anotherDatabase.*"],
+      "ns":["someDatabase.someCollection", "anotherDatabase.*", "*.myCollection", "!excludedDb"],
       "adminUser":"",
       "adminPw":"",
       "ssl":false,
@@ -236,6 +236,7 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
   "adminToken":"mySecureAdminToken",
   "defaultSlowMS":100,
   "defaultResponseTimeoutInMs":2000,
+  "defaultExcludedDBs": ["admin", "local", "config"],
   "maxWeblogEntries":100
 }
 ```
@@ -245,13 +246,14 @@ After the definition of the collector follow the databases to be profiled. In th
 
 Fields of `profiled` entries explained:
 
-* `enabled` = whether collecting has to be started automatically upon (re)start of the application
+* `enabled` = whether collecting has to be started automatically upon (re)start of the application, default=`false`
 * `label` = a label of the database system in order to be able to filter, sort and group on it
 * `hosts` = an array of members of the same replica set, or just a single host, or one or more mongo router of the same cluster
-* `ns` = an array of the namespaces to be collected in the format of `databaseName.collectionName`. The placeholder `*` may be used instead of `databaseName` and/or `collectionName` to collect from all databases and/or all collections. Examples:
+* `ns` = an array of the namespaces to be collected in the format of `databaseName.collectionName`. The placeholder `*` may be used instead of `databaseName` and/or `collectionName` to collect from all databases and/or all collections. If the placeholder is used to profile all databases, you may prefix database names with `!` in order to exclude them. Examples:
   * `databaseName.*` collects from all collections from database `databaseName`
   * `*.collectionName` collects from all databases from collection `collectionName`
   * `*.*` collects from all collections from all databases
+  * `!myDB` database `myDB` will be excluded
 * `adminUser`= if authentication is enabled, name of the user for database "admin" having role "root"
 * `adminPw`= if authentication is enabled, passwort of the user
 * `ssl`= if set to `true`, use ssl to connect to the server
@@ -272,9 +274,14 @@ In v2.4.0 some new options have been introduced:
 * `defaultSlowMS` defines a default threshold of slow operations in milliseconds for all `profiled` entries that don't have specified `slowMS` (default: 100 ms)
 * `maxWeblogEntries` defines the maximal number of log messages shown in the application status page (default: 100)
 
+In v2.11.0 a new option has been introduced:
+* `defaultExcludedDBs` is an array of Strings which defines databases to be excluded from profiling and collecting and thus are not shown on the application status page (see example above)
+
 
 ## Version history
 * v2.11.0
+  + new: configuration option `defaultExcludedDBs` which defines databases to be excluded from profiling and collecting and thus are not shown on the application status page (see example above)
+  + new: in the configuration file you may prefix database names with `!` to exclude them from profiling/collecting which is helpful in combination with the database.collections placeholder `*.*` 
   + new: for update operations, the updated document is removed because it may be quite huge and it does not matter for the analysis, and most important, it may produce lots of different slow-op types only because there may be many different updated document structures 
   + new: in the analysis page, in the column `Resolution by` the option `Second` was added, which allows a finer grained analysis. However, only use a fine grained resolution if the selected time period is short enough to return data that fit in the maximum allowed BSON document size (16 MB).
   + new: some info tooltips have been added

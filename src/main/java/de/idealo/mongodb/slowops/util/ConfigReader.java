@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -58,7 +59,7 @@ public class ConfigReader {
         return result;
     }
 
-    //rudimental validation
+    //rudimentary validation
     private static boolean isValidConfig(){
         boolean result = true;
         final CollectorServerDto collectorServer = getCollectorServer();
@@ -207,10 +208,12 @@ public class ConfigReader {
     public static List<ProfiledServerDto> getProfiledServers(Document doc){
         List<ProfiledServerDto> result = Lists.newArrayList();
         List<Document> profiledServerList = getList(doc, "profiled", Lists.newArrayList());
+        List<String> exDbs = getList(doc, Util.DEFAULT_EXCLUDED_DBS, Lists.newArrayList());
 
         for(Document serverDoc : profiledServerList){
             List<String> hostList = getList(serverDoc, "hosts", Lists.newArrayList());
             List<String> nsList = getList(serverDoc, "ns", Lists.newArrayList());
+
             ProfiledServerDto dto = new ProfiledServerDto(
                     getBoolean(serverDoc, "enabled", false),
                     getString(serverDoc, "label", null),
@@ -220,7 +223,8 @@ public class ConfigReader {
                     getString(serverDoc, "adminPw", null),
                     getBoolean(serverDoc, "ssl", false),
                     getLong(serverDoc, "slowMS", ConfigReader.getLong(doc, Util.DEFAULT_SLOW_MS, MongoDbAccessor.DEFAULT_SLOW_MS)),
-                    (int)getLong(serverDoc, "responseTimeoutInMs", getLong(doc, Util.DEFAULT_RESPONSE_TIMEOUT_IN_MS, MongoDbAccessor.DEFAULT_CONNECT_TIMEOUT_MS))
+                    (int)getLong(serverDoc, "responseTimeoutInMs", getLong(doc, Util.DEFAULT_RESPONSE_TIMEOUT_IN_MS, MongoDbAccessor.DEFAULT_CONNECT_TIMEOUT_MS)),
+                    exDbs
             );
             result.add(dto);
         }

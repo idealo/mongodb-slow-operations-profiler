@@ -32,11 +32,12 @@ public class ProfiledServerDto {
     private int responseTimeout;
     private HashSet<ServerAddress> resolvedHosts;
     private List<String> resolvedDatabases;
+    private List<String> excludedDbs;
     private final ReadWriteLock globalLock = new ReentrantReadWriteLock();
     private final Lock readLock = globalLock.readLock();
     private final Lock writeLock = globalLock.writeLock();
 
-    public ProfiledServerDto(boolean enabled, String label, ServerAddress[] hosts, String[] ns, String adminUser, String adminPw, boolean ssl, long slowMs, int responseTimeout) {
+    public ProfiledServerDto(boolean enabled, String label, ServerAddress[] hosts, String[] ns, String adminUser, String adminPw, boolean ssl, long slowMs, int responseTimeout, List<String> excludedDbs) {
         this.enabled = enabled;
         this.label = label;
         this.hosts = hosts;
@@ -48,8 +49,13 @@ public class ProfiledServerDto {
         this.responseTimeout = responseTimeout;
         this.resolvedHosts = new HashSet<ServerAddress>();
         this.resolvedDatabases = Lists.newLinkedList();
+        this.excludedDbs = excludedDbs;
     }
 
+    /**
+     *
+     * @return HashMap whose keys are database names and their value is a list of collection names
+     */
     public HashMap<String, List<String>> getCollectionsPerDatabase(){
         HashMap<String, List<String>> result = new HashMap<String, List<String>>();
         for(String n : ns){
@@ -69,11 +75,25 @@ public class ProfiledServerDto {
                         readLock.unlock();
                     }
 
+                }else if(db.startsWith("!")){
+                    String dbToRemove = db.substring(1);
+                    try {
+                        readLock.lock();
+                        result.remove(dbToRemove);
+                    } finally {
+                        readLock.unlock();
+                    }
+
                 }else{
                     addCollection(db, col, result);
                 }
             }
         }
+
+        for(String exDb : excludedDbs){
+            result.remove(exDb);
+        }
+
         return result;
     }
 
