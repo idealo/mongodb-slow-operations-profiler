@@ -293,7 +293,7 @@ In v2.11.0 a new option has been introduced:
     However, there may be commands such as `host info` for example which are not bound to a specific database, so the result is still bound to the DBS (respectively host) independent of the *specific* selected database(s). 
   + new: favicon for all web pages added
   + new: for collected insert operations, the inserted document is removed from the slow ops document because it may be quite huge and it does not matter for the analysis, and most important, it may produce lots of different slow-op types only because there may be many different inserted document structures 
-v2.11.0
+* v2.11.0
   + new: configuration option `defaultExcludedDBs` which defines databases to be excluded from profiling and collecting and thus are not shown on the application status page (see example above)
   + new: in the configuration file you may prefix database names with `!` to exclude them from profiling/collecting which is helpful in combination with the database.collections placeholder `*.*` 
   + new: for collected update operations, the updated document is removed from the slow ops document because it may be quite huge and it does not matter for the analysis, and most important, it may produce lots of different slow-op types only because there may be many different updated document structures 
