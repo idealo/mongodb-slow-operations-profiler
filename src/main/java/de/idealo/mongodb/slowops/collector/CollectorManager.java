@@ -186,6 +186,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
                     if(!isReaderExists(mongodAddress, db)){//dont't create readers twice
                         profilingReaderCreatorlist.add(new ProfilingReaderCreator(0, mongodAddress, dto, db, collectionsPerDb.get(db), this, writerMongo));
                     }else{
+                        //ToDo: if reader exists already, config changes such as dbs label, user/pw etc. won't be applied and thus are not shown on the app page
                         LOG.info("Reader already exists for: {}/{}", mongodAddress, db );
                     }
                 }
@@ -359,6 +360,8 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
                     for (ServerAddress mongodAddress : dto.getResolvedHosts()) {
                         for (String db : collectionsPerDb.keySet()) {
                             if (r.getServerAddress().equals(mongodAddress) && r.getDatabase().equals(db)) {
+                                //ToDo: if config changed, such as user/pw, ssl or slowMS (but serverAddress and db are unchanged),
+                                // then the old reader has to be removed and a new one has to be started with the new config
                                 readerInUse = true;
                                 break;
                             }
@@ -751,28 +754,26 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
     }
 
 
-    public void setSlowMs(List<Integer> idList, String ms){
-        try {
-            long slowMs = Long.parseLong(ms);
+    public void setSlowMs(List<Integer> idList, long slowMs){
 
-            for(int id : idList){
-                try{
-                    readLock.lock();
-                    for (ProfilingReader reader : readers) {
-                        if(id == reader.getInstanceId()){
+        for(int id : idList){
+            try{
+                readLock.lock();
+                for (ProfilingReader reader : readers) {
+                    if(id == reader.getInstanceId()){
+                        if(slowMs == 0){
+                            reader.setSlowMs(2, slowMs);//profile all ops
+                        }else {
                             reader.setSlowMs(1, slowMs);
-                            break;
                         }
+                        break;
                     }
-                }finally {
-                    readLock.unlock();
                 }
-
+            }finally {
+                readLock.unlock();
             }
-
-        } catch (NumberFormatException e) {
-            LOG.warn("slowMS must be numeric but was: {}", ms);
         }
+
     }
 
 

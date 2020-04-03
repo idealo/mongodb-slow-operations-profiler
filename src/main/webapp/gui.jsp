@@ -6,6 +6,8 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
   <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7; IE=EmulateIE9">
+  <link rel="shortcut icon" type="image/x-icon" href="img/mdb.ico">
+  <link rel="icon" type="image/png" href="img/mdb.png">
   <script type="text/javascript" src="js/dygraph-combined.js"></script>
   <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
   <script type="text/javascript" src="js/bootstrap.min.js"></script>

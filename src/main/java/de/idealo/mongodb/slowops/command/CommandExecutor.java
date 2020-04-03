@@ -3,6 +3,7 @@ package de.idealo.mongodb.slowops.command;
 
 
 import com.mongodb.ServerAddress;
+import de.idealo.mongodb.slowops.collector.ProfilingReader;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
 import de.idealo.mongodb.slowops.dto.TableDto;
 import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
@@ -16,27 +17,22 @@ public class CommandExecutor implements Callable<TableDto> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CommandExecutor.class);
 
-    private final ProfiledServerDto profiledServerDto;
+    private final ProfilingReader profilingReader;
     private final ICommand command;
-    private final ServerAddress serverAdress;
+    private final ServerAddress[] serverAddresses;
 
-    public CommandExecutor(ProfiledServerDto profiledServerDto, ICommand command, ServerAddress serverAdress) {
-        this.profiledServerDto = profiledServerDto;
+    public CommandExecutor(ProfilingReader profilingReader, ICommand command, ServerAddress ... serverAddresses) {
+        this.profilingReader = profilingReader;
         this.command = command;
-        this.serverAdress = serverAdress;
+        this.serverAddresses = serverAddresses;
     }
 
 
     @Override
-    public TableDto call() throws Exception {
-    	MongoDbAccessor mongoDbAccessor = null;
-        if(serverAdress!=null){
-            mongoDbAccessor = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), profiledServerDto.getSsl(), serverAdress);
-        }else{
-            mongoDbAccessor = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), profiledServerDto.getSsl(), profiledServerDto.getHosts());
-        }
+    public TableDto call() {
+        final ProfiledServerDto profiledServerDto = profilingReader.getProfiledServerDto();
+        final MongoDbAccessor mongoDbAccessor = new MongoDbAccessor(profiledServerDto.getAdminUser(), profiledServerDto.getAdminPw(), profiledServerDto.getSsl(), serverAddresses);
 
-        return command.runCommand(profiledServerDto, mongoDbAccessor);
-
+        return command.runCommand(profilingReader, mongoDbAccessor);
     }
 }

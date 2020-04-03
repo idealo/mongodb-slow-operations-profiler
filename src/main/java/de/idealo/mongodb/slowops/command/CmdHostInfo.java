@@ -2,6 +2,7 @@ package de.idealo.mongodb.slowops.command;
 
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
+import de.idealo.mongodb.slowops.collector.ProfilingReader;
 import de.idealo.mongodb.slowops.dto.CommandResultDto;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
 import de.idealo.mongodb.slowops.dto.TableDto;
@@ -42,7 +43,18 @@ public class CmdHostInfo implements ICommand {
     }
 
     @Override
-    public TableDto runCommand(ProfiledServerDto profiledServerDto, MongoDbAccessor mongoDbAccessor) {
+    public boolean isHostCommand(){
+        return true;
+    }
+
+    @Override
+    public CommandResultDto getCommandResultDto() {
+        return commandResultDto;
+    }
+
+
+    @Override
+    public TableDto runCommand(ProfilingReader profilingReader, MongoDbAccessor mongoDbAccessor) {
         final TableDto table = new TableDto();
 
         try{
@@ -53,13 +65,12 @@ public class CmdHostInfo implements ICommand {
                 Object system = commandResultDoc.get("system");
                 Object os = commandResultDoc.get("os");
                 Object extra = commandResultDoc.get("extra");
-                if (system != null && os != null && extra != null
-                        && system instanceof Document && os instanceof Document && extra instanceof Document) {
+                if (system instanceof Document && os instanceof Document && extra instanceof Document) {
                     final Document systemDoc = (Document) system;
                     final Document osDoc = (Document) os;
                     final Document extraDoc = (Document) extra;
                     final List<Object> row = Lists.newArrayList();
-                    row.add(profiledServerDto.getLabel());
+                    row.add(profilingReader.getProfiledServerDto().getLabel());
                     row.add(systemDoc.getString("hostname"));
                     if(buildInfoDoc != null) {
                         row.add(buildInfoDoc.getString("version"));
@@ -87,12 +98,6 @@ public class CmdHostInfo implements ICommand {
         }
 
         return table;
-    }
-
-
-    @Override
-    public CommandResultDto getCommandResultDto() {
-        return commandResultDto;
     }
 
 

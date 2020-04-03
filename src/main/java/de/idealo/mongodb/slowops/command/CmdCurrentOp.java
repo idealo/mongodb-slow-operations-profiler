@@ -2,6 +2,8 @@ package de.idealo.mongodb.slowops.command;
 
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import de.idealo.mongodb.slowops.collector.ProfilingReader;
 import de.idealo.mongodb.slowops.dto.CommandResultDto;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
 import de.idealo.mongodb.slowops.dto.TableDto;
@@ -16,7 +18,7 @@ import java.util.List;
 /**
  * Created by kay.agahd on 29.06.17.
  */
-public class CmdCurrentOp implements ICommand {
+public abstract class CmdCurrentOp implements ICommand {
 
     private static final Logger LOG = LoggerFactory.getLogger(CmdCurrentOp.class);
 
@@ -40,22 +42,30 @@ public class CmdCurrentOp implements ICommand {
 
     }
 
+    public abstract DBObject getQuery(ProfilingReader profilingReader);
+
     @Override
-    public TableDto runCommand(ProfiledServerDto profiledServerDto, MongoDbAccessor mongoDbAccessor) {
+    public CommandResultDto getCommandResultDto() {
+        return commandResultDto;
+    }
+
+
+    @Override
+    public TableDto runCommand(ProfilingReader profilingReader, MongoDbAccessor mongoDbAccessor) {
         final TableDto table = new TableDto();
 
         try{
-            final Document commandResultDoc = mongoDbAccessor.runCommand("admin", new BasicDBObject("currentOp", 1));
+            final Document commandResultDoc = mongoDbAccessor.runCommand("admin", getQuery(profilingReader));
 
             if(commandResultDoc != null){
                 Object inprog = commandResultDoc.get("inprog");
-                if(inprog != null && inprog instanceof ArrayList) {
+                if(inprog instanceof ArrayList) {
                     final List inprogList = (ArrayList) inprog;
                     for (Object entry : inprogList) {
                         if (entry instanceof Document) {
                             final Document entryDoc = (Document) entry;
                             final List<Object> row = Lists.newArrayList();
-                            row.add(profiledServerDto.getLabel());
+                            row.add(profilingReader.getProfiledServerDto().getLabel());
                             row.add("" + entryDoc.get("opid"));
                             row.add(entryDoc.getLong("microsecs_running"));
                             row.add(entryDoc.get("secs_running", Number.class));//may be Long (v4) or Integer (v3.4)
@@ -81,16 +91,10 @@ public class CmdCurrentOp implements ICommand {
     }
 
 
-    @Override
-    public CommandResultDto getCommandResultDto() {
-        return commandResultDto;
-    }
-
-
 
     private String getJson(Document entryDoc, String key){
         final Object obj = entryDoc.get(key);
-        if(obj != null && obj instanceof Document){
+        if(obj instanceof Document){
             Document doc = (Document) obj;
             return doc.toJson();
         }

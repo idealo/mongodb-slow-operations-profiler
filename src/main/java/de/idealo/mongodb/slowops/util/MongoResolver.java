@@ -88,7 +88,7 @@ public class MongoResolver implements Callable<MongoResolver> {
             try {
                 final Document doc = mongo.runCommand("admin", new BasicDBObject("replSetGetStatus", 1));
                 final Object members = doc.get("members");
-                if (members != null && members instanceof ArrayList) {
+                if (members instanceof ArrayList) {
                     final ArrayList<Document> list = (ArrayList<Document>) members;
                     for (Object obj : list) {
                         final Document dbo = (Document) obj;
@@ -119,7 +119,7 @@ public class MongoResolver implements Callable<MongoResolver> {
 
             if(commandResultDoc != null){
                 Object databases = commandResultDoc.get("databases");
-                if(databases != null && databases instanceof ArrayList) {
+                if(databases instanceof ArrayList) {
                     final List dbList = (ArrayList) databases;
                     for (Object entry : dbList) {
                         if (entry instanceof Document) {

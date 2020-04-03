@@ -60,9 +60,13 @@ public class CommandResult extends HttpServlet {
 
                     ICommand command = null;
                     if("cops".equals(cmd)){
-                        command = new CmdCurrentOp();
-                    }else if("lsdbs".equals(cmd)){
-                        command = new CmdListDbCollections();
+                        command = new CmdCurrentOpAll();
+                    }else if("copsns".equals(cmd)){
+                        command = new CmdCurrentOpNs();
+                    }else if("dbstat".equals(cmd)){
+                        command = new CmdDatabaseStats();
+                    }else if("collstat".equals(cmd)){
+                        command = new CmdCollectionStats();
                     }else if("idxacc".equals(cmd)){
                         command = new CmdIdxAccessStats();
                     }else if("hostinfo".equals(cmd)){
@@ -104,25 +108,44 @@ public class CommandResult extends HttpServlet {
                 .build();
         final ThreadPoolExecutor threadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(poolSize, threadFactory);
         final List<Future<TableDto>> futureTableList = new ArrayList<>();
-        final HashSet<ServerAddress> serverAdresses = new HashSet<ServerAddress>();
-        final HashSet<ProfiledServerDto> dbsEntryPoints = new HashSet<ProfiledServerDto>();
+        final HashSet<ServerAddress> serverAdresses = new HashSet<>();
+        final HashMap<ProfiledServerDto, HashSet<String>> dbsEntryPoints = new HashMap<>();
         final boolean isMongod = "mongod".equals(mode);
 
         for (ProfilingReader reader : readerList) {
-            //execute command only *once* for any given server address or dbs (depending on mode)
-            // because nodes selected by user may have same address but just different registered databases
-            boolean isFirst = false;
-            if(isMongod){
-                isFirst = serverAdresses.add(reader.getServerAddress());
+
+            if(command.isHostCommand()) {
+                //if it's a host-command, execute command only *once* for any given server address or dbs (depending on mode)
+                // because nodes selected by user may have same address but just different registered databases
+
+                if (isMongod) {
+                    if(serverAdresses.add(reader.getServerAddress())){
+                        submitCommand(threadPool, futureTableList, reader, command, reader.getServerAddress());
+                    };
+                } else {
+                    if(dbsEntryPoints.put(reader.getProfiledServerDto(), new HashSet<>()) == null){
+                        submitCommand(threadPool, futureTableList, reader, command, reader.getProfiledServerDto().getHosts());
+                    };
+                }
             }else{
-                isFirst = dbsEntryPoints.add(reader.getProfiledServerDto());
+                //if it's a database specific command, execute for every selected DB when in mongod-mode
+                if (isMongod) {
+                    submitCommand(threadPool, futureTableList, reader, command, reader.getServerAddress());
+                } else {
+                    //in dbs-mode execute for all selected DB's only once per DBS
+                    //because nodes selected by user may have the same registered databases
+                    //but different addresses (i.e. Primary, Secondary or shard1, shard2) of the *same* DBS
+                    HashSet<String> dbNames = dbsEntryPoints.get(reader.getProfiledServerDto());
+                    if(dbNames == null) dbNames = new HashSet<>();
+                    if(!dbNames.contains(reader.getDatabase())){
+                        //command was not yet executed against this db of this dbs, so add this dbName to this dbs and execute command once
+                        dbNames.add(reader.getDatabase());
+                        dbsEntryPoints.put(reader.getProfiledServerDto(), dbNames);
+                        submitCommand(threadPool, futureTableList, reader, command, reader.getProfiledServerDto().getHosts());
+                    }
+                }
             }
 
-            if (isFirst) {
-                CommandExecutor commandExecutor = new CommandExecutor(reader.getProfiledServerDto(), command, isMongod?reader.getServerAddress():null);
-                Future<TableDto> futureTable = threadPool.submit(commandExecutor);
-                futureTableList.add(futureTable);
-            }
         }
         threadPool.shutdown();
 
@@ -140,6 +163,12 @@ public class CommandResult extends HttpServlet {
 
 
         return result;
+    }
+
+    private void submitCommand(ThreadPoolExecutor threadPool, List<Future<TableDto>> futureTableList, ProfilingReader reader, ICommand command, ServerAddress ... serverAddresses){
+        final CommandExecutor commandExecutor = new CommandExecutor(reader, command, serverAddresses);
+        final Future<TableDto> futureTable = threadPool.submit(commandExecutor);
+        futureTableList.add(futureTable);
     }
 
 

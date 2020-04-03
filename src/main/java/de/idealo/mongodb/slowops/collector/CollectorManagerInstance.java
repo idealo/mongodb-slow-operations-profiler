@@ -36,7 +36,7 @@ public final class CollectorManagerInstance {
 
     public static void startStopProfilingReaders(List<Integer> idList, boolean stop){ INSTANCE.startStopProfilingReaders(idList, stop); };
 
-    public static void setSlowMs(List<Integer> idList, String ms){ INSTANCE.setSlowMs(idList, ms); };
+    public static void setSlowMs(List<Integer> idList, long ms){ INSTANCE.setSlowMs(idList, ms); };
 
     public static void reloadConfig(String cfg){ INSTANCE.reloadConfig(cfg); }
 

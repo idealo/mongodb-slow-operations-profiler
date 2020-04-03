@@ -591,17 +591,17 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
         Set<String> fields = null;
         Set<String> sort = null;
         String op = "" + doc.get("op");
-        if(queryOrCommand != null  && queryOrCommand instanceof Document) {
+        if(queryOrCommand instanceof Document) {
             Document queryObj = (Document)queryOrCommand;
             if(isCommand && "command".equals(op)) op += "." + getFirstKey(queryObj);//if op is "command" specify it
             Object innerQuery = null;
             if("getmore".equals(op)){
                 Object getmoreObj = doc.get("originatingCommand"); //for "getmore" use "originatingCommand" to get the fields
-                if(getmoreObj!= null && getmoreObj instanceof Document) queryObj = (Document)getmoreObj;
+                if(getmoreObj instanceof Document) queryObj = (Document)getmoreObj;
             }else{
                 innerQuery = queryObj.get("query");//test if "query.query" or "command.query"
             }
-            if(innerQuery != null && innerQuery instanceof Document) {//format is "query.query" or "command.query"
+            if(innerQuery instanceof Document) {//format is "query.query" or "command.query"
                 fields = getFields(innerQuery);
                 Object orderbyObj = queryObj.get("orderby");
                 if(orderbyObj != null) {
@@ -629,7 +629,7 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
                     }else {//format is "query" or "command"
 
                         Object pipeline = queryObj.get("pipeline");//test if it's an aggregation command
-                        if(pipeline != null && pipeline instanceof List) {
+                        if(pipeline instanceof List) {
                             List<Document> pipelineList = (List<Document>)pipeline;
                             fields = new HashSet<String>();
                             for(Document pipelineObj : pipelineList){
@@ -692,7 +692,7 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
 
     private Set<String> getFields(Object obj) {
         HashSet<String> result = new HashSet<String>();
-        if(obj != null && obj instanceof Document) {
+        if(obj instanceof Document) {
             Document dbObj = (Document)obj;
             for(String key : dbObj.keySet()){
                 Object subObj = dbObj.get(key);

@@ -91,7 +91,7 @@ public class Util {
         String propNameParts[] = propertyName.split("\\.");
         for(String part : propNameParts){
             Object obj = doc.get(part);
-            if(obj != null && obj instanceof Document){
+            if(obj instanceof Document){
                 continue;
             }else{
                 return obj.toString();
@@ -105,9 +105,9 @@ public class Util {
         String propNameParts[] = propertyName.split("\\.");
         for(String part : propNameParts){
             Object obj = doc.get(part);
-            if(obj != null && obj instanceof Document){
+            if(obj instanceof Document){
                 continue;
-            }else if(obj != null && obj instanceof List){
+            }else if(obj instanceof List){
                 return (List)obj;
             }
         }
@@ -115,6 +115,21 @@ public class Util {
         return null;
     }
 
+    public static long getNumber(Document doc, String field, long defaultValue){
+        long result = defaultValue;
+        if(doc != null){
+            final Object obj = doc.get(field);
+            if(obj instanceof Double){
+                result = Math.round((Double)obj);
+            }else if(obj instanceof Integer) {
+                result = (Integer) obj;
+            }else if(obj instanceof Long) {
+                result = (Long) obj;
+            }
+        }
+
+        return result;
+    }
 
    
     

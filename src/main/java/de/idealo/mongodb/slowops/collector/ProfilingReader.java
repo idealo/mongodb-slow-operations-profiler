@@ -305,7 +305,7 @@ public class ProfilingReader extends Thread implements Terminable{
             }
             Document doc = mongo.runCommand(database, new BasicDBObject("profile", profile).append("slowms", ms));
             Object ok = doc.get("ok");
-            if (ok != null && ok instanceof Double && Double.valueOf(ok.toString()).doubleValue()==1.0) {
+            if (ok instanceof Double && Double.valueOf(ok.toString()).doubleValue() == 1.0) {
                 slowMs = ms;
                 isProfiling = profile==0?false:true;
                 LOG.info("setSlowMs successfully set to {} ms on {}/{}", new Object[]{ms, serverAddress, database});
@@ -336,11 +336,11 @@ public class ProfilingReader extends Thread implements Terminable{
             try {
                 Document doc = mongo.runCommand("admin", new BasicDBObject("replSetGetStatus", 1));
                 Object rs = doc.get("set");
-                if (rs != null && rs instanceof String) {
+                if (rs instanceof String) {
                     replSet = rs.toString();
                 }
                 Object myState = doc.get("myState");
-                if (myState != null && myState instanceof Integer) {
+                if (myState instanceof Integer) {
                     replSetStatus = ReplicaStatus.getReplicaState((Integer)myState);
                 }
 
@@ -381,8 +381,7 @@ public class ProfilingReader extends Thread implements Terminable{
                 Object os = hostInfoDoc.get("os");
                 Object extra = hostInfoDoc.get("extra");
 
-                if (system != null && os != null && extra != null
-                        && system instanceof Document && os instanceof Document && extra instanceof Document) {
+                if (system instanceof Document && os instanceof Document && extra instanceof Document) {
                     final Document systemDoc = (Document) system;
                     final Document osDoc = (Document) os;
                     final Document extraDoc = (Document) extra;
@@ -419,7 +418,7 @@ public class ProfilingReader extends Thread implements Terminable{
             Document doc = mongo.runCommand(database, new BasicDBObject("profile", -1));
             Object was = doc.get("was");
             LOG.debug("isProfiling was: {}", was);
-            if (was != null && was instanceof Integer) {
+            if (was instanceof Integer) {
                 int wasInt = (Integer)was;
                 LOG.debug("isProfiling wasInt: {}", wasInt);
                 if(wasInt==0){
@@ -429,7 +428,7 @@ public class ProfilingReader extends Thread implements Terminable{
                 }
             }
             Object ms = doc.get("slowms");
-            if (ms != null && ms instanceof Integer) {
+            if (ms instanceof Integer) {
                 slowMs = (long)(Integer)ms;
             }
 

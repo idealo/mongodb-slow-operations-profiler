@@ -51,12 +51,17 @@ public class Action {
 
 				if (pList.size() > 0) {
 					if (isAuthenticated) {
-						if ("start".equals(cmd)) {
+						if ("cstart".equals(cmd)) {
 							CollectorManagerInstance.startStopProfilingReaders(pList, false);
-						} else if ("stop".equals(cmd)) {
+						} else if ("cstop".equals(cmd)) {
 							CollectorManagerInstance.startStopProfilingReaders(pList, true);
-						} else if ("slowms".equals(cmd)) {
-							CollectorManagerInstance.setSlowMs(pList, ms);
+						} else if ("pstart".equals(cmd)) {
+							long slowMs = getSlowMs(ms, 100);
+							CollectorManagerInstance.setSlowMs(pList, Math.abs(slowMs));
+						} else if ("pstop".equals(cmd)) {
+							long slowMs = getSlowMs(ms, 100);
+							if(slowMs == 0) slowMs = 100;//set to default because 0 means profile all ops but we want to stop profiling here
+							CollectorManagerInstance.setSlowMs(pList, Math.abs(slowMs)*-1);
 						}
 					}
 					result = CollectorManagerInstance.getApplicationStatus(pList, isAuthenticated);
@@ -83,6 +88,16 @@ public class Action {
 		}
 		LOG.info("<<< getApplicationJSON");
 		return result;
+	}
+
+	private long getSlowMs(String ms, long defaultValue){
+		try {
+			return Long.parseLong(ms);
+		} catch (NumberFormatException e) {
+			ApplicationStatusDto.addWebLog("slowMS must be numeric but was: '" + ms + "' so take default: " + defaultValue);
+			LOG.warn("slowMS must be numeric but was: '{}' so take default: {}", ms, defaultValue);
+		}
+		return defaultValue;
 	}
 
 

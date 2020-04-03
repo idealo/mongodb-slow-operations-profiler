@@ -63,7 +63,7 @@ public class ApplicationStatus extends HttpServlet {
         final HttpSession session = req.getSession(true);
 
         final Object isAdminToken = session.getAttribute(Util.ADMIN_TOKEN);
-        if (isAdminToken != null && isAdminToken instanceof Boolean && (Boolean) isAdminToken) {
+        if (isAdminToken instanceof Boolean && (Boolean) isAdminToken) {
             LOG.info("authenticated by session");
             return true;
         }else{

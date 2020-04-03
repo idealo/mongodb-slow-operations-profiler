@@ -78,11 +78,11 @@ The value of `memSort`is `true` if no index could be used to sort the documents.
 Since v1.0.3 there is also a page to show the application status. Besides showing the status of the collector, means where and how many slow operations have been collected (read and written) since application restart, it shows also every registered database in a table. Since profiling works per database, each database to be profiled is in one row.
 
 The table is filterable. Columns are sortable and selectable to be hidden or shown. Wherever it makes sense, the sum of
-the values of a column is displayed at the bottom of the column. The table is by default sorted by the columns `Label`,
+the values of a column is displayed at the bottom of the column. The table is by default sorted by the columns `DBS Label`,
 `ReplSet` and `Status` which gives a very good overview over a whole bunch of clusters. **Hint:** Hold shift key pressed
 while clicking the column headers in order to sort multiple columns.
 
-Here is a reduced screenshot of some first rows of the table, ordered by columns `ReplSet` and `Status`, with a filter "datastore" applied on rows:
+Here is a reduced screenshot of some first rows of the table, ordered by columns `DBS Label`, `Status` and `Database`, with a filter "datastore" applied on rows:
 
 ![Screenshot](img/slow_operations_app_status.png "Screenshot of the application status page")
 
@@ -90,16 +90,17 @@ At its right side, the table has a bunch of time slot columns (10 sec, 1 min, 10
 
 #### Actions
 
-Since v2.0.2, a floating **Actions panel** is shown always on top and can be switched on or off. Both `refresh` and `analyse` actions were implemented already before v2.0.0. `refresh` gets and shows the latest data of the selected database(s). `analyse` opens the above mentionned analysis page to show the slow operation types of the last 24 hours of the selected node(s) respectively database(s). Both `collecting start/stop` and `set slowMs` were also already implemented before but since v2.0.0 they are only shown to authorized users. "Authorized users" are users who used the url parameter `adminToken` set to the right value (see below under "configuration" for more details).
+Since v2.0.2, an **Actions panel** is shown always on top in order to choose actions that can be executed against the databases of selected row(s). Both `refresh` and `analyse` actions were implemented already before v2.0.0. `refresh` gets and shows the latest data of the selected database(s). `analyse` opens the above mentionned analysis page to show the slow operation types of the last 24 hours of the selected node(s) respectively database(s). Both `collecting start/stop` and `set slowMs` were also already implemented before but since v2.0.0 they are only shown to authorized users. "Authorized users" are users who used the url parameter `adminToken` set to the right value (see below under "configuration" for more details).
 
-Since v2.0.0. you may execute **commands** against the selected database system(s). Since v2.0.3 you can choose whether the command has to run against the corresponding database system (i.e. mongos-router) or against the individually selected nodes (i.e. mongod). The difference is that the command will run either against the entry point of the database system (i.e. router or primary) or against all selected nodes wich may be secondaries as well. Current implemented commands are:
+Since v2.0.0. you may execute **commands** against the selected database system(s). Since v2.0.3 you can choose whether the command has to run against the corresponding database system (i.e. mongoS-router) or against the individually selected nodes (i.e. mongoD). The difference is that the command will run either against the entry point of the database system (i.e. router or primary) or against all selected nodes wich may be secondaries as well. Current implemented commands are:
 
-+ list databases and their collections
++ show database statistics
++ show collection statistics
++ show index access statistics (requires mongodb v3.2 or newer)
 + show currently running operations (requires mongodb v3.2 or newer)
-+ show index access statistics of all databases and their collections (requires mongodb v3.2 or newer)
 + show host info such as, mongodb version, operating system, kernel & libc version, CPU info (number of cores, MHz, architecture), amount of RAM, Numa enabled, page size, number of pages, max open files
 
-The command result is shown in a new page in a filterable table. Columns are sortable as well, so you can detect immediately spikes. **Hint:** Hold shift key pressed while clicking the column headers in order to sort multiple columns.
+The command result is shown in a new page in a filterable table. Columns are sortable as well, so you can detect immediately outliers. **Hint:** Hold shift key pressed while clicking the column headers in order to sort multiple columns.
 
 Here is a cutout of a screenshot showing the result of the current-operation command. The table is sorted by column "secs running" in order to see slow operations first.
 
@@ -158,9 +159,9 @@ Or:
 * clone the project from github to your local computer in a temporary 
   docker container
 * build the project by maven in a temporary docker container
-* spin up one container named `collector-db` running one single mongod
+* spin up one container named `collector-db` running one single mongoD
   instance serving as collector database
-* spin up one container named `test-db` running one single mongod
+* spin up one container named `test-db` running one single mongoD
   instance serving as test database
 * spin up one container named `profiler-webapp` running a web server (tomcat) to serve the webapp
 * expose port 8080 to access the webapp
@@ -173,7 +174,7 @@ Or:
 * rebuild and start all stopped docker containers belonging to this project: `docker-compose up -d --build`
 * stop all docker containers belonging to this project: `docker-compose down`
   
-Be aware that neither both mongod instances (`collector-db` and `test-db`) nor the web server (`profiler-webapp`) are
+Be aware that neither both mongoD instances (`collector-db` and `test-db`) nor the web server (`profiler-webapp`) are
 secured. This means that mongodb can be accessed without authentication from within their containers. Also SSL/TLS is
 not enabled.
   
@@ -185,7 +186,7 @@ not enabled.
 2. Enter the server addresses, database and collection names in file "`mongodb-slow-operations-profiler/src/main/resources/config.json`" (see [Configuration](#config) below)
 3. While being in the in the project folder "`mongodb-slow-operations-profiler/`", build a war file by executing in a shell:
    - `mvn package`
-4. Deploy the resulted war file `mongodb-slow-operations-profiler.war` on a java webserver (e.g. tomcat). Dependent on the above mentionned `config.json`, it may automatically start collecting slow operations. If no slow operations exist yet on the mongod's, the collector(s) will sleep 1 hour before retrying.
+4. Deploy the resulted war file `mongodb-slow-operations-profiler.war` on a java webserver (e.g. tomcat). Dependent on the above mentionned `config.json`, it may automatically start collecting slow operations. If no slow operations exist yet on the mongoD's, the collector(s) will sleep 1 hour before retrying.
 5. The application can be accessed through a web browser by the URL:
    - [http://your-server:your-port/mongodb-slow-operations-profiler[-VERSION-NUMBER-if-less-than-2.10]/app](http://your-server:your-port/mongodb-slow-operations-profiler/app)
 6. To visualize and analyze slow operations either select one or more entries and click "analyse" or use the following
@@ -240,7 +241,7 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
   "maxWeblogEntries":100
 }
 ```
-This example configuration defines first the `collector` running as a replica set consisting of 3 members on hosts "myCollectorHost_member[1|2|3]" on port 27017, using the collection "slowops" of database "profiling". Both `adminUser` and `adminPw` are empty because the mongodb instance runs without authentication. If mongod runs with authentication, the user must exist for the admin database with role "root".
+This example configuration defines first the `collector` running as a replica set consisting of 3 members on hosts "myCollectorHost_member[1|2|3]" on port 27017, using the collection "slowops" of database "profiling". Both `adminUser` and `adminPw` are empty because the mongodb instance runs without authentication. If mongoD runs with authentication, the user must exist for the admin database with role "root".
 
 After the definition of the collector follow the databases to be profiled. In this example, there are only two entries. However, keep in mind that the application will **resolve all members** of a replica set (even if only 1 member has been defined) respectively all shards and its replica set members of a whole mongodb cluster.
 
@@ -279,7 +280,19 @@ In v2.11.0 a new option has been introduced:
 
 
 ## Version history
-* v2.11.0
+* v2.12.0
+  + new: overhaul of the application status page to make it look cleaner and more modern
+  + new: the command `db stats` has been added to the application status page. The command shows statistics about the selected databases such as `objects`, `avgObjSize`, `dataSize`, `storageSize`, `#indexes` and `indexSize`.
+  + new: the command `list db.collections` has been replaced by `index stats` which shows more details about the collection(s) such as `size`, `count`, `avgObjSize`, `storageSize`, `#indexes`, `totalIndexSize` and sizes of each index. 
+  + new: the command `index access stats` adds a column to the result table in order to show whether the index is a TTL index or not. 
+    This is important to know because as [mongodb documentation](https://docs.mongodb.com/master/reference/operator/aggregation/indexStats/#behavior) states, the statistics only include index accesses driven by user requests. It does not include internal operations like deletion via TTL indexes.
+    So if a given index shows 0 accesses it may be still a useful index if it's used as TTL index.  
+  + new: until now commands were executed against *all* databases of the selected DBS but now they will only be run against the database(s) of the selected rows.
+    For example, the command `index access stats` was executed for all collections of all databases of the DBS (respectively mongoD) of the selected row even if only one row, thus only one database, had been selected.
+    This behaviour could have produced very long results, may have added avoidable stress to the DBS and was slower than just getting the result of the selected database(s).
+    However, there may be commands such as `host info` for example which are not bound to a specific database, so the result is still bound to the DBS (respectively host) independent of the *specific* selected database(s). 
+  + new: favicon for all web pages added
+v2.11.0
   + new: configuration option `defaultExcludedDBs` which defines databases to be excluded from profiling and collecting and thus are not shown on the application status page (see example above)
   + new: in the configuration file you may prefix database names with `!` to exclude them from profiling/collecting which is helpful in combination with the database.collections placeholder `*.*` 
   + new: for update operations, the updated document is removed because it may be quite huge and it does not matter for the analysis, and most important, it may produce lots of different slow-op types only because there may be many different updated document structures 
@@ -348,7 +361,7 @@ In v2.11.0 a new option has been introduced:
    + update: default sorting of columns corresponds to the order of the columns from right to left: "label, replSet, status, host, database" instead of the former column sort order "label, replSet, host, status, database"
 * v2.4.0
    + bugfix: the data table of the application status page could sometimes not be loaded du to race conditions and resultant deadlocks
-   + new: user relevant log messages (see new option `maxWeblogEntries`) are shown at the bottom of the application status page, which is helpful for example to spot mongod hosts that could not sent a response within the configured `responseTimeoutInMs`
+   + new: user relevant log messages (see new option `maxWeblogEntries`) are shown at the bottom of the application status page, which is helpful for example to spot mongoD hosts that could not sent a response within the configured `responseTimeoutInMs`
    + new: option `responseTimeoutInMs` which is helpful to fail fast (thus to show the application status page quick enough) when some defined mongo hosts are not responsive enough
    + new: option `defaultResponseTimeoutInMs` defines a default response timeout for all `profiled` entries that don't have specified `responseTimeoutInMs`
    + new: option `defaultSlowMS` has been introduced to define a default threshold of slow operations in milliseconds for all `profiled` entries that don't have specified `slowMS`
@@ -370,7 +383,7 @@ In v2.11.0 a new option has been introduced:
    + bugfix: the diagram displayed superfluously also the accumulation of all distinct slow operation types, resulting in big circles at the first occurrence of each distinct slow operation type, thus often shown at the very left on the x-axis
    + bugfix: after refreshing the application status page, the status of profiling, collecting and slowMs of nodes whose status changed within the cache time of 1 minute might have been wrongly reported because these values were not immediately updated in the cache
 * v2.1.0
-   + new: application status page loads much quicker if many mongod's or databases are registered because the status of mongod's and databases are now cached; a page reload will refresh the status of mongod's and databases in the background if it's older than 1 minute
+   + new: application status page loads much quicker if many mongoD's or databases are registered because the status of mongoD's and databases are now cached; a page reload will refresh the status of mongoD's and databases in the background if it's older than 1 minute
 * v2.0.3
    + new: option to run command against database system or against selected nodes
 * v2.0.2
@@ -404,11 +417,11 @@ In v2.11.0 a new option has been introduced:
 * v1.1.0
     + new: namespace (`profiled.ns`) in config.json may use placeholder `*` for collection names (i.e. `mydb.*`) in order to collect from all collections of the given database
 * v1.0.3
-    + new: multiple databases and collections for different replica sets, clusters or single mongod's can be defined to be profiled
-    + new: automatic resolving of all mongod's constituting the defined clusters and replica sets
-    + new: overview of all resolved mongod's and their state i.e. primary or secondary, databases, being profiled or not, number of profiled slow operations per database in total and in the last time periods of 10 seconds, 1, 10, 30 minutes, 1, 12 and 24 hours
+    + new: multiple databases and collections for different replica sets, clusters or single mongoD's can be defined to be profiled
+    + new: automatic resolving of all mongoD's constituting the defined clusters and replica sets
+    + new: overview of all resolved mongoD's and their state i.e. primary or secondary, databases, being profiled or not, number of profiled slow operations per database in total and in the last time periods of 10 seconds, 1, 10, 30 minutes, 1, 12 and 24 hours
     + new: option to set `slowMs` threshold, to start or to stop profiling and collecting of slow operations for multiple selected databases with one click
-    + new: just tick one or multiple databases to open the diagram showing slow operations graphically for the selected databases, mongod's, replica sets or whole clusters
+    + new: just tick one or multiple databases to open the diagram showing slow operations graphically for the selected databases, mongoD's, replica sets or whole clusters
     + new: besides the diagram showing slow operation graphically, a filterable and sortable table displays different metrics of these slow operations, so you can easily spot the most expensive operations within the chosen time period
     + new: option to show circles in the diagram as square root of count-value to reduce the diameter of the circles which is useful when there are too many slow operations of the same type resulting in circles which are too large to fit in the diagram
     + new: the fingerprint of a query is better distinguished i.e. a query like `{_id:{$in:[1,2,3]}}` was formerly fingerprinted just as `_id` but now it's `_id.$in` which is helpful to spot queries using operators which may cause performance issues
