@@ -292,10 +292,11 @@ In v2.11.0 a new option has been introduced:
     This behaviour could have produced very long results, may have added avoidable stress to the DBS and was slower than just getting the result of the selected database(s).
     However, there may be commands such as `host info` for example which are not bound to a specific database, so the result is still bound to the DBS (respectively host) independent of the *specific* selected database(s). 
   + new: favicon for all web pages added
+  + new: for collected insert operations, the inserted document is removed from the slow ops document because it may be quite huge and it does not matter for the analysis, and most important, it may produce lots of different slow-op types only because there may be many different inserted document structures 
 v2.11.0
   + new: configuration option `defaultExcludedDBs` which defines databases to be excluded from profiling and collecting and thus are not shown on the application status page (see example above)
   + new: in the configuration file you may prefix database names with `!` to exclude them from profiling/collecting which is helpful in combination with the database.collections placeholder `*.*` 
-  + new: for update operations, the updated document is removed because it may be quite huge and it does not matter for the analysis, and most important, it may produce lots of different slow-op types only because there may be many different updated document structures 
+  + new: for collected update operations, the updated document is removed from the slow ops document because it may be quite huge and it does not matter for the analysis, and most important, it may produce lots of different slow-op types only because there may be many different updated document structures 
   + new: in the analysis page, in the column `Resolution by` the option `Second` was added, which allows a finer grained analysis. However, only use a fine grained resolution if the selected time period is short enough to return data that fit in the maximum allowed BSON document size (16 MB).
   + new: some info tooltips have been added
 * v2.10.2

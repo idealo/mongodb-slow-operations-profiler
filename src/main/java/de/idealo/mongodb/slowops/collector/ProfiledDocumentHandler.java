@@ -640,8 +640,11 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
                             if("update".equals(op)){//for update operations, remove the updated document because it may be quite huge and does it does not matter for the analysis
                                 ((Document) queryOrCommand).remove("u");
                             }
-                            fields = getFields(queryOrCommand);
-                            sort = null;
+                            if(!"insert".equals(op)){//don't get fields for insert because there are no queried fields for inserts
+                                fields = getFields(queryOrCommand);
+                                sort = null;
+                            }
+
                         }
 
                     }
