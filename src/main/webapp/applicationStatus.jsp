@@ -13,7 +13,6 @@
 	<script type="text/javascript" src="js/jquery.dataTables.sum.js"></script>
 	<script type="text/javascript" src="js/jquery.number.min.js"></script>
 	<script type="text/javascript" src="js/jquery-ui.min.js"></script>
-    <script type="text/javascript" src="js/popper1.11.0.min.js"></script>
 
     <link rel="stylesheet" type="text/css" href="css/jquery.dataTables.css">
 	<link rel="stylesheet" type="text/css" href="css/jquery-ui.css">
