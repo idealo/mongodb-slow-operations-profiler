@@ -4,6 +4,7 @@
 package de.idealo.mongodb.slowops.collector;
 
 import com.mongodb.ServerAddress;
+import de.idealo.mongodb.slowops.grapher.AggregatedProfilingId;
 import org.bson.Document;
 
 import java.util.Date;
@@ -28,6 +29,7 @@ public class ProfilingEntry {
     final String user;
     final Set<String> fields;
     final Set<String> sort;
+    final Set<String> proj;
     final Integer nret;
     final Integer respLen;
     final Integer millis;
@@ -44,7 +46,7 @@ public class ProfilingEntry {
     
     
     public ProfilingEntry(Date ts, ServerAddress adr, String db, String col, String op, String user,
-                          Set<String> fields, Set<String> sort, Integer nret, Integer respLen, Integer millis,
+                          Set<String> fields, Set<String> sort, Set<String> proj, Integer nret, Integer respLen, Integer millis,
                           Long cId, Integer keys, Integer docs, Boolean isSort, Integer del, Integer ins,
                           Integer mod) {
         super();
@@ -56,6 +58,7 @@ public class ProfilingEntry {
         this.user = user;
         this.fields = fields;
         this.sort = sort;
+        this.proj = proj;
         this.nret= nret;
         this.respLen = respLen;
         this.millis = millis;
@@ -92,6 +95,7 @@ public class ProfilingEntry {
         if(user!=null && !user.isEmpty()) obj.put("user", user);
         if(fields!=null && !fields.isEmpty()) obj.put("fields", fields);
         if(sort!=null && !sort.isEmpty()) obj.put("sort", sort);
+        if(proj!=null && !proj.isEmpty()) obj.put("proj", proj);
         if(nret!=null) obj.put("nret", nret);
         if(respLen!=null) obj.put("resplen", respLen);
         if(millis!=null) obj.put("millis", millis);
@@ -104,5 +108,10 @@ public class ProfilingEntry {
         if(mod!=null) obj.put("mod", mod);
         
         return obj;
+    }
+
+    public String getFingerprint(){
+        final AggregatedProfilingId id = new AggregatedProfilingId(op, fields, sort, proj);
+        return id.getFingerprint();
     }
 }

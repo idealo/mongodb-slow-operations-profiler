@@ -97,6 +97,9 @@ public class SlowOps extends HttpServlet {
         if(!isEmpty(request, "sort")) {
             pipeline.append("sort:{$all:[").append(getStringArray(request.getParameter("sort"))).append("]},");
         }
+        if(!isEmpty(request, "proj")) {
+            pipeline.append("proj:{$all:[").append(getStringArray(request.getParameter("proj"))).append("]},");
+        }
         if(!isEmpty(request, "fromMs") || !isEmpty(request, "toMs")) {
             pipeline.append("millis:{");
             if(!isEmpty(request, "fromMs")){
@@ -212,6 +215,9 @@ public class SlowOps extends HttpServlet {
         }
         if(!isEmpty(request, "bySort")) {
             result.append("sort:'$sort',");
+        }
+        if(!isEmpty(request, "byProj")) {
+            result.append("proj:'$proj',");
         }
         //default:
         if(result.length() == 0) {

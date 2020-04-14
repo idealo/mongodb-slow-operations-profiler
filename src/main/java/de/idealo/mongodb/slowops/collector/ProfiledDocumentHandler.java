@@ -590,8 +590,15 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
         Object queryOrCommand = tmp;
         Set<String> fields = null;
         Set<String> sort = null;
+        Set<String> proj = null;
         String op = "" + doc.get("op");
         if(queryOrCommand instanceof Document) {
+            //remove unnecessary fields which contain many more sub documents which would blow up the ProfilingEntry without being useful for the analysis
+            ((Document) queryOrCommand).remove("$db");
+            ((Document) queryOrCommand).remove("$clusterTime");
+            ((Document) queryOrCommand).remove("$client");
+            ((Document) queryOrCommand).remove("$configServerState");
+
             Document queryObj = (Document)queryOrCommand;
             if(isCommand && "command".equals(op)) op += "." + getFirstKey(queryObj);//if op is "command" specify it
             Object innerQuery = null;
@@ -607,6 +614,10 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
                 if(orderbyObj != null) {
                     sort = getFields(orderbyObj);
                 }
+                Object projObj = queryObj.get("projection");
+                if(projObj != null) {
+                    proj = getFields(projObj);
+                }
                 if(fields.isEmpty() && queryObj.get("key") != null){//command.query is empty but command.key is not, i.e. db.find.distinct("someField");
                     fields.add(queryObj.get("key").toString());
                 }
@@ -618,6 +629,10 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
                     if(orderbyObj != null) {
                         sort = getFields(orderbyObj);
                     }
+                    Object projObj = queryObj.get("$projection");
+                    if(projObj != null) {
+                        proj = getFields(projObj);
+                    }
                 }else {//format is "query.filter" or "query" or "command"
                     Object filterQuery = queryObj.get("filter");
                     if(filterQuery != null) { //format is query.filter
@@ -625,6 +640,10 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
                         Object sortObj = queryObj.get("sort");
                         if (sortObj != null) {
                             sort = getFields(sortObj);
+                        }
+                        Object projObj = queryObj.get("projection");
+                        if(projObj != null) {
+                            proj = getFields(projObj);
                         }
                     }else {//format is "query" or "command"
 
@@ -637,12 +656,14 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
                                 fields.addAll(pFieldsSet);
                             }
                         }else{
+
                             if("update".equals(op)){//for update operations, remove the updated document because it may be quite huge and does it does not matter for the analysis
                                 ((Document) queryOrCommand).remove("u");
                             }
                             if(!"insert".equals(op)){//don't get fields for insert because there are no queried fields for inserts
                                 fields = getFields(queryOrCommand);
                                 sort = null;
+                                proj = null;
                             }
 
                         }
@@ -661,7 +682,7 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
         }
 
         return new ProfilingEntry((Date) doc.get("ts"), serverAddress, db, col,
-                op, "" + doc.get("user"), fields, sort,
+                op, "" + doc.get("user"), fields, sort, proj,
                 getField(Integer.class, doc, "nreturned"),
                 getField(Integer.class, doc, "responseLength"),
                 getField(Integer.class, doc, "millis"),

@@ -27,6 +27,8 @@ public class Action {
 
 	private static final Logger LOG = LoggerFactory.getLogger(Action.class);
 
+	private static final int SLOWMS_DEFAULT = 100;
+
 
 	@GET
 	@Produces({MediaType.APPLICATION_JSON})
@@ -56,11 +58,11 @@ public class Action {
 						} else if ("cstop".equals(cmd)) {
 							CollectorManagerInstance.startStopProfilingReaders(pList, true);
 						} else if ("pstart".equals(cmd)) {
-							long slowMs = getSlowMs(ms, 100);
+							long slowMs = getSlowMs(ms);
 							CollectorManagerInstance.setSlowMs(pList, Math.abs(slowMs));
 						} else if ("pstop".equals(cmd)) {
-							long slowMs = getSlowMs(ms, 100);
-							if(slowMs == 0) slowMs = 100;//set to default because 0 means profile all ops but we want to stop profiling here
+							long slowMs = getSlowMs(ms);
+							if(slowMs == 0) slowMs = SLOWMS_DEFAULT;//set to default because 0 means profile all ops but we want to stop profiling here
 							CollectorManagerInstance.setSlowMs(pList, Math.abs(slowMs)*-1);
 						}
 					}
@@ -90,14 +92,14 @@ public class Action {
 		return result;
 	}
 
-	private long getSlowMs(String ms, long defaultValue){
+	private long getSlowMs(String ms){
 		try {
 			return Long.parseLong(ms);
 		} catch (NumberFormatException e) {
-			ApplicationStatusDto.addWebLog("slowMS must be numeric but was: '" + ms + "' so take default: " + defaultValue);
-			LOG.warn("slowMS must be numeric but was: '{}' so take default: {}", ms, defaultValue);
+			ApplicationStatusDto.addWebLog("slowMS must be numeric but was: '" + ms + "' so take default: " + SLOWMS_DEFAULT);
+			LOG.warn("slowMS must be numeric but was: '{}' so take default: {}", ms, SLOWMS_DEFAULT);
 		}
-		return defaultValue;
+		return SLOWMS_DEFAULT;
 	}
 
 

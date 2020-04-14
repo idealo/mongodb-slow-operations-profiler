@@ -46,8 +46,9 @@
 					<tr><td>User</td><td><input type="text" name="user" size="30" <% 			if(!isEmpty(request,"user")){out.print("value=\""+request.getParameter("user")+"\"");}%> ><sup>1</sup></td></tr>
 					<tr><td>Operation</td><td><input type="text" name="op" size="30" <% 		if(!isEmpty(request,"op")){out.print("value=\""+request.getParameter("op")+"\"");}%> ><sup>1</sup></td></tr>
 					<tr><td>Queried fields</td><td><input type="text" name="fields" size="30" <%if(!isEmpty(request,"fields")){out.print("value=\""+request.getParameter("fields")+"\"");}%> ><sup>2</sup></td></tr>
-					<tr><td>Sorted fields</td><td><input type="text" name="sort" size="30" <% 	if(!isEmpty(request,"sort")){out.print("value=\""+request.getParameter("sort")+"\"");}%> ><sup>2</sup></td></tr>
-					<tr><td>Millis from</td><td><input type="text" name="fromMs" size="10" <%    if(!isEmpty(request,"fromMs")){out.print("value=\""+request.getParameter("fromMs")+"\"");}%> > to <input type="text" name="toMs" size="10" <%                if(!isEmpty(request,"toMs")){out.print("value=\""+request.getParameter("toMs")+"\"");}%> ></td></tr>
+                    <tr><td>Sorted fields</td><td><input type="text" name="sort" size="30" <% 	if(!isEmpty(request,"sort")){out.print("value=\""+request.getParameter("sort")+"\"");}%> ><sup>2</sup></td></tr>
+                    <tr><td>Projected fields</td><td><input type="text" name="proj" size="30" <% 	if(!isEmpty(request,"proj")){out.print("value=\""+request.getParameter("proj")+"\"");}%> ><sup>2</sup></td></tr>
+                    <tr><td>Millis from</td><td><input type="text" name="fromMs" size="10" <%    if(!isEmpty(request,"fromMs")){out.print("value=\""+request.getParameter("fromMs")+"\"");}%> > to <input type="text" name="toMs" size="10" <%                if(!isEmpty(request,"toMs")){out.print("value=\""+request.getParameter("toMs")+"\"");}%> ></td></tr>
 					<tr><td colspan="2">
 						<i>
 							Values separated by semicolon are logically combined: </br>
@@ -68,6 +69,7 @@
 					<tr><td><input type="checkbox" name="byOp" value="op" <%		if(!isEmpty(request,"byOp")){out.print("checked=\"checked\"");}%> > Operation</td></tr>
 					<tr><td><input type="checkbox" name="byFields" value="fields" <%if(!isEmpty(request,"byFields")  || (isEmpty(request,"byLbl") && isEmpty(request,"byAdr") && isEmpty(request,"byDb") && isEmpty(request,"byCol") && isEmpty(request,"byUser") && isEmpty(request,"byOp") && isEmpty(request,"bySort"))){out.print("checked=\"checked\"");}%> > Queried fields</td></tr>
 					<tr><td><input type="checkbox" name="bySort" value="sort" <% 	if(!isEmpty(request,"bySort")){out.print("checked=\"checked\"");}%> > Sorted fields</td></tr>
+                    <tr><td><input type="checkbox" name="byProj" value="proj" <% 	if(!isEmpty(request,"byProj")){out.print("checked=\"checked\"");}%> > Projected fields</td></tr>
 				</table>
 			</td>
 			<td valign="top" class="infoResolution"><strong>Resolution by</strong> <img src="img/info.gif" alt="info" title="info">
@@ -82,11 +84,13 @@
                     <tr><td>&nbsp;</td></tr>
                     <tr><td>&nbsp;</td></tr>
                     <tr><td>&nbsp;</td></tr>
+                    <tr><td>&nbsp;</td></tr>
                     <tr><td><input type="submit" value="Submit"></td></tr>
 				</table>
 			</td>
 			<td valign="top">
 				<table>
+                    <tr><td>&nbsp;</td></tr>
                     <tr><td>&nbsp;</td></tr>
                     <tr><td>&nbsp;</td></tr>
                     <tr><td>&nbsp;</td></tr>
@@ -168,11 +172,16 @@ function setCountAsSqrt(checkButton){
 //maxRet=8
 //avgRet=9
 //stdDevRet=10
-//rKeys=11
-//rDocs=12
-//wDocs=13
-//memSort=14
-var initialYIndex=[0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14];//initial order of fields: timestamp,avg,count,min,max,sum
+//len=11
+//minLen=12
+//maxLen=13
+//avgLen=14
+//stdDevLen=15
+//rKeys=16
+//rDocs=17
+//wDocs=18
+//memSort=19
+var initialYIndex=[0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19];//initial order of fields: timestamp,avg,count,min,max,sum
 var currentYIndex=initialYIndex;
 function setYAxis(newYIndex){
     currentYIndex = interchangeIndexes(initialYIndex, newYIndex);//save current order to show the correct values in the legend
@@ -204,12 +213,17 @@ function drawLegend(){
                 var maxRet = g.getValue(row, seriesProps.column + currentYIndex[9]);
                 var avgRet = g.getValue(row, seriesProps.column + currentYIndex[10]);
                 var stdDevRet = g.getValue(row, seriesProps.column + currentYIndex[11]);
-                var rKeys = g.getValue(row, seriesProps.column + currentYIndex[12]);
-                var rDocs = g.getValue(row, seriesProps.column + currentYIndex[13]);
-                var wDocs = g.getValue(row, seriesProps.column + currentYIndex[14]);
-                var memSort = g.getValue(row, seriesProps.column + currentYIndex[15]);
+                var len = g.getValue(row, seriesProps.column + currentYIndex[12]);
+                var minLen = g.getValue(row, seriesProps.column + currentYIndex[13]);
+                var maxLen = g.getValue(row, seriesProps.column + currentYIndex[14]);
+                var avgLen = g.getValue(row, seriesProps.column + currentYIndex[15]);
+                var stdDevLen = g.getValue(row, seriesProps.column + currentYIndex[16]);
+                var rKeys = g.getValue(row, seriesProps.column + currentYIndex[17]);
+                var rDocs = g.getValue(row, seriesProps.column + currentYIndex[18]);
+                var wDocs = g.getValue(row, seriesProps.column + currentYIndex[19]);
+                var memSort = g.getValue(row, seriesProps.column + currentYIndex[20]);
                 if (pts[i].yval != 0 && count != 0) {//0-values are necessary to put into the data matrix (instead of empty values) but they are not shown in the legend
-                    legend.push([seriesProps.color, pts[i], avg, count, minSec, maxSec, sumSec, stdDevMs, nRet, minRet, maxRet, avgRet, stdDevRet, rKeys, rDocs, wDocs, memSort]);
+                    legend.push([seriesProps.color, pts[i], avg, count, minSec, maxSec, sumSec, stdDevMs, nRet, minRet, maxRet, avgRet, stdDevRet, len, minLen, maxLen, avgLen, stdDevLen, rKeys, rDocs, wDocs, memSort]);
                 }
             }
         }
@@ -231,7 +245,8 @@ function drawLegend(){
                 "<b>Slow-ops </b> count:" + formatNumber(legend[i][3]) +
                 "<br/><b>Duration</b> min:" + formatNumber(legend[i][4]) + " max:" + formatNumber(legend[i][5]) + " avg:" + formatNumber(legend[i][2]) + " sum:" + formatNumber(legend[i][6]) + " stdDev:" + formatNumber(legend[i][7]) +
                 "<br/><b>Returned </b> min:" + formatNumber(legend[i][9]) + " max:" + formatNumber(legend[i][10]) + " avg:" + formatNumber(legend[i][11]) + " sum:" + formatNumber(legend[i][8]) + " stdDev:" + formatNumber(legend[i][12]) +
-                "<br/><b>R/W </b> rKeys:" + formatNumber(legend[i][13]) + " rDocs:" + formatNumber(legend[i][14]) + " wDocs:" + formatNumber(legend[i][15]) + " memSort: " + (legend[i][16]=="1"?"true":"false") +
+                "<br/><b>Bytes </b> min:" + formatNumber(legend[i][14]) + " max:" + formatNumber(legend[i][15]) + " avg:" + formatNumber(legend[i][16]) + " sum:" + formatNumber(legend[i][13]) + " stdDev:" + formatNumber(legend[i][17]) +
+                "<br/><b>R/W </b> rKeys:" + formatNumber(legend[i][18]) + " rDocs:" + formatNumber(legend[i][19]) + " wDocs:" + formatNumber(legend[i][20]) + " memSort: " + (legend[i][21]=="1"?"true":"false") +
                 "</span><br/>";
         }
         text += header + body;
@@ -381,6 +396,11 @@ a:hover {
                         {"visible":true, "name": "StdDev ret"},
                         {"visible":true, "name": "ret/ms"},
                         {"visible":true, "name": "ms/ret"},
+                        {"visible":true, "name": "Min bytes"},
+                        {"visible":true, "name": "Max bytes"},
+                        {"visible":true, "name": "Avg bytes"},
+                        {"visible":true, "name": "Sum bytes"},
+                        {"visible":true, "name": "StdDev bytes"},
                         {"visible":true, "name": "rKeys"},
                         {"visible":true, "name": "rDocs"},
                         {"visible":true, "name": "wDocs"},
@@ -414,16 +434,18 @@ a:hover {
                     var total1 = api.column(1, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
                     var total5 = api.column(5, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
                     var total10 = api.column(10, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
-                    var total14 = api.column(14, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
-                    var total15 = api.column(15, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
-                    var total16 = api.column(16, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    var total17 = api.column(17, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    var total19 = api.column(19, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    var total20 = api.column(20, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
+                    var total21 = api.column(21, {page: 'current'}).data().reduce(function (a, b) {return intVal(a) + intVal(b);});
                     // Update footer
                     $(api.column(1).footer()).html('Total count: ' + formatNumber(total1));
                     $(api.column(5).footer()).html('Total ms: ' + formatNumber(total5));
                     $(api.column(10).footer()).html('Total ret: ' + formatNumber(total10));
-                    $(api.column(14).footer()).html('Total rKeys: ' + formatNumber(total14));
-                    $(api.column(15).footer()).html('Total rDocs: ' + formatNumber(total15));
-                    $(api.column(16).footer()).html('Total wDocs: ' + formatNumber(total16));
+                    $(api.column(17).footer()).html('Total bytes: ' + formatNumber(total17));
+                    $(api.column(19).footer()).html('Total rKeys: ' + formatNumber(total19));
+                    $(api.column(20).footer()).html('Total rDocs: ' + formatNumber(total20));
+                    $(api.column(21).footer()).html('Total wDocs: ' + formatNumber(total21));
                 }
             }
         });
@@ -433,17 +455,40 @@ a:hover {
             var visible = table.column( $(v) ).visible();
             $( "#cols" ).append( "<a id='cols_"+k+"' class='toggle-vis-" + visible + "' data-column='" + k + "'>" + $(v).html() +  "</a> - ");
             $( "#cols_" + k ).on('click', function (e) {
-            e.preventDefault();
+                e.preventDefault();
 
+                // Get the column API object
+                var column = table.column( $(this).attr('data-column') );
+
+                // Toggle the visibility
+                var isVisible = column.visible();
+                $("#cols_" + column[0]).removeClass("toggle-vis-" + isVisible).addClass("toggle-vis-" + !isVisible);
+                column.visible( ! isVisible );
+            });
+        });
+
+        function toggleColumn(columnIndex){
             // Get the column API object
-            var column = table.column( $(this).attr('data-column') );
-
+            var column = table.column(columnIndex);
             // Toggle the visibility
             var isVisible = column.visible();
             $("#cols_" + column[0]).removeClass("toggle-vis-" + isVisible).addClass("toggle-vis-" + !isVisible);
-            column.visible( ! isVisible );
-        } );
-        })
+            column.visible(!isVisible);
+        }
+
+        function makeColumnGroup(label, columnIndexes){
+            $("#cols").append("<a id='cols_" + label + "' class='toggle-vis-true' data-column='" + label + "'>" + label + "</a> - ");
+            $("#cols_" + label).on('click', function (e) {
+                e.preventDefault();
+                columnIndexes.forEach(function(colIndex){
+                    toggleColumn(colIndex);
+                });
+            });
+        }
+
+        makeColumnGroup("Durations", [2,3,4,5,6]);
+        makeColumnGroup("ReturnedDocs", [7,8,9,10,11,12,13]);
+        makeColumnGroup("Bytes", [14,15,16,17,18]);
 
         $(".infoResolution").tooltip({content:function(){return $("#infoResolutionContent").html();}});
         $(".infoGroup").tooltip({content:function(){return $("#infoGroupContent").html();}});
@@ -466,7 +511,13 @@ a:hover {
     final HashMap<String, AggregatedProfiling> labelSeries = slowOpsDto.getLabelSeries();
     for (AggregatedProfiling labelSerie : labelSeries.values()) {%>
         <tr>
-            <td valign="top"><%=labelSerie.getId().getLabel(true) %></td>
+            <td valign="top"><%=labelSerie.getId().getLabel(true) %>
+            <%
+                if(labelSerie.getId().isFingerprintable()){
+                    out.print("<br><a target='_blank' href='"+request.getContextPath() + "/slowop?fp=" + labelSerie.getId().getFingerprint()+"'>example</a>");
+                }
+            %>
+            </td>
             <td valign="top"><%=labelSerie.getCount() %></td>
             <td valign="top"><%=labelSerie.getMinMs() %></td>
             <td valign="top"><%=labelSerie.getMaxMs() %></td>
@@ -480,6 +531,11 @@ a:hover {
             <td valign="top"><%=labelSerie.getStdDevRet() %></td>
             <td valign="top"><%=labelSerie.getMillis()>0?(labelSerie.getNRet()/labelSerie.getMillis()):"" %></td>
             <td valign="top"><%=labelSerie.getNRet()>0?(labelSerie.getMillis()/labelSerie.getNRet()):"" %></td>
+            <td valign="top"><%=labelSerie.getMinLen() %></td>
+            <td valign="top"><%=labelSerie.getMaxLen() %></td>
+            <td valign="top"><%=labelSerie.getLen()/labelSerie.getCount() %></td>
+            <td valign="top"><%=labelSerie.getLen() %></td>
+            <td valign="top"><%=labelSerie.getStdDevLen() %></td>
             <td valign="top"><%=labelSerie.getKeys() %></td>
             <td valign="top"><%=labelSerie.getDocs() %></td>
             <td valign="top"><%=labelSerie.getDocsWrittenCount() %></td>

@@ -233,6 +233,7 @@ public class ProfilingReader extends Thread implements Terminable{
     private void readSystemProfile() {
 
         final MongoDbAccessor mongo = getMongoDbAccessor();
+        final ExecutorService executorService = Executors.newFixedThreadPool(4);
 
         MongoCursor<Document> profileCursor=null;
 
@@ -243,7 +244,7 @@ public class ProfilingReader extends Thread implements Terminable{
 
                     final Document doc = profileCursor.next();
                     lastTs = (Date)doc.get("ts");
-                    filterDoc(doc);
+                    filterDoc(doc, executorService);
                     LOG.debug(getShrinkedLogLine(doc));
                 }
             }else {
@@ -258,11 +259,20 @@ public class ProfilingReader extends Thread implements Terminable{
             if(profileCursor != null) {
                 profileCursor.close();
             }
+            executorService.shutdown();
+            try {
+                executorService.awaitTermination(100, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                LOG.error("Error while awaiting termination of executorService for readSystemProfile", e);
+            }finally {
+                executorService.shutdownNow();
+            }
+
         }
     }
 
 
-    private void filterDoc(Document doc) {
+    private void filterDoc(Document doc, ExecutorService executorService) {
 
         ProfilingEntry entry = profiledDocumentHandler.filterDoc(doc);
         entry.setLabel(profiledServerDto.getLabel());
@@ -271,6 +281,13 @@ public class ProfilingReader extends Thread implements Terminable{
 
             jobQueue.put(entry);
             doneJobs.incrementAndGet();
+            //update the cache concurrently
+            executorService.execute(new Runnable() {
+                @Override
+                public void run() {
+                    ExampleSlowOpsCache.INSTANCE.addToCache(entry.getFingerprint(), doc);
+                }
+            });
 
         } catch (InterruptedException e) {
             LOG.error("InterruptedException while waiting to put entry into jobQueue", e);

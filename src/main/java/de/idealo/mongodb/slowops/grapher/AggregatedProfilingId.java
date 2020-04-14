@@ -3,7 +3,13 @@
  */
 package de.idealo.mongodb.slowops.grapher;
 
-import java.util.*;
+import com.google.common.hash.Hashing;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * 
@@ -24,6 +30,7 @@ public class AggregatedProfilingId {
     private String user;
     private Set<String> fields;
     private Set<String> sort;
+    private Set<String> proj;
     private String year;
     private String month;
     private String week;
@@ -34,6 +41,65 @@ public class AggregatedProfilingId {
     private String milliseconds;
     
     public AggregatedProfilingId(){      
+    }
+
+    public AggregatedProfilingId(String op,  Set<String> fields, Set<String> sort, Set<String> proj) {
+        this.op = op;
+        this.fields = fields;
+        this.sort = sort;
+        this.proj = proj;
+    }
+
+    /**
+     * This defines a "fully qualified query shape".
+     *
+     * This is not foolproof, e.g. a query executed on different collections may be different
+     * (because the same named field can be of different type and semantic)
+     * even if all other characteristics below are identical.
+     * But since we want to store only a minimum of example queries, this should be good enough.
+     *
+     * @return a fingerprint of the query shape
+     */
+    public String getFingerprint(){
+        final StringBuffer result = new StringBuffer();
+
+        //separate each characteristics by . so even if some are null, the fingerprint will change
+        if(op!=null) result.append(op);
+        result.append(".");
+        if(fields!=null) {
+            final Iterator<String> fi = fields.iterator();
+            while(fi.hasNext()) {
+                result.append(fi.next());
+            }
+        };
+        result.append(".");
+        if(sort!=null) {
+            final Iterator<String> si = sort.iterator();
+            while(si.hasNext()) {
+                result.append(si.next());
+            }
+        };
+        result.append(".");
+        if(proj!=null) {
+            final Iterator<String> pi = proj.iterator();
+            while(pi.hasNext()) {
+                result.append(pi.next());
+            }
+        };
+
+        return Hashing.murmur3_128().hashString(result.toString(), StandardCharsets.UTF_8).toString();
+    }
+
+    /**
+     * Returns true if it make sense to show a slow operations document as an example.
+     * This is the case, if at least the operation is known.
+     *
+     * The queried, sorted and projected fields may be empty, and as such take part in defining a "fully qualified query shape".
+     *
+     * @return
+     */
+    public boolean isFingerprintable(){
+        return op!=null && !op.isEmpty();
     }
 
     /**
@@ -114,6 +180,12 @@ public class AggregatedProfilingId {
         return sort;
     }
 
+    /**
+     * @return the proj
+     */
+    public Set<String> getProj() {
+        return proj;
+    }
 
 
 
@@ -123,7 +195,6 @@ public class AggregatedProfilingId {
     public String getSecond() {
         return second;
     }
-
 
     public String getLabel(boolean isHtml) {
         final StringBuffer result = new StringBuffer();
@@ -136,6 +207,7 @@ public class AggregatedProfilingId {
         result.append(getField("user", user, isHtml));
         result.append(getField("fields", getStringList(fields), isHtml));
         result.append(getField("sort", getStringList(sort), isHtml));
+        result.append(getField("proj", getStringList(proj), isHtml));
         
         if(result.length() > 0) {
             if(isHtml) {

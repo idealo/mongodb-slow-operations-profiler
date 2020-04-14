@@ -1,4 +1,4 @@
-# MongoDB slow operation profiler and visualizer
+# MongoDB slow operations profiler and visualizer
 
 This java web application collects and stores slow operations from one or more mongoDB system(s) in order to visualize and analyze them.
 Since v2.0.0 it may be easily extended to an administration tool by implementing commands to be executed against the configured database system(s).
@@ -48,7 +48,11 @@ For example, to see the most expensive slow operations first, just sort descendi
 
 Here is a reduced screenshot of the table without any filter on rows because the `Search` textbox is empty. However not all columns are shown. You can toggle a column to be shown or hidden by clicking its name in the table header. The table here is sorted by column `Sum ms`, so we see in the first row the most **expensive** slow operation type: either there were many of this type or they were generally slow. 
 
-Let's interprete the first row to get you familar with. In the column `Group` you see the attributes you've grouped by (selected in the search form above). Here again, the slow ops occurred in the collection (`col`) "apiOfferlist". The slow operations (`op`) were "updates" and the field (`fields`) to select the documents to be modified was an `_id` field having a sub-document querying the 3 fields `productId`, `siteId` and `segments`. Sub-documents being queried on more than one field are enclosed by curly brackets `{}`. However, if only one sub-document field was queried, dot-notation is preferably used.
+Let's interpret the first row to get you familiar with. In the column `Group` you see the attributes you've grouped by (selected in the search form above). Here again, the slow ops occurred in the collection (`col`) "apiOfferlist". The slow operations (`op`) were "updates" and the field (`fields`) to select the documents to be modified was an `_id` field having a sub-document querying the 3 fields `productId`, `siteId` and `segments`. Sub-documents being queried on more than one field are enclosed by curly brackets `{}`. However, if only one sub-document field was queried, dot-notation is preferably used.
+
+Since v2.13.0, documents of profiled slow operations are stored in the collector database in order to show them as an example for any given query shape which may help to understand the output of more complex queries better. 
+So, the column `Group` in the data table adds for each slow operation type, an [example](#) link to see an original document from the `system.profile` collection as an example of a profiled slow operation. The example matches the query shape of the given slow operation type as long as the checkboxes `Operation`, `Queried fields`, `Sorted fields` and `Projected fields` (which are defining a query shape) have been selected in the `Group by` section of the search form. 
+At least `Operation` needs to be selected in the `Group by` section to show the link to an example document. However, if only `Operation` is selected, an example only exists if it had the same `Operation` and **no** `Queried fields`, `Sorted fields`and `Projected fields`. So, besides selecting the checkbox `Operation`, you should also tick checkboxes such as `Queried fields`, `Sorted fields` or `Projected fields` in the `Group by` section to get an existing slow operation example document which matches the query shape.
 
 The rest of the columns in the data table should be self-explanatory. High values in the column `ms/ret` (and vice versa low values in column `ret/ms`) may indicate a performance problem for operations which return documents, because these columns show the time in ms needed to return 1 document respectively the number of documents returned within 1 ms.
 
@@ -280,10 +284,22 @@ In v2.11.0 a new option has been introduced:
 
 
 ## Version history
+* v2.13.0
+  + new: the column `Group` of the summarized table in the analysis page adds for each row, thus for each slow operation type, a link to see an original document from the `system.profile` collection as an example of a profiled slow operation for the given slow operation type.
+  + new: add $projection to the slow op document because it's important to know for the analysis if and which fields were projected
+  + new: show on the analysis page also the size in bytes of the slow operation (`resplen`) which is important to understand how many bytes had to be retrieved by the database
+  + new: added the possibility to hide/show with one single click a group of columns of the data table in the application status page: 
+    + `Specs` toggles the columns `NumCores`, `CPUFreqMHz`, `MemSizeMB` and `Mongodb (version)`  
+    + `LastSlowOps` toggles the columns `LastTS`, `#SlowOps`, `#10sec`, `#1Min`, `#10Min`, `#30Min`, `#1Hour`, `#12Hours` and `#1Day`  
+  + new: added the possibility to hide/show with one single click a group of columns of the data table in the analysys page: 
+    + `Durations` toggles the columns `Min ms`, `Max ms`, `Avg ms`, `Sum ms` and `StdDev ms`
+    + `ReturnedDocs` toggles the columns `Min ret`, `Max ret`, `Avg ret`, `Sum ret`, `StdDev ret`, `ret/ms`, `ms/ret`
+    + `Bytes` toggles the columns `Min bytes`, `Max bytes`, `Avg bytes`, `Sum bytes` and `StdDev bytes`
+  + update: the negative y-axis on the analysis page shows only up to negative 10% of the maximum y-value, because there are never negative values and the circles near zero are still clearly visible
 * v2.12.0
   + new: overhaul of the application status page to make it look cleaner and more modern
   + new: the command `db stats` has been added to the application status page. The command shows statistics about the selected databases such as `objects`, `avgObjSize`, `dataSize`, `storageSize`, `#indexes` and `indexSize`.
-  + new: the command `list db.collections` has been replaced by `index stats` which shows more details about the collection(s) such as `size`, `count`, `avgObjSize`, `storageSize`, `#indexes`, `totalIndexSize` and sizes of each index. 
+  + new: the command `list db.collections` has been replaced by `collection stats` which shows more details about the collection(s) such as `size`, `count`, `avgObjSize`, `storageSize`, `#indexes`, `totalIndexSize` and sizes of each index. 
   + new: the command `index access stats` adds a column to the result table in order to show whether the index is a TTL index or not. 
     This is important to know because as [mongodb documentation](https://docs.mongodb.com/master/reference/operator/aggregation/indexStats/#behavior) states, the statistics only include index accesses driven by user requests. It does not include internal operations like deletion via TTL indexes.
     So if a given index shows 0 accesses it may be still a useful index if it's used as TTL index.  

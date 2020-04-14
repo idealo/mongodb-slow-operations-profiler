@@ -25,6 +25,7 @@ public class AggregatedProfilingGroup extends AggregatedProfilingId {
         result.append(getField("user", getUser()));
         result.append(getField("fields", getFields()!=null?getFields().toString():null));
         result.append(getField("sort", getSort()!=null?getSort().toString():null));
+        result.append(getField("proj", getProj()!=null?getProj().toString():null));
         
         if(result.length() > 0) {
             result.deleteCharAt(result.length()-1);//remove last comma

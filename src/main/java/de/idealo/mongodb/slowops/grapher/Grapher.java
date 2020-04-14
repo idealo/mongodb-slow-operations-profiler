@@ -80,7 +80,9 @@ public class Grapher {
     public SlowOpsDto aggregateSlowQueries(StringBuffer filter, Object[] params, StringBuffer groupExp, StringBuffer groupTime) {
         final SlowOpsDto result = new SlowOpsDto();
         final String[] customFields = new String[] {"count", "minSec", "maxSec", "sumSec", "stdDevMs",
-                "nRet", "minRet", "maxRet", "avgRet", "stdDevRet", "rKeys", "rDocs", "wDocs", "memSort"};
+                "nRet", "minRet", "maxRet", "avgRet", "stdDevRet",
+                "len", "minLen", "maxLen", "avgLen", "stdDevLen",
+                "rKeys", "rDocs", "wDocs", "memSort"};
 
         //List<AggregatedProfiling> queryResult = null;
         ResultsIterator<AggregatedProfiling> queryResult = null;
@@ -110,6 +112,11 @@ public class Grapher {
                     "minRet : { $min : '$nret' }," +
                     "maxRet : { $max : '$nret' }," +
                     "stdDevRet : { $stdDevPop : '$nret' }," +
+                    "len : { $sum : '$resplen' }," +
+                    "avgLen : { $avg : '$resplen' }," +
+                    "minLen : { $min : '$resplen' }," +
+                    "maxLen : { $max : '$resplen' }," +
+                    "stdDevLen : { $stdDevPop : '$resplen' }," +
                     "firstts : { $first : '$ts' }," +
                     "keys : { $sum : '$keys' }," +
                     "docs : { $sum : '$docs' }," +
@@ -211,19 +218,24 @@ public class Grapher {
         symbols.setDecimalSeparator('.');
         final DecimalFormat decimalFormat = new DecimalFormat("#", symbols);
 
-        //write one line to expand the y-axis to the negated max value so zooming-in values near 0 becomes easier
+        //write one line to expand the y-axis to a 10th of the negated max value so zooming-in values near 0 becomes easier
         minCalendar.add(Calendar.MINUTE, -1);
         dataGrid.append("[new Date(\"").append(dateFormat.format(minCalendar.getTime())).append("\"),");//first group Date
-        dataGrid.append(decimalFormat.format(maxAvgMs/-scale)).append(",0,");//first group Avg and Count
-        dataGrid.append(decimalFormat.format(maxMinMs/-scale)).append(",");//first group MinMs
-        dataGrid.append(decimalFormat.format(maxMaxMs/-scale)).append(",");//first group MaxMs
-        dataGrid.append(decimalFormat.format(maxSumMs/-scale)).append(",");//first group SumMs
+        dataGrid.append(decimalFormat.format(maxAvgMs/-scale/10)).append(",0,");//first group Avg and Count
+        dataGrid.append(decimalFormat.format(maxMinMs/-scale/10)).append(",");//first group MinMs
+        dataGrid.append(decimalFormat.format(maxMaxMs/-scale/10)).append(",");//first group MaxMs
+        dataGrid.append(decimalFormat.format(maxSumMs/-scale/10)).append(",");//first group SumMs
         dataGrid.append("0,");//first group StdDevMs
         dataGrid.append("0,");//first group NRet
         dataGrid.append("0,");//first group MinRet
         dataGrid.append("0,");//first group MaxRet
         dataGrid.append("0,");//first group AvgRet
         dataGrid.append("0,");//first group StdDevRet
+        dataGrid.append("0,");//first group len
+        dataGrid.append("0,");//first group MinLen
+        dataGrid.append("0,");//first group MaxLen
+        dataGrid.append("0,");//first group AvgLen
+        dataGrid.append("0,");//first group StdDevLen
         dataGrid.append("0,");//first group rKeys
         dataGrid.append("0,");//first group rDocs
         dataGrid.append("0,");//first group wDocs
@@ -262,11 +274,17 @@ public class Grapher {
                 values[startIdx + 8] = decimalFormat.format(entry.getMaxRet());
                 values[startIdx + 9] = decimalFormat.format(entry.getAvgRet());
                 values[startIdx + 10] = decimalFormat.format(entry.getStdDevRet());
+                //RespLen:
+                values[startIdx + 11] = decimalFormat.format(entry.getLen());
+                values[startIdx + 12] = decimalFormat.format(entry.getMinLen());
+                values[startIdx + 13] = decimalFormat.format(entry.getMaxLen());
+                values[startIdx + 14] = decimalFormat.format(entry.getAvgLen());
+                values[startIdx + 15] = decimalFormat.format(entry.getStdDevLen());
                 //Perf:
-                values[startIdx + 11] = ""+entry.getKeys();
-                values[startIdx + 12] = ""+entry.getDocs();
-                values[startIdx + 13] = ""+(entry.getDel() + entry.getIns() + entry.getMod());
-                values[startIdx + 14] = entry.hasSortStage()?"1":"0";
+                values[startIdx + 16] = ""+entry.getKeys();
+                values[startIdx + 17] = ""+entry.getDocs();
+                values[startIdx + 18] = ""+(entry.getDel() + entry.getIns() + entry.getMod());
+                values[startIdx + 19] = entry.hasSortStage()?"1":"0";
 
             }
             for (int i = 0; i < values.length; i++) {

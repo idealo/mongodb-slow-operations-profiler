@@ -189,7 +189,8 @@ public class ProfilingWriter extends Thread implements Terminable{
                     }
                 }else{
                     LOG.debug("try to insertOne before: {}", doneJobs.get());
-                    profileCollection.insertOne(jobQueue.take().getDocument());
+                    Document doc = jobQueue.take().getDocument();
+                    profileCollection.insertOne(doc);
                     doneJobs.incrementAndGet();
                     LOG.debug("try to insertOne after: {}", doneJobs.get());
                 }

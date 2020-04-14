@@ -34,6 +34,11 @@ public class AggregatedProfiling {
     private double minRet;
     private double maxRet;
     private double stdDevRet;
+    private double len;
+    private double avgLen;
+    private double minLen;
+    private double maxLen;
+    private double stdDevLen;
     private Date firstts;
 
     private long keys;
@@ -132,6 +137,27 @@ public class AggregatedProfiling {
         return stdDevRet;
     }
 
+
+    public double getLen() {
+        return len;
+    }
+
+    public double getAvgLen() {
+        return avgLen;
+    }
+
+    public double getMinLen() {
+        return minLen;
+    }
+
+    public double getMaxLen() {
+        return maxLen;
+    }
+
+    public double getStdDevLen() {
+        return stdDevLen;
+    }
+
     /**
      * @return the firstts
      */
@@ -170,6 +196,9 @@ public class AggregatedProfiling {
             if(entry.getMinRet() < minRet) minRet = entry.getMinRet();
             if(entry.getMaxRet() > maxRet) maxRet = entry.getMaxRet();
             stdDevRet = combineStdDev(new Triplet(nRet, stdDevRet, count), new Triplet(entry.getNRet(), entry.getStdDevRet(), entry.getCount()));
+            if(entry.getMinLen() < minLen) minLen = entry.getMinLen();
+            if(entry.getMaxLen() > maxLen) maxLen = entry.getMaxLen();
+            stdDevLen = combineStdDev(new Triplet(len, stdDevLen, count), new Triplet(entry.getLen(), entry.getStdDevLen(), entry.getCount()));
             if(entry.getFirstts().before(firstts)) firstts = entry.getFirstts();
             keys += entry.getKeys();
             docs += entry.getDocs();
@@ -178,6 +207,7 @@ public class AggregatedProfiling {
             mod += entry.getMod();
             sortstages.addAll(entry.getSortstages());
             nRet += entry.getNRet();//last line because it's used to calculate stdDev
+            len += entry.getLen();//last line because it's used to calculate stdDev
             millis += entry.getMillis();//last line because it's used to calculate stdDev
             count += entry.getCount();//last line because it's used to calculate stdDev
         }
@@ -211,6 +241,11 @@ public class AggregatedProfiling {
         result.minRet = getMinRet();
         result.maxRet = getMaxRet();
         result.stdDevRet = getStdDevRet();
+        result.len = getLen();
+        result.avgLen = getAvgLen();
+        result.minLen = getMinLen();
+        result.maxLen = getMaxLen();
+        result.stdDevLen = getStdDevLen();
         result.firstts = (Date)getFirstts().clone();
         result.keys = getKeys();
         result.docs = getDocs();

@@ -198,6 +198,33 @@
 					}
 				})
 
+                function toggleColumn(columnIndex){
+                    // Get the column API object
+                    var column = mainTable.column(columnIndex);
+                    // Toggle the visibility
+                    var isVisible = column.visible();
+                    $("#cols_" + column[0]).removeClass("toggle-vis-" + isVisible).addClass("toggle-vis-" + !isVisible);
+                    column.visible(!isVisible);
+                }
+
+                function makeColumnGroup(label, columnIndexes){
+                    $("#cols").append("<a id='cols_" + label + "' class='toggle-vis-true' data-column='" + label + "'>" + label + "</a> - ");
+                    $("#cols_" + label).on('click', function (e) {
+                        e.preventDefault();
+                        columnIndexes.forEach(function(colIndex){
+                            toggleColumn(colIndex);
+                        });
+                    });
+                }
+
+                makeColumnGroup("Specs", [5,6,7,8]);
+                makeColumnGroup("LastSlowOps", [14,15,16,17,18,19,20,21,22]);
+
+
+
+
+
+
 				$('#checkall').click(function () {
 					$(':checkbox', mainTable.rows().nodes()).prop('checked', this.checked);
 				});
@@ -301,6 +328,7 @@
                             + "&byOp=op"
                             + "&byFields=fields"
                             + "&bySort=sort"
+                            + "&byProj=proj"
                             + "&resolution=hour"
                             + "&sortLegend=y"
                             , "_blank");
