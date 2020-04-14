@@ -188,9 +188,13 @@ public class ExampleSlowOpsCache {
                 Object obj = dbObj.get(key);
                 key = key.replace("$", "&#36;").replace(".", "&#46;");
                 if (obj instanceof Collection) {
-                    final List<Document> list = Lists.newLinkedList();
+                    final List<Object> list = Lists.newLinkedList();
                     for (Object subObj : (Collection<Object>) obj) {
-                        list.add(replaceIllegalChars(subObj, new Document()));
+                        if (! (subObj instanceof Document || subObj instanceof Collection)) {
+                            list.add(subObj); // add scalar value
+                        }else{
+                            list.add(replaceIllegalChars(subObj, new Document())); // add structured value
+                        }
                     }
                     output.append(key, list);
                 }else if(obj instanceof Document){
@@ -218,17 +222,24 @@ public class ExampleSlowOpsCache {
               {
                 "$l2": "v2"
               }
+            ],
+            "$array": [
+              1,2
             ]
           },
          */
         List<Document> list = Lists.newArrayList();
         list.add(new Document("$l1", "v1"));
         list.add(new Document("$l2", "v2"));
+        List<Integer> array = Lists.newArrayList();
+        array.add(1);
+        array.add(2);
 
         Document in = new Document("$root",
                 new Document("$number", -1)
                         .append("$field", new Date())
                         .append("$list", list)
+                        .append("$array", array)
         );
 
         Document out = ExampleSlowOpsCache.INSTANCE.replaceIllegalChars(in, new Document());
