@@ -77,7 +77,7 @@ The value of `memSort`is `true` if no index could be used to sort the documents.
 
 
 
-## Applicaton status page
+## Application status page
 
 Since v1.0.3 there is also a page to show the application status. Besides showing the status of the collector, means where and how many slow operations have been collected (read and written) since application restart, it shows also every registered database in a table. Since profiling works per database, each database to be profiled is in one row.
 
