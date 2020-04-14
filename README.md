@@ -291,7 +291,7 @@ In v2.11.0 a new option has been introduced:
   + new: added the possibility to hide/show with one single click a group of columns of the data table in the application status page: 
     + `Specs` toggles the columns `NumCores`, `CPUFreqMHz`, `MemSizeMB` and `Mongodb (version)`  
     + `LastSlowOps` toggles the columns `LastTS`, `#SlowOps`, `#10sec`, `#1Min`, `#10Min`, `#30Min`, `#1Hour`, `#12Hours` and `#1Day`  
-  + new: added the possibility to hide/show with one single click a group of columns of the data table in the analysys page: 
+  + new: added the possibility to hide/show with one single click a group of columns of the data table in the analysis page: 
     + `Durations` toggles the columns `Min ms`, `Max ms`, `Avg ms`, `Sum ms` and `StdDev ms`
     + `ReturnedDocs` toggles the columns `Min ret`, `Max ret`, `Avg ret`, `Sum ret`, `StdDev ret`, `ret/ms`, `ms/ret`
     + `Bytes` toggles the columns `Min bytes`, `Max bytes`, `Avg bytes`, `Sum bytes` and `StdDev bytes`
