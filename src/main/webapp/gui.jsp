@@ -545,7 +545,7 @@ a:hover {
   <tbody>
  </table>
 
-<span id="infoGroupContent" style="display:none">The more criteria are selected, the more characteristics allow to distinguish between the different slow-operation types.</span>
+<span id="infoGroupContent" style="display:none">The more criteria are selected, the more characteristics allow to distinguish between the different slow-operation types.<br>To see concrete examples of slow operations, select at least the following criteria:<ul><li>Label</li><li>Database</li><li>Collection</li><li>Operation</li></ul>Furthermore select <ul><li>Queried fields</li><li>Sorted fields</li><li>Projected fields</li></ul>because they define the query shape for which you probably want to see a specific example.</span>
 <span id="infoResolutionContent" style="display:none">Only use a fine grained resolution if the selected time period is short enough to return data that fit in the maximum allowed BSON document size (16 MB).</span>
 
 <%@ include file="buildInfo.jsp" %>

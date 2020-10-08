@@ -43,6 +43,7 @@ public class StartStopHook implements ServletContextListener{
         LOG.info(">>> contextDestroyed");
         CollectorManagerInstance.terminate();
         MongoDbAccessor.terminate();
+        ExampleSlowOpsCache.terminate();
         LOG.info("<<< contextDestroyed");
         
     }

@@ -43,7 +43,10 @@ public class AggregatedProfilingId {
     public AggregatedProfilingId(){      
     }
 
-    public AggregatedProfilingId(String op,  Set<String> fields, Set<String> sort, Set<String> proj) {
+    public AggregatedProfilingId(String lbl, String db, String col, String op,  Set<String> fields, Set<String> sort, Set<String> proj) {
+        this.lbl = lbl;
+        this.db = db;
+        this.col = col;
         this.op = op;
         this.fields = fields;
         this.sort = sort;
@@ -64,7 +67,15 @@ public class AggregatedProfilingId {
         final StringBuffer result = new StringBuffer();
 
         //separate each characteristics by . so even if some are null, the fingerprint will change
-        if(op!=null) result.append(op);
+        if(op!=null) result.append(lbl).append(".").append(db).append(".").append(col).append(".").append(op);
+        appendValues(fields, result);
+        appendValues(sort, result);
+        appendValues(proj, result);
+
+        return Hashing.murmur3_128().hashString(result.toString(), StandardCharsets.UTF_8).toString();
+    }
+
+    private void appendValues(Set<String> fields, StringBuffer result){
         result.append(".");
         if(fields!=null) {
             final Iterator<String> fi = fields.iterator();
@@ -72,34 +83,21 @@ public class AggregatedProfilingId {
                 result.append(fi.next());
             }
         };
-        result.append(".");
-        if(sort!=null) {
-            final Iterator<String> si = sort.iterator();
-            while(si.hasNext()) {
-                result.append(si.next());
-            }
-        };
-        result.append(".");
-        if(proj!=null) {
-            final Iterator<String> pi = proj.iterator();
-            while(pi.hasNext()) {
-                result.append(pi.next());
-            }
-        };
-
-        return Hashing.murmur3_128().hashString(result.toString(), StandardCharsets.UTF_8).toString();
     }
 
     /**
      * Returns true if it make sense to show a slow operations document as an example.
-     * This is the case, if at least the operation is known.
+     * This is the case, if at least the label, database, collection and operation are known.
      *
      * The queried, sorted and projected fields may be empty, and as such take part in defining a "fully qualified query shape".
      *
      * @return
      */
     public boolean isFingerprintable(){
-        return op!=null && !op.isEmpty();
+        return lbl!=null && !lbl.isEmpty() &&
+               db!=null && !db.isEmpty() &&
+               col!=null && !col.isEmpty()  &&
+               op!=null && !op.isEmpty();
     }
 
     /**

@@ -6,6 +6,8 @@ import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.IndexOptions;
 import de.idealo.mongodb.slowops.dto.CollectorServerDto;
 import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
@@ -15,10 +17,11 @@ import org.bson.json.JsonWriterSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -34,7 +37,9 @@ public class ExampleSlowOpsCache {
     private final Lock readLock;
     private final Lock writeLock;
     private final CollectorServerDto serverDto;
-    private MongoCollection<Document> exampleCollection;
+    private final MongoDbAccessor mongo;
+    private ScheduledExecutorService cleanUpService =null;
+    private ScheduledFuture<?> cleanUpFuture =null;
 
     private ExampleSlowOpsCache(){
         cache = new HashSet<>();
@@ -42,9 +47,9 @@ public class ExampleSlowOpsCache {
         readLock = globalLock.readLock();
         writeLock = globalLock.writeLock();
 
-        final MongoDbAccessor mongo = new MongoDbAccessor(serverDto.getAdminUser(), serverDto.getAdminPw(), serverDto.getSsl(), serverDto.getHosts());
+        mongo = new MongoDbAccessor(serverDto.getAdminUser(), serverDto.getAdminPw(), serverDto.getSsl(), serverDto.getHosts());
         try {
-            exampleCollection = getExampleCollection(mongo);
+            final MongoCollection<Document> exampleCollection = getExampleCollection();
 
             final IndexOptions indexOptions = new IndexOptions();
             indexOptions.background(true);
@@ -53,8 +58,9 @@ public class ExampleSlowOpsCache {
             exampleCollection.createIndex(new BasicDBObject("fp", 1), indexOptions);
             //index for removing old entries
             // e.g. when the slow ops collection is a capped collection
-            // then entries older than the oldest slow op can be removed from the example collection
-            // (the entry may be added automatically anew if the corresponding query is collected again)
+            // then entries older than the oldest slow op can be removed from the example collection.
+            // The entry may be added automatically anew if the corresponding query is collected again.
+            // However, if such query is not collected again, other still stored slow ops might have lost their example document if the have the same fingerprint.
             LOG.info("Create index {ts:1} in the background if it does not yet exists");
             exampleCollection.createIndex(new BasicDBObject("ts", 1), indexOptions);
 
@@ -62,20 +68,85 @@ public class ExampleSlowOpsCache {
 
             LOG.info("ExampleSlowOpsCache is ready at {}", serverDto.getHosts());
 
+            final Runnable cleanupTask = getTaskToRemoveExpiredExamples();
+            cleanUpService = Executors.newScheduledThreadPool(1);
+            cleanUpFuture = cleanUpService.scheduleAtFixedRate(cleanupTask, 2, 1, TimeUnit.HOURS); // init Delay = 2, repeat the task every 1 hour
+
+
         } catch (MongoException e) {
             LOG.error("Exception while connecting to: {}", serverDto.getHosts(), e);
         }
     }
 
+    private Runnable getTaskToRemoveExpiredExamples(){
+        final Runnable result = () -> {
+            final MongoCollection<Document> exampleCollection = getExampleCollection();
+            final Date oldestSlowOp = getOldestSlowOp();
+            final BasicDBObject query = new BasicDBObject("ts", new BasicDBObject("$lt", oldestSlowOp));
+            final BasicDBObject fields = new BasicDBObject("_id", -1).append("fp", 1);
+            final MongoCursor<Document> c = exampleCollection.find(query).projection(fields).iterator();
+            final List toDeleteFromDB = Lists.newArrayList();
+            final HashSet<String> toDeleteFromCache = new HashSet<>();
+            try {
+                while (c.hasNext()) {//since the cache is small enough to be stored in memory, we can read all fp's into memory first to delete them later at once as batch
+                    final Document obj = c.next();
+                    final String fp = obj.getString("fp");
+                    toDeleteFromDB.add(new DeleteOneModel(new Document("fp", fp)));
+                    toDeleteFromCache.add(fp);
+                }
+            } finally {
+                c.close();
+            }
 
-    private MongoCollection<Document> getExampleCollection(MongoDbAccessor mongo){
+            try {
+                writeLock.lock();
+                cache.removeAll(toDeleteFromCache);
+                if(toDeleteFromDB.size() > 0) {
+                    try {
+                        exampleCollection.bulkWrite(toDeleteFromDB, new BulkWriteOptions().ordered(false));
+                    } catch (Exception e) {
+                        LOG.error("Error while deleting expired example documents from '{}', so reload the cache.", exampleCollection.getNamespace(), e);
+                        loadCache(exampleCollection);
+                    }
+                }
+            } finally {
+                writeLock.unlock();
+            }
+
+        };
+        return result;
+    }
+
+    private Date getOldestSlowOp(){
+        final MongoCollection<Document> slowOpsCollection = getSlowOpsCollection("");
+        final BasicDBObject fields = new BasicDBObject("_id", -1).append("ts", 1);
+        final BasicDBObject sort = new BasicDBObject("ts", 1);
+        final MongoCursor<Document> c = slowOpsCollection.find().projection(fields).sort(sort).limit(1).iterator();
+
+        try {
+            while(c.hasNext()) {
+                final Document obj = c.next();
+                return obj.getDate("ts");
+            }
+        }finally {
+            c.close();
+        }
+        return null;
+    }
+
+    private MongoCollection<Document> getSlowOpsCollection(String suffix){
         final MongoDatabase db = mongo.getMongoDatabase(serverDto.getDb());
-        final MongoCollection<Document> result =  db.getCollection(serverDto.getCollection() + ".ex");
+        final MongoCollection<Document> result =  db.getCollection(serverDto.getCollection() + suffix);
 
         if(result == null) {
-            throw new IllegalArgumentException("Can't continue without example slow ops collection for " + serverDto.getHosts());
+            throw new IllegalArgumentException("Can't continue without collection '"+serverDto.getCollection() + suffix+"' for " + serverDto.getHosts());
         }
         return result;
+    }
+
+
+    private MongoCollection<Document> getExampleCollection(){
+        return getSlowOpsCollection(".ex");
     }
 
     private void loadCache(MongoCollection<Document> exampleCollection) {
@@ -102,11 +173,11 @@ public class ExampleSlowOpsCache {
 
 
     public void addToCache(String fp, Document slowOperation) {
-        LOG.info(">>> addToCache fp:{}", fp);
+        LOG.debug(">>> addToCache fp:{}", fp);
         try{
             readLock.lock();
             if(cache.contains(fp)){
-                LOG.info("addToCache fp exists:{}", fp);
+                LOG.debug("no need to add, fp exists:{}", fp);
                 return;
             }
         }finally {
@@ -115,18 +186,18 @@ public class ExampleSlowOpsCache {
         try{
             writeLock.lock();
             if(cache.add(fp)){
+                final MongoCollection<Document> exampleCollection = getExampleCollection();
                 final Document doc = new Document("fp", fp)
                         .append("ts", new Date())
                         .append("doc", replaceIllegalChars(slowOperation, new Document()));
                 exampleCollection.insertOne(doc);
-                LOG.info("OK addToCache fp:{}", fp);
+                LOG.debug("OK addToCache fp:{}", fp);
             }
         }finally {
             writeLock.unlock();
         }
-        LOG.info("<<< addToCache fp:{}", fp);
+        LOG.debug("<<< addToCache fp:{}", fp);
     }
-
 
 
     public List<Document> getSlowOp(String fp) {
@@ -134,9 +205,9 @@ public class ExampleSlowOpsCache {
         try{
             readLock.lock();
             if(cache.contains(fp)){
+                final MongoCollection<Document> exampleCollection = getExampleCollection();
                 final Document query = new Document("fp", fp);
-                final Document fields = new Document("_id", -1)
-                        .append("doc", 1);
+                final Document fields = new Document("_id", -1).append("doc", 1);
                 final MongoCursor<Document> c = exampleCollection.find(query).projection(fields).iterator();
                 try {
                     while(c.hasNext()) {//it's usually only 1 doc but the hashing algorithm may have produced collisions, so return them all
@@ -208,6 +279,13 @@ public class ExampleSlowOpsCache {
         return output;
     }
 
+    public static void terminate() {
+        if(INSTANCE != null) {
+            if(INSTANCE.cleanUpFuture != null) INSTANCE.cleanUpFuture.cancel(true);
+            if(INSTANCE.cleanUpService != null) INSTANCE.cleanUpService.shutdown();
+        }
+    }
+
     public static void main(String[] args) {
         /*
         $root": {
@@ -228,6 +306,7 @@ public class ExampleSlowOpsCache {
             ]
           },
          */
+
         List<Document> list = Lists.newArrayList();
         list.add(new Document("$l1", "v1"));
         list.add(new Document("$l2", "v2"));
@@ -247,7 +326,6 @@ public class ExampleSlowOpsCache {
         JsonWriterSettings.Builder settingsBuilder = JsonWriterSettings.builder().indent(true);
         String json = out.toJson(settingsBuilder.build());
         LOG.info(json);
-
 
     }
 }

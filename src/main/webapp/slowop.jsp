@@ -25,16 +25,16 @@
 <div class="container">
 	<h2>slow operation example</h2>
 	<%if(slowOps.isEmpty()){
-		out.print("<p><div class=\"alert alert-warning\" role=\"alert\">The slow operation document with this fingerprint could not be found in the database!<br>You should tick <b>more</b> checkboxes such as 'Operation', 'Queried fields', 'Sorted fields' or 'Projected fields' in the 'Group by' section to get an existing slow operation example document which matches the query shape.</div>");
+		out.print("<p><div class=\"alert alert-warning\" role=\"alert\">The slow operation document with this fingerprint could not be found in the database!<br>You should tick <b>more</b> checkboxes such as 'Label', 'Database', 'Collection', 'Operation', 'Queried fields', 'Sorted fields' and/or 'Projected fields' in the 'Group by' section to get an existing slow operation example document which matches the query shape for a query executed within the same database and collection.</div>");
 	}else{%>
-	<span>The shown document is a profiled slow operation which has the same query shape as the clicked one which is defined by:
+	<span>For more complex queries it may help to see an example of the profiled operation to understand better how to interpret the shown fields.<br/>
+		The shown document is a profiled slow operation of the same dbs label, database, and collection which has the same query shape as the clicked one which is defined by:
 		<ul>
 			<li>Operation</li>
 			<li>Queried fields</li>
 			<li>Sorted fields</li>
 			<li>Projected fields</li>
 		</ul>
-		For more complex queries it may help to see an example of the profiled operation to understand better how to interpret the shown fields.<br/>
 	</span>
 	<pre><%JsonWriterSettings.Builder settingsBuilder = JsonWriterSettings.builder().indent(true);
 		for(Document doc : slowOps){

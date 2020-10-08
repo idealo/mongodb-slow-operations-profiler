@@ -92,7 +92,7 @@ public class CmdIdxAccessStats implements ICommand {
             row.add(collection.getNamespace().getCollectionName());
             final String indexName = doc.getString("name");
             row.add(indexName);
-            row.add(((Document)doc.get("key")).toJson());
+            row.add(JSON.serialize(doc.get("key")));//serialization must keep the order of fields which is the case for JSON.serialize() but not for org.bson.Document.toJson()
             row.add(Boolean.toString(isTTL(indexesProperties, indexName)));
             final Object accesses = doc.get("accesses");
             if(accesses instanceof Document){

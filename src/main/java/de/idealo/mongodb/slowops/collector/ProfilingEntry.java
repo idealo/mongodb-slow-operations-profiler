@@ -111,7 +111,7 @@ public class ProfilingEntry {
     }
 
     public String getFingerprint(){
-        final AggregatedProfilingId id = new AggregatedProfilingId(op, fields, sort, proj);
+        final AggregatedProfilingId id = new AggregatedProfilingId(label, db, col, op, fields, sort, proj);
         return id.getFingerprint();
     }
 }
