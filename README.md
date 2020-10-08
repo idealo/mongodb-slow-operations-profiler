@@ -285,7 +285,7 @@ In v2.11.0 a new option has been introduced:
 
 ## Version history
 * v2.14.0
-  + new: slop ops example documents are now specific to dbs label, database and collection. One the one hand this increases the quality of the examples because they are now more pertinent but on the other hand it will increase the number of example documents and memory consumption of the webserver because fingerprints are cached in the webserver's RAM.
+  + new: slow ops example documents are now specific to dbs label, database and collection. One the one hand this increases the quality of the examples because they are now more pertinent but on the other hand it will increase the number of example documents and memory consumption of the webserver because fingerprints are cached in the webserver's RAM.
   + new: slow ops example documents will automatically removed when they become older than the oldest stored slow operation e.g. if the slow ops collection is a capped collection, when the oldest entries get removed then all older examples will be removed as well. A new example entry will be added automatically when the corresponding query is collected again. However, if such query is not collected again, other still stored slow ops might have lost their example document if the have the same fingerprint as the removed example document.
   + update: lowered log level from INFO to DEBUG when adding slow ops examples to the cache
   + bugfix: the command `index access stats` showed the fields of compound indexes in ascending order but since in this case the order of fields matters, they are now shown in their original order   
