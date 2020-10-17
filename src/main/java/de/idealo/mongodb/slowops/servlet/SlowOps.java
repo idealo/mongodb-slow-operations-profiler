@@ -3,6 +3,7 @@
  */
 package de.idealo.mongodb.slowops.servlet;
 
+import com.google.common.collect.Lists;
 import de.idealo.mongodb.slowops.dto.SlowOpsDto;
 import de.idealo.mongodb.slowops.dto.SlowOpsFilterDto;
 import de.idealo.mongodb.slowops.grapher.Grapher;
@@ -21,6 +22,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 
 /**
@@ -48,7 +50,7 @@ public class SlowOps extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	    
 	    final SlowOpsFilterDto filter = getFilter(request);
-	    
+
 	    final SlowOpsDto slowOpsDto = grapher.aggregateSlowQueries(filter.getPipeline(), filter.getParameters(), getGroupExp(request), getGroupTime(request));
         request.setAttribute("slowOpsDto", slowOpsDto);
         
@@ -65,48 +67,69 @@ public class SlowOps extends HttpServlet {
 	
 	private SlowOpsFilterDto getFilter(HttpServletRequest request) {
 	    final SlowOpsFilterDto result = new SlowOpsFilterDto();
-	    
-	    final String PREFIX = "{$match:{";
-	    final StringBuffer pipeline = new StringBuffer(PREFIX);
-	    final List<Date> params = new LinkedList<Date>();
+	    final StringBuffer pipeline = new StringBuffer("{$match:{");
+	    final List params = Lists.newArrayList();
+	    final Pattern matchAlphaNumericWord=Pattern.compile("\\w");
 
-        if(!isEmpty(request, "lbl")) {
-            pipeline.append("lbl:{$in:[").append(getStringArray(request.getParameter("lbl"))).append("]},");
+        if(isEmpty(request, "lbl")) {
+            pipeline.append("lbl:#,");
+            params.add(matchAlphaNumericWord);
+        }else{
+            //to use the index {lbl:1, db:1, ts:-1}, regexp has to be /^lbl/
+            //see: https://docs.mongodb.com/manual/reference/operator/query/regex/#index-use
+            pipeline.append("lbl:{$in:#},");
+            params.add(getBeginsWithPatternArray(request.getParameter("lbl")));
+        }
+        if(isEmpty(request, "db")) {
+            pipeline.append("db:#,");
+            params.add(matchAlphaNumericWord);
+        }else{
+            //to use the index {lbl:1, db:1, ts:-1}, regexp has to be /^db/
+            //see: https://docs.mongodb.com/manual/reference/operator/query/regex/#index-use
+            pipeline.append("db:{$in:#},");
+            params.add(getBeginsWithPatternArray(request.getParameter("db")));
         }
         if(!isEmpty(request, "adr")) {
-            pipeline.append("adr:{$in:[").append(getStringArray(request.getParameter("adr"))).append("]},");
+            pipeline.append("adr:{$in:#},");
+            params.add(getPatternArray(request.getParameter("adr")));
         }
         if(!isEmpty(request, "rs")) {
-            pipeline.append("rs:{$in:[").append(getStringArray(request.getParameter("rs"))).append("]},");
-        }
-        if(!isEmpty(request, "db")) {
-            pipeline.append("db:{$in:[").append(getStringArray(request.getParameter("db"))).append("]},");
+            pipeline.append("rs:{$in:#},");
+            params.add(getPatternArray(request.getParameter("rs")));
         }
         if(!isEmpty(request, "col")) {
-            pipeline.append("col:{$in:[").append(getStringArray(request.getParameter("col"))).append("]},");
+            pipeline.append("col:{$in:#},");
+            params.add(getPatternArray(request.getParameter("col")));
         }
         if(!isEmpty(request, "user")) {
-            pipeline.append("user:{$in:[").append(getStringArray(request.getParameter("user"))).append("]},");
+            pipeline.append("user:{$in:#},");
+            params.add(getPatternArray(request.getParameter("user")));
         }
         if(!isEmpty(request, "op")) {
-            pipeline.append("op:{$in:[").append(getStringArray(request.getParameter("op"))).append("]},");
+            pipeline.append("op:{$in:#},");
+            params.add(getPatternArray(request.getParameter("op")));
         }
         if(!isEmpty(request, "fields")) {
-            pipeline.append("fields:{$all:[").append(getStringArray(request.getParameter("fields"))).append("]},");
+            pipeline.append("fields:{$all:#},");
+            params.add(getPatternArray(request.getParameter("fields")));
         }
         if(!isEmpty(request, "sort")) {
-            pipeline.append("sort:{$all:[").append(getStringArray(request.getParameter("sort"))).append("]},");
+            pipeline.append("sort:{$all:#},");
+            params.add(getPatternArray(request.getParameter("sort")));
         }
         if(!isEmpty(request, "proj")) {
-            pipeline.append("proj:{$all:[").append(getStringArray(request.getParameter("proj"))).append("]},");
+            pipeline.append("proj:{$all:#},");
+            params.add(getPatternArray(request.getParameter("proj")));
         }
         if(!isEmpty(request, "fromMs") || !isEmpty(request, "toMs")) {
             pipeline.append("millis:{");
             if(!isEmpty(request, "fromMs")){
-                pipeline.append("$gte:").append(request.getParameter("fromMs")).append(",");
+                pipeline.append("$gte:#,");
+                params.add(getAbsLong(request.getParameter("fromMs")));
             }
             if(!isEmpty(request, "toMs")){
-                pipeline.append("$lt:").append(request.getParameter("toMs")).append(",");
+                pipeline.append("$lt:#,");
+                params.add(getAbsLong(request.getParameter("toMs")));
             }
             pipeline.deleteCharAt(pipeline.length()-1);//delete last comma
             pipeline.append("},");
@@ -146,7 +169,7 @@ public class SlowOps extends HttpServlet {
         LOG.debug("toDate: {}", request.getParameter("toDate"));
         
         result.setPipeline(pipeline);
-        result.setParameters(params.toArray(new Date[params.size()]));
+        result.setParameters(params.toArray(new Object[params.size()]));
         
         return result;
 	}
@@ -173,17 +196,41 @@ public class SlowOps extends HttpServlet {
     }
 
     /**
-     * @param parameter
+     * @param param
      * @return
      */
-    private String getStringArray(String parameter) {
-        final StringBuffer result = new StringBuffer();
+    private Long getAbsLong(String param) {
+
+        try {
+            return Math.abs(Long.parseLong(param));
+        } catch (NumberFormatException e) {
+            LOG.error("can't parse String as Long: {}", param, e);
+        }
+        return 0L;
+    }
+
+    private List<Pattern> getBeginsWithPatternArray(String parameter) {
+        return getPatternArray("^" , parameter, "");
+    }
+
+    private List<Pattern> getPatternArray(String parameter) {
+        return getPatternArray("" , parameter , "");
+    }
+
+    /**
+     * Transforms a String containing tokens, separated by semicolon,
+     * into a List of Pattern
+     *
+     * @param prefix, parameter, suffix
+     * @return
+     */
+    private List<Pattern> getPatternArray(String prefix, String parameter, String suffix) {
+        final List<Pattern> result = Lists.newArrayList();
         final String[] params = parameter.replaceAll("'", "").split(";");
         for (int i = 0; i < params.length; i++) {
-            result.append("\"").append(params[i].trim()).append("\",");
+            result.add(Pattern.compile(prefix + params[i].trim() + suffix));
         }
-        result.deleteCharAt(result.length()-1);
-        return result.toString();
+        return result;
     }
 
     private StringBuffer getGroupExp(HttpServletRequest request) {

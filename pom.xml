@@ -4,7 +4,7 @@
 
 	<groupId>de.idealo.mongodb</groupId>
 	<artifactId>mongodb-slow-operations-profiler</artifactId>
-	<version>2.14.0</version>
+	<version>3.0.0</version>
 	<packaging>war</packaging>
 
 	<name>mongodb-slow-operations-profiler</name>
@@ -59,7 +59,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.12</version>
+			<version>4.13.1</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>

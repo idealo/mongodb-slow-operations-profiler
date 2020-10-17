@@ -40,7 +40,7 @@ public class ApplicationStatusDto {
 
 
     public synchronized List<CollectorStatusDto> getCollectorStatuses(){
-        LOG.info("getCollectorStatuses size:" + collectorStatuses.size());
+        LOG.debug("getCollectorStatuses size:" + collectorStatuses.size());
         return collectorStatuses;
     }
 

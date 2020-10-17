@@ -92,7 +92,7 @@ public class MongoDbAccessor {
 
 
     private void init() {
-        LOG.info(">>> init connection to servers {} ", serverAddresses);
+        LOG.debug(">>> init connection to servers {} ", serverAddresses);
         try {
             writeLock.lock();
             final MongoDbAccessor instance = INSTANCES.get(this.hashCode());
@@ -134,7 +134,7 @@ public class MongoDbAccessor {
         }finally {
             writeLock.unlock();
         }
-        LOG.info("<<< init");
+        LOG.debug("<<< init");
     }
 
     public CodecRegistry getDefaultCodecRegistry(){
@@ -163,7 +163,7 @@ public class MongoDbAccessor {
                throw e;
            }
            long end = System.currentTimeMillis();
-           LOG.info("runCommand {} execTime in ms: {} on {}/{}", new Object[]{cmd.toString(), (end-start), serverAddresses, dbName});
+           LOG.debug("runCommand {} execTime in ms: {} on {}/{}", new Object[]{cmd.toString(), (end-start), serverAddresses, dbName});
            return result;
         }
         throw new IllegalStateException("Database not initialized");

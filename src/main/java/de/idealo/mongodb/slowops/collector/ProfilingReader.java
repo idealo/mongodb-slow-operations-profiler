@@ -235,39 +235,45 @@ public class ProfilingReader extends Thread implements Terminable{
         final MongoDbAccessor mongo = getMongoDbAccessor();
         final ExecutorService executorService = Executors.newFixedThreadPool(4);
 
-        MongoCursor<Document> profileCursor=null;
-
         try {
-            profileCursor = getProfileCursor(mongo);//get tailable cursor from oldest to newest profile entry
-            if(profileCursor.hasNext()) {
-                while(!stop && profileCursor.hasNext()) {
+            final MongoCursor<Document> profileCursor = getProfileCursor(mongo);//get tailable cursor from oldest to newest profile entry;
 
-                    final Document doc = profileCursor.next();
-                    lastTs = (Date)doc.get("ts");
-                    filterDoc(doc, executorService);
-                    LOG.debug(getShrinkedLogLine(doc));
+            try {
+                if (profileCursor.hasNext()) {
+                    while (!stop && profileCursor.hasNext()) {
+                        final Document doc = profileCursor.next();
+                        executorService.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                lastTs = (Date) doc.get("ts");
+                                filterDoc(doc, executorService);
+                                LOG.debug(getShrinkedLogLine(doc));
+                            }
+                        });
+                    }
+                } else {
+                    throw new IllegalStateException("No newer profile entry found.");
                 }
-            }else {
-                LOG.info("No newer profile entry found for database {} at {}", database, serverAddress);
-                return;
+            } catch (Exception e) {
+                if (! (e instanceof IllegalStateException)) { //don't log it as an error
+                    LOG.error("Exception occurred on {}/{} , will return and try again.", new Object[]{serverAddress, database}, e);
+                }
+                throw (e);
+            } finally {
+                LOG.info("profileCursor being closed for database {} at {}", database, serverAddress);
+                if (profileCursor != null) {
+                    profileCursor.close();
+                }
             }
-        }catch(Exception e) {
-            LOG.error("Exception occurred on {}/{} , will return and try again.", new Object[]{serverAddress, database}, e);
-            throw(e);
         }finally {
-            LOG.info("profileCursor being closed for database {} at {}", database, serverAddress);
-            if(profileCursor != null) {
-                profileCursor.close();
-            }
             executorService.shutdown();
             try {
                 executorService.awaitTermination(100, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 LOG.error("Error while awaiting termination of executorService for readSystemProfile", e);
-            }finally {
+            } finally {
                 executorService.shutdownNow();
             }
-
         }
     }
 
@@ -529,25 +535,38 @@ public class ProfilingReader extends Thread implements Terminable{
         try {
             double errorCount = 0;
             while(!stop) {
-
+                final Date d = getLastTs();
+                Exception ex = null;
                 try {
                     readSystemProfile();
 
-                    errorCount = 0;
-
-                    sleepIfNotStopped(MAX_RETRY_TIMEOUT_MSEC);
-
                 }catch (Exception e){
-                    errorCount++;
-                    final long sleepMs = Math.min( (long)Math.pow(2, errorCount) * MIN_RETRY_TIMEOUT_MSEC, MAX_RETRY_TIMEOUT_MSEC); //double sleep time with each error up to MAX_RETRY_TIMEOUT_MSEC
-                    String reason = "";
-                    if(e instanceof MongoQueryException && e.getMessage().indexOf("error code 96")!=-1){
-                        reason = " The error happened because the number of profiled operations was too high or the system.profile collection too small. You may increase the slow operations threshold (slowMs), decrease the number of running operations and/or increase the size of the system.profile collection.";
+                    ex = e;
+                } finally {
+                    if(!stop){
+                        if(d.before(getLastTs())){
+                            errorCount = 0;  //reset errorCount because lastTS has increased, which means that the system.profile collection could be read at least one time
+                        }else{
+                            errorCount++;
+                        }
+                        final long sleepMs = Math.min( (long)Math.pow(2, errorCount) * MIN_RETRY_TIMEOUT_MSEC, MAX_RETRY_TIMEOUT_MSEC); //double sleep time with each error up to MAX_RETRY_TIMEOUT_MSEC
+                        if(ex != null) {
+                            String msg = "ProfilingReader for '" + profiledServerDto.getLabel() + "' at " + serverAddress + "/" + database + " will be restarted in " + (sleepMs / 1000) + " seconds ";
+                            if (ex instanceof MongoQueryException && (ex.getMessage().indexOf("error code 96") != -1 || ex.getMessage().indexOf("error code 136") != -1)) {
+                                msg += "because the number of profiled operations was too high or the system.profile collection too small to keep up reading. You may increase the slow operations threshold (slowMs), decrease the number of running operations and/or increase the size of the system.profile collection.";
+                            }
+                            if (ex instanceof IllegalStateException){ //this case it's rather an info than an error, so log it appropriately
+                                msg += "because no slow operations exist yet in system.profile collection.";
+                                LOG.info(msg, ex);
+                            }else{
+                                ApplicationStatusDto.addWebLog(msg);
+                                LOG.warn(msg, ex);
+                            }
+
+
+                        }
+                        sleepIfNotStopped(sleepMs);
                     }
-                    final String msg = "ProfilingReader for '"+profiledServerDto.getLabel()+"' at " + serverAddress + "/" + database + " threw an error and will be restarted in " + (sleepMs/1000) + " seconds." + reason;
-                    ApplicationStatusDto.addWebLog(msg);
-                    LOG.warn(msg, e);
-                    sleepIfNotStopped(sleepMs);
                 }
             }
         }finally {
@@ -584,6 +603,7 @@ public class ProfilingReader extends Thread implements Terminable{
         Thread.sleep(5000);
         //reader.terminate();
         //reader.stop();
+
 
         LOG.info("main end");
 

@@ -33,7 +33,7 @@ public class ConfigReaderTest {
                 +"\"adminPw\":\"XXX\","
                 +"\"slowMs\":100"
                 +"},"
-                +"{\"enabled\":true,"
+                +"{\"collect\":true,"
                 +"\"label\":\"offerstore-pl\","
                 +"\"hosts\":[\"mongo-030.ipx:27017\",\"mongo-017.ipx:27017\",\"mongo-018.ipx:27017\"],"
                 +"\"ns\":[\"offerStore.offer\"],"

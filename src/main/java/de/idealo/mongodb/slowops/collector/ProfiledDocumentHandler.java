@@ -1,5 +1,6 @@
 package de.idealo.mongodb.slowops.collector;
 
+import com.google.common.collect.Lists;
 import com.mongodb.ServerAddress;
 import org.bson.Document;
 
@@ -588,23 +589,28 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
             isCommand = true;
         }
         Object queryOrCommand = tmp;
-        Set<String> fields = null;
-        Set<String> sort = null;
-        Set<String> proj = null;
+        LinkedHashSet<String> fields = null;
+        LinkedHashSet<String> sort = null;
+        LinkedHashSet<String> proj = null;
         String op = "" + doc.get("op");
         if(queryOrCommand instanceof Document) {
-            //remove unnecessary fields which contain many more sub documents which would blow up the ProfilingEntry without being useful for the analysis
-            ((Document) queryOrCommand).remove("$db");
-            ((Document) queryOrCommand).remove("$clusterTime");
-            ((Document) queryOrCommand).remove("$client");
-            ((Document) queryOrCommand).remove("$configServerState");
-
             Document queryObj = (Document)queryOrCommand;
+            removeUnnecessaryFields(queryObj);
+
             if(isCommand && "command".equals(op)) op += "." + getFirstKey(queryObj);//if op is "command" specify it
             Object innerQuery = null;
             if("getmore".equals(op)){
                 Object getmoreObj = doc.get("originatingCommand"); //for "getmore" use "originatingCommand" to get the fields
-                if(getmoreObj instanceof Document) queryObj = (Document)getmoreObj;
+                if(getmoreObj instanceof Document) {
+                    queryObj = (Document)getmoreObj;
+                    removeUnnecessaryFields(queryObj);
+                    queryObj.remove("noCursorTimeout");
+                    queryObj.remove("batchSize");
+                    queryObj.remove("$readPreference");
+                    //the following fields contain just the collection name, so it's redundant and can be removed and, if present, we specify the getmore op by a suffix
+                    if(queryObj.remove("find") != null) op += ".find";
+                    if(queryObj.remove("aggregate") != null) op += ".aggregate";
+                }
             }else{
                 innerQuery = queryObj.get("query");//test if "query.query" or "command.query"
             }
@@ -650,18 +656,18 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
                         Object pipeline = queryObj.get("pipeline");//test if it's an aggregation command
                         if(pipeline instanceof List) {
                             List<Document> pipelineList = (List<Document>)pipeline;
-                            fields = new HashSet<String>();
+                            fields = new LinkedHashSet<String>();
                             for(Document pipelineObj : pipelineList){
-                                Set<String> pFieldsSet = getFields(pipelineObj);
+                                LinkedHashSet<String> pFieldsSet = getFields(pipelineObj);
                                 fields.addAll(pFieldsSet);
                             }
                         }else{
 
                             if("update".equals(op)){//for update operations, remove the updated document because it may be quite huge and does it does not matter for the analysis
-                                ((Document) queryOrCommand).remove("u");
+                                queryObj.remove("u");
                             }
                             if(!"insert".equals(op)){//don't get fields for insert because there are no queried fields for inserts
-                                fields = getFields(queryOrCommand);
+                                fields = getFields(queryObj);
                                 sort = null;
                                 proj = null;
                             }
@@ -697,6 +703,20 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
         );
     }
 
+    /**
+     * remove unnecessary fields which contain many more sub documents which would blow up the ProfilingEntry without being useful for the analysis
+     * @param doc
+     */
+    private void removeUnnecessaryFields(Document doc){
+        doc.remove("$db");
+        doc.remove("$clusterTime");
+        doc.remove("$client");
+        doc.remove("$configServerState");
+        doc.remove("shardVersion");
+        doc.remove("snapshot");
+
+    }
+
     private String getFirstKey(Document doc){
         for(String key:doc.keySet()){
             return key;
@@ -714,40 +734,37 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
         return null;
     }
 
-    private Set<String> getFields(Object obj) {
-        HashSet<String> result = new HashSet<String>();
+    private LinkedHashSet<String> getFields(Object obj) {
+        LinkedHashSet<String> result = new LinkedHashSet<String>();
         if(obj instanceof Document) {
             Document dbObj = (Document)obj;
-            for(String key : dbObj.keySet()){
+            //sorting keys on the same level is needed to group them up
+            //else e.g. [a,b] and [b,a] would be 2 different groups
+            //but both should be grouped to the same slow-op group
+            List<String> sortedList = new ArrayList<>(dbObj.keySet());
+            Collections.sort(sortedList);
+            for(String key : sortedList){
                 Object subObj = dbObj.get(key);
                 if(subObj != null) {
                     if(subObj instanceof Document) {
-                    	if(((Document) subObj).keySet().size() > 1){//multiple keys in subObj, so reflect the document with {} instead of using dot notation
-	                    	key += "{";
-	                    	Set<String> subDocKeys = getFields(subObj);
-	                    	for(String sKey : subDocKeys){
-	                            key += sKey + ", ";
-	                        }
-	                    	key = key.substring(0, key.length()-2); //cut last ,
-	                    	key += "}";
-                    	}else{ //only one key so we can use dot notation
-                    		Set<String> subDocKeys = getFields(subObj);
-	                    	for(String sKey : subDocKeys){
-	                            key += "." + sKey;
-	                        }
-                    	}
+                        key = handleSubDoc((Document)subObj, key, ".");
+
                     }else if(subObj instanceof Collection){
-                    	
-                        String collKey="";
+                        final ArrayList<String> sKeys = Lists.newArrayList();
                         for(Object sDoc : (Collection<Object>)subObj){
-                            Set<String> subDoc = getFields(sDoc);
-                            for(String sKey : subDoc){
-                                collKey += sKey + ", ";
+                            if(sDoc != null && sDoc instanceof Document) {
+                                sKeys.add(handleSubDoc((Document)sDoc, "", ""));
                             }
                         }
-                        if(!collKey.isEmpty()){
-                        	collKey=collKey.substring(0, collKey.length()-2); //cut last ,
-                        	key = "[" + collKey + "." + key + "]";
+                        //sorting is required because querying the fields [a, b] is the same as [b, a], thus has to be grouped into the same slow-op type
+                        Collections.sort( sKeys );
+                        if(!sKeys.isEmpty()){
+                            key = key + "[";
+                            for(String k : sKeys){
+                                key += k + ", ";
+                            }
+                            key=key.substring(0, key.length()-2); //cut last ,
+                            key += "]";
                         }
                     }
                 }
@@ -755,6 +772,25 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
             }
         }
         return result;
+    }
+
+    private String handleSubDoc(Document subObj, String key, String separator){
+        if(subObj.keySet().size() > 1){//multiple keys in subObj, so reflect the document with {}
+            key += "{";
+            List<String> sortedList = new ArrayList<>(getFields(subObj));//sorting is required because querying the fields {a, b} is the same as {b, a}, thus has to be grouped into the same slow-op type
+            Collections.sort(sortedList);
+            for(String sKey : sortedList){
+                key += sKey + ", ";
+            }
+            key = key.substring(0, key.length()-2); //cut last ,
+            key += "}";
+        }else{ //only one key so we can separate with separator (e.g. dot notation)
+            LinkedHashSet<String> subDocKeys = getFields(subObj);
+            for(String sKey : subDocKeys){
+                key += separator + sKey;
+            }
+        }
+        return key;
     }
 
 }

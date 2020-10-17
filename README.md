@@ -27,16 +27,38 @@ Below you see how many documents (min, max, avg, sum, stdDev) were returned by t
 
 The second slowest operation type in this screenshot is a `getmore` operation. Since v2.9.0 the application shows also the originating query of the `getmore`operation. In this example, the query logically combined both fields `_id.productId`and `parentProductId` by OR and its result was logically combined by AND with the field `_id.siteId`. 
 
-In general, multiple fields belonging to an operator expression are enclosed in square brackets `[]` and the last field is suffixed by `.$operator` e.g. `[a, b.$or]`. If the operator applies to only one field, square brackets are omitted, e.g. `a.$gt`.
-
 The metrics about execution times, returned documents, read and written documents and/or index keys are to read in the same manner as above.
-
-
 
 ## Example screenshot of the analysis page
 
 
 ![Screenshot](img/slow_operations_gui_diagram_low.png "Screenshot of the analysis page")
+
+
+### How to interpret slow operation types
+
+The fields that make up a slow operation, such as query, projection and sort, are retrieved and stored without their exact values in the collector database. They are shown on the analysys page when analyzing slow operations as follows:
+  + queried fields are suffixed by their operator if no equality condition was used 
+     + e.g. the find expression `{field:{$gt:3}}` is shown as `field.$gt` 
+  + if the operator applies to multiple operands, operands are enclosed in square brackets 
+     + e.g. the find expression `$and:[$or:[a:1, b:2], c:3]` is show as `$and[$or[a, b], c]` 
+  + nested fields are shown in dot notation 
+     + e.g. the find expression `$and:[{"a.x":1},{"a.y":2}]` is shown as `$and[a.x, a.y]`
+  + nested documents are surrounded by curly braces
+     + e.g. the find expression `p:{x:1,y:2}` is shown as `p{x,y}`
+  + stages of an aggregation pipeline are shown separated by semicolon
+     + e.g. the pipeline `[{$match:{a:1, b:2}}, {$project:{_id: 1}}]` is shown as `'$match{a, b}'; '$project._id'`   
+
+If you want to see an original document (from the `system.profile` collection) which corresponds to the profiled slow operation type, you need to select in the `Group By` section the following checkboxes: 
+  + Label
+  + Database
+  + Collection
+  + Operation
+  + Queried fields
+  + Sorted fields
+  + Projected fields
+  
+ Once selected and submitted the form,  an [example](#) link will appear in the column `Group` in the data table below the diagram.
 
 ### Summarized table
 
@@ -50,7 +72,7 @@ Here is a reduced screenshot of the table without any filter on rows because the
 
 Let's interpret the first row to get you familiar with. In the column `Group` you see the attributes you've grouped by (selected in the search form above). Here again, the slow ops occurred in the collection (`col`) "apiOfferlist". The slow operations (`op`) were "updates" and the field (`fields`) to select the documents to be modified was an `_id` field having a sub-document querying the 3 fields `productId`, `siteId` and `segments`. Sub-documents being queried on more than one field are enclosed by curly brackets `{}`. However, if only one sub-document field was queried, dot-notation is preferably used.
 
-Since v2.13.0, documents of profiled slow operations are stored in the collector database in order to show them as an example for any given query shape (aka fingerprint) which may help to understand better the output of more complex queries. 
+Since v2.13.0, documents of profiled slow operations are stored in the collector database in order to show them as an example for any given slow operation type which may help to understand better the output of more complex queries. 
 So, the column `Group` in the data table adds for each slow operation type, an [example](#) link to see an original document from the `system.profile` collection as an example of a profiled slow operation. The example matches the namespace (label, database, collection) and the query shape of the given slow operation type as long as the checkboxes `Label`, `Database`, `Collection` `Operation`, `Queried fields`, `Sorted fields` and `Projected fields` have been selected in the `Group by` section of the search form.
 Since v2.14.0, slow operation examples will automatically be removed when they become older than the oldest stored slow operation e.g. if the slow ops collection is a capped collection, when the oldest entries get removed then all older example documents will be removed as well. A new example entry will be added automatically when the corresponding query is collected again. However, if such a query is not collected again, other still stored slow ops might have lost their example document if they have the same fingerprint as the removed example document.
 
@@ -214,7 +236,7 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
     "ssl":false
   },
   "profiled":[
-    { "enabled":false,
+    { 
       "label":"dbs foo",
       "hosts":["someHost1:27017",
                "someHost2:27017",
@@ -222,16 +244,18 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
       "ns":["someDatabase.someCollection", "anotherDatabase.anotherCollection"],
       "adminUser":"",
       "adminPw":"",
+      "collect": false,
       "ssl":false,
       "slowMS":250,
       "responseTimeoutInMs":2000
     },
-    { "enabled": false,
+    { 
       "label":"dbs bar",
       "hosts":["someMongoRouter:27017"],
       "ns":["someDatabase.someCollection", "anotherDatabase.*", "*.myCollection", "!excludedDb"],
       "adminUser":"",
       "adminPw":"",
+      "collect":false,
       "ssl":false,
       "slowMS":250,
       "responseTimeoutInMs":2000
@@ -251,7 +275,7 @@ After the definition of the collector follow the databases to be profiled. In th
 
 Fields of `profiled` entries explained:
 
-* `enabled` = whether collecting has to be started automatically upon (re)start of the application, default=`false`
+* `collect` = whether collecting has to be started automatically upon (re)start of the application, default=`false` (the name of this property has been renamed from `enabled` to `collect` in v3.0.0)
 * `label` = a label of the database system in order to be able to filter, sort and group on it
 * `hosts` = an array of members of the same replica set, or just a single host, or one or more mongo router of the same cluster
 * `ns` = an array of the namespaces to be collected in the format of `databaseName.collectionName`. The placeholder `*` may be used instead of `databaseName` and/or `collectionName` to collect from all databases and/or all collections. If the placeholder is used to profile all databases, you may prefix database names with `!` in order to exclude them. Examples:
@@ -284,6 +308,29 @@ In v2.11.0 a new option has been introduced:
 
 
 ## Version history
+* v3.0.0
+  + update: in the config file, the boolean property `enabled` has been renamed to `collect`. **Attention**: Please rename this property in your config file `config.json`!
+  + improvement: the collector database has a new index `{lbl:1, db:1, ts:-1}` which performs for most use cases better than the previous index `{ts:-1, lbl:1}`, especially if you are profiling a lot of different database systems which have more than only 1 database. **Attention**: The app will automatically create the new index if it does not yet exist. The old index `{ts:-1, lbl:1}` will be dropped automatically. If you have upgraded from an earlier version and your collector database contains already many documents, the start-up of the app may take a while due to the index creation. The new index is created in the background so that the collector database will not get blocked during this operation. However, the app is waiting until the index has been created.
+  + improvement: all search parameters are compiled to avoid injections
+  + improvement: replace junit v4.12 by v14.13.1 to to close a potential security vulnerability
+  + improvement: on the analysis page
+    + the search tokens entered in the `Filter by` section are now transformed into regular expressions (regex) instead of plain text. For example, when the textfield `Queried fields` contains `foo;bar` then only slow operations having an equality condition on the fields `foo` or `bar` were matched up to now. From now on, it will match also slow queries whose queried fields **contain** `foo` or `bar` e.g. it would match also the queried fields `foot`, `barely` or `foo.$gt` or `$group{foot}`. This is important since operators (e.g. `$gt`, `$lt` or `$in`) are concatenated with the queried field, the `Filter by` could only find them if they were entered completely with their operators (e.g. `$gt`, `$lt` or `$in`) respectively with their pipelines (e.g. `$match` or `$group`).
+    Furthermore, you can use your own regular expression within your search. For example, if you want to match slow operations that were queried on field `foo` (and not `foot`) with an equality condition (so no operator follows), just type in the regular expression `^foo$`. `^` matches the beginning and `$` matches the end of the string. 
+    Keep in mind that you need to **escape** characters that are regular expression metacharacters by `\`. For example, if you want to match slow operations that were queried on field `foo` with a `$gt` condition, you cannot just write `foo.$gt` because `.` and `$` are regex metacharacters that need to be escaped by `\`, so the correct expression would be `foo\.\$gt` in this example.
+    There are 3 exceptions to the usage of regular expressions:
+      1. `Earliest date` and `Latest date` are always exact timestamps (no regex)
+      2. `Label` and `Database` will always match dbs labels respectively database names that **begin** with the entered search string(s). If it's empty, they will match any alphanumeric word.
+      3. `Millis from` and `to` are always positive integer numbers (no regex)                          
+    + the per default selected `Group by` check boxes are now `Label`, `Database`, `Collection`, `Operation`, `Queried fieds`, `Sorted fieds`, and `Projected  fieds` because these allow to show example slow-operations documents
+    + the default time span is from 1 hour in the past to 1 hour in the future instead of the former past 24 hours because often times we want to analyse what happened a few minutes ago respectively what is happening right now and what will happen in the near future. This is also the reason that the default `Resolution by` is now `Minute` instead of `Hour`.
+    + fields of `getmore` operations contained unnecessary fields which are not relevant for the analysis so they are omitted now e.g. `$clusterTime`, `$configServerState` or `shardVersion` 
+    + `getmore` operations are now specified by the suffix `.find` or `.aggregate`
+    + when showing slow operations, documents contained in arrays are now correctly shown e.g. the expression `$in[{a, b}, {a, b}]` was formerly incorrectly shown as `$in[a, b, a, b]`  
+    + when showing slow operations, operators (e.g. `$or`, `$and`, `$in`) are now shown in front of the tuples they are applied of instead of the end. For example, the expression `$and[a, $or[b, c]]` was formerly shown as `[a, [b, c].$or].$and` but now it's shown as `$and[a, $or[b, c]]` 
+    + the `submit` button is disabled after clicking it to avoid multiple submissions
+  + bugfix: some slow-operation documents were not correctly parsed if their schema did not comply with the rules of the slow-operations-profiler. This may have resulted in missing information about the queried, sorted and projected fields. For example, the `originatingCommand` of `getmore` operations, showed some unhelpful meta fields of this slow operation e.g. `'getMore'; 'collection'; 'lsid{uid, id}`  instead of showing the queried field(s), e.g. `_id` and its query operator `$gt` e.g. shown as `_id.$gt`.
+  + bugfix: retrieved documents from the `system.profile` collection are now **concurrently** transformed to avoid com.mongodb.MongoQueryException: Query failed with error code 136 and error message 'errmsg: "CollectionScan died due to position in capped collection being deleted.". This error could happen when many slow operations at the same time were profiled. After having retrieved the next slow operation document from the `system.profile` capped collection, it is transformed to a compact document to store it in the global collector database. Storing the document is (and was) done concurrently but transforming was not. However, if the documents are quite big, only a few documents are present in the `system.profile` capped collection (sometimes only **one** document because the default size of the capped collection is only 1 MB!). Furthermore, the transformation of them could take too much time so that the next document in the `system.profile` collection could already be overwritten by a newer one, so the tailable cursor died. Doing the transformation concurrently alleviates this issue as long as the hardware where the slow-operations-profiler application runs has enough CPU power.
+  + bugfix: in case of an error while reading the `system.profile` collection, the retry mechanism failed to reset its waiting time even though the next retry was successful. This may have resulted in retry waiting times starting from 1 second, incremented with each retry by 1 to the power of 2 up to the max of 1 hour (1, 2, 4, 8, ... 3600 sec). This retry mechanism has been designed to avoid overloading database servers with requests in case of failures. However, the error counter needs to be reset as soon as the retry was successful instead to be accumulated as it was the case until this bugfix. 
 * v2.14.0
   + new: slow ops example documents are now specific to dbs label, database and collection. One the one hand this increases the quality of the examples because they are now more pertinent but on the other hand it will increase the number of example documents and memory consumption of the webserver because their fingerprints are cached in the webserver's RAM.
   + new: slow ops example documents will automatically be removed when they become older than the oldest stored slow operation e.g. if the slow ops collection is a capped collection, when the oldest entries get removed then all older example documents will be removed as well. A new example entry will be added automatically when the corresponding query is collected again. However, if such a query is not collected again, other still stored slow ops might have lost their example document if they have the same fingerprint as the removed example document.

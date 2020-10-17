@@ -215,7 +215,7 @@ public class ConfigReader {
             List<String> nsList = getList(serverDoc, "ns", Lists.newArrayList());
 
             ProfiledServerDto dto = new ProfiledServerDto(
-                    getBoolean(serverDoc, "enabled", false),
+                    getBoolean(serverDoc, "collect", false),
                     getString(serverDoc, "label", null),
                     getServerAddresses(hostList),
                     nsList.toArray(new String[]{}),

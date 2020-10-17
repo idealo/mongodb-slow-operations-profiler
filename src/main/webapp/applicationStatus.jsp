@@ -315,21 +315,23 @@
 
                     });
 
-                    var toDate = new Date();
-                    var fromDate = new Date(toDate.getTime() - (24 * 60 * 60 * 1000));
+                    var nowDate = new Date();
+                    var toDate = new Date(nowDate.getTime() + (1 * 60 * 60 * 1000));
+                    var fromDate = new Date(nowDate.getTime() - (1 * 60 * 60 * 1000));
                     window.open("<%=request.getContextPath()%>/gui?fromDate=" + formatDate(fromDate) + "&toDate=" + formatDate(toDate)
                             + "&lbl=" + lbl.values()
                             + "&rs=" + rs.values()
                             + "&adr=" + adr.values()
                             + "&db=" + db.values()
                             + "&col=" + col.values()
+                            + "&byLbl=lbl"
                             + "&byDb=db"
                             + "&byCol=col"
                             + "&byOp=op"
                             + "&byFields=fields"
                             + "&bySort=sort"
                             + "&byProj=proj"
-                            + "&resolution=hour"
+                            + "&resolution=minute"
                             + "&sortLegend=y"
                             , "_blank");
                 }else{

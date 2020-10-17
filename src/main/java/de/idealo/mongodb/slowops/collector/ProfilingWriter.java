@@ -4,10 +4,7 @@
 package de.idealo.mongodb.slowops.collector;
 
 import com.google.common.collect.Lists;
-import com.mongodb.BasicDBObject;
-import com.mongodb.MongoBulkWriteException;
-import com.mongodb.MongoException;
-import com.mongodb.ServerAddress;
+import com.mongodb.*;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -58,8 +55,19 @@ public class ProfilingWriter extends Thread implements Terminable{
 
             IndexOptions indexOptions = new IndexOptions();
             indexOptions.background(true);
-            LOG.info("Create index {ts:-1, lbl:1} in the background if it does not yet exists");
-            profileCollection.createIndex(new BasicDBObject("ts",-1).append("lbl", 1), indexOptions);
+            LOG.info("Create index {lbl:1, db:1, ts:-1} in the background if it does not yet exists");
+            profileCollection.createIndex(new BasicDBObject("lbl",1).append("db", 1).append("ts", -1), indexOptions);
+            LOG.info("Drop index 'ts_-1_lbl_1' (if it still exists) which has been deprecated since v3.0.0");
+            try {
+                profileCollection.dropIndex("ts_-1_lbl_1");
+                LOG.info("Index 'ts_-1_lbl_1' successfully dropped.");
+            }catch(MongoCommandException e){
+                if(e.getErrorCode() == 27) {
+                    LOG.info("Index 'ts_-1_lbl_1' not found.");
+                }else{
+                    LOG.error("Error while dropping index 'ts_-1_lbl_1'", e);
+                }
+            }
             LOG.info("Create index {adr:1, db:1, ts:-1} in the background if it does not yet exists");
             profileCollection.createIndex(new BasicDBObject("adr",1).append("db",1).append("ts", -1), indexOptions);
 
@@ -93,8 +101,19 @@ public class ProfilingWriter extends Thread implements Terminable{
 
             IndexOptions indexOptions = new IndexOptions();
             indexOptions.background(true);
-            LOG.info("Create index {ts:-1, lbl:1} in the background if it does not yet exists");
-            profileCollection.createIndex(new BasicDBObject("ts",-1).append("lbl", 1), indexOptions);
+            LOG.info("Create index {lbl:1, db:1, ts:-1} in the background if it does not yet exists");
+            profileCollection.createIndex(new BasicDBObject("lbl", 1).append("db", 1).append("ts",-1), indexOptions);
+            LOG.info("Drop index 'ts_-1_lbl_1' (if it still exists) which has been deprecated since v3.0.0");
+            try {
+                profileCollection.dropIndex("ts_-1_lbl_1");
+                LOG.info("Index 'ts_-1_lbl_1' successfully dropped.");
+            }catch(MongoCommandException e){
+                if(e.getErrorCode() == 27) {
+                    LOG.info("Index 'ts_-1_lbl_1' not found.");
+                }else{
+                    LOG.error("Error while dropping index 'ts_-1_lbl_1'", e);
+                }
+            }
             LOG.info("Create index {adr:1, db:1, ts:-1} in the background if it does not yet exists");
             profileCollection.createIndex(new BasicDBObject("adr",1).append("db",1).append("ts", -1), indexOptions);
             ApplicationStatusDto.addWebLog("ProfilingWriter is successfully connected to its collector database.");

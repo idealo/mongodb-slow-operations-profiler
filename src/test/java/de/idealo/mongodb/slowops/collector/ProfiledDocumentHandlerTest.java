@@ -7,8 +7,8 @@ import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.LinkedHashSet;
+
 
 import static org.junit.Assert.assertEquals;
 
@@ -37,7 +37,9 @@ public class ProfiledDocumentHandlerTest {
             "fieldWithElemMatch" : {$elemMatch: {
                                         "f1" : "v1",
                                         "f2" : "v2",
-                                        "year" : {$gt:2015}}}
+                                        "year" : {$gt:2015}}},
+            "fieldWithInObjects" : {$in:[{a:1}, {b:2}]},
+            "fieldWithInComplexObjects" : {$in:[{a:1, b:2}, {a:3, b:4}]},
           }
 
 
@@ -49,9 +51,11 @@ public class ProfiledDocumentHandlerTest {
             "fieldWithIn.$in",
             "fieldWithSubDoc{productId,siteId}"
             "fieldWithSubSubDoc.productId{foo,siteId}"
-            "[x,y.$and]"
-            "[x,[a,b.$or].$and]"
+            "$and[x,y]"
+            "$and[$or[a,b], x]" //x is last because elements are sorted within []
             "fieldWithElemMatch.$elemMatch{year.$gt,f1,f2}"
+            "fieldWithInObjects.$in[a, b]",
+             "fieldWithInComplexObjects.$in[{a, b}, {a, b}]",
          */
 
         Document fields = new Document("fieldSingleValue", 123)
@@ -65,19 +69,24 @@ public class ProfiledDocumentHandlerTest {
                 .append("fieldWithElemMatch", new Document("$elemMatch", new Document("f1", "v1")
                         .append("f2", "v2")
                         .append("year", new Document("$gt", 2015))))
+                .append("fieldWithInObjects", new Document("$in", Lists.newArrayList(new Document("a", 1),new Document("b", 2))  ))
+                .append("fieldWithInComplexObjects", new Document("$in", Lists.newArrayList(new Document("a", 1).append("b", 2), new Document("a", 3).append("b", 4))))
+                ;
         ;
 
 
-        Set<String> fieldsExpected = new HashSet<String>();
+        LinkedHashSet<String> fieldsExpected = new LinkedHashSet<String>();
         fieldsExpected.add("fieldSingleValue");
         fieldsExpected.add("fieldMustExist.$exists");
         fieldsExpected.add("fieldWithRange{$gt, $lt}");
         fieldsExpected.add("fieldWithIn.$in");
         fieldsExpected.add("fieldWithSubDoc{productId, siteId}");
         fieldsExpected.add("fieldWithSubSubDoc.productId{foo, siteId}");
-        fieldsExpected.add("[x, y.$and]");
-        fieldsExpected.add("[x, [a, b.$or].$and2]");
-        fieldsExpected.add("fieldWithElemMatch.$elemMatch{year.$gt, f1, f2}");
+        fieldsExpected.add("$and[x, y]");
+        fieldsExpected.add("$and2[$or[a, b], x]");
+        fieldsExpected.add("fieldWithElemMatch.$elemMatch{f1, f2, year.$gt}");
+        fieldsExpected.add("fieldWithInObjects.$in[a, b]");
+        fieldsExpected.add("fieldWithInComplexObjects.$in[{a, b}, {a, b}]");
 
 
         Document doc = new Document("query",
@@ -169,7 +178,7 @@ public class ProfiledDocumentHandlerTest {
                                 .append("update", new Document()));
         ProfilingEntry entry = dh.filterDoc(doc);
         assertEquals("command.findAndModify", entry.op);
-        fieldsExpected = new HashSet<String>();
+        fieldsExpected = new LinkedHashSet<String>();
         fieldsExpected.add("field");
         assertEquals(fieldsExpected, entry.fields);
 
@@ -186,10 +195,10 @@ public class ProfiledDocumentHandlerTest {
                                 .append("cursor", new Document()));
         entry = dh.filterDoc(doc);
         assertEquals("command.aggregate", entry.op);
-        fieldsExpected = new HashSet<String>();
+        fieldsExpected = new LinkedHashSet<String>();
         fieldsExpected.add("$match.matchingFP");
         fieldsExpected.add("$group._id");
-        fieldsExpected.add("$group{count.$sum, _id}");
+        fieldsExpected.add("$group{_id, count.$sum}");
         assertEquals(fieldsExpected, entry.fields);
         //the same using hamcrest:
         MatcherAssert.assertThat(fieldsExpected, CoreMatchers.is(entry.fields));

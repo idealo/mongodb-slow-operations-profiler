@@ -6,10 +6,7 @@ package de.idealo.mongodb.slowops.grapher;
 import com.google.common.hash.Hashing;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 
@@ -28,9 +25,9 @@ public class AggregatedProfilingId {
     private String col;
     private String op;
     private String user;
-    private Set<String> fields;
-    private Set<String> sort;
-    private Set<String> proj;
+    private LinkedHashSet<String> fields;
+    private LinkedHashSet<String> sort;
+    private LinkedHashSet<String> proj;
     private String year;
     private String month;
     private String week;
@@ -43,7 +40,7 @@ public class AggregatedProfilingId {
     public AggregatedProfilingId(){      
     }
 
-    public AggregatedProfilingId(String lbl, String db, String col, String op,  Set<String> fields, Set<String> sort, Set<String> proj) {
+    public AggregatedProfilingId(String lbl, String db, String col, String op, LinkedHashSet<String> fields, LinkedHashSet<String> sort, LinkedHashSet<String> proj) {
         this.lbl = lbl;
         this.db = db;
         this.col = col;
@@ -75,7 +72,7 @@ public class AggregatedProfilingId {
         return Hashing.murmur3_128().hashString(result.toString(), StandardCharsets.UTF_8).toString();
     }
 
-    private void appendValues(Set<String> fields, StringBuffer result){
+    private void appendValues(LinkedHashSet<String> fields, StringBuffer result){
         result.append(".");
         if(fields!=null) {
             final Iterator<String> fi = fields.iterator();
@@ -164,7 +161,7 @@ public class AggregatedProfilingId {
     /**
      * @return the fields
      */
-    public Set<String> getFields() {
+    public LinkedHashSet<String> getFields() {
         return fields;
     }
 
@@ -174,14 +171,14 @@ public class AggregatedProfilingId {
     /**
      * @return the sort
      */
-    public Set<String> getSort() {
+    public LinkedHashSet<String> getSort() {
         return sort;
     }
 
     /**
      * @return the proj
      */
-    public Set<String> getProj() {
+    public LinkedHashSet<String> getProj() {
         return proj;
     }
 
@@ -220,7 +217,7 @@ public class AggregatedProfilingId {
         return result.toString();
     }
 
-    private String getStringList(Set<String> str){
+    private String getStringList(LinkedHashSet<String> str){
         if(str == null) return null;
         final StringBuffer result = new StringBuffer();
         for (String s: str) {

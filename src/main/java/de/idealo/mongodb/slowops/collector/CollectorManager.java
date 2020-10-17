@@ -69,20 +69,19 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
     public void reloadConfig(String cfg){
         if(ConfigReader.reloadConfig(cfg)){
             LOG.info("new config has been applied");
-
-            restartChangedWriter();
-
-            final List<ProfiledServerDto> profiledServers = getProfiledServers(CONFIG);
-
-            resolveMongodAdresses(profiledServers);
-
-            removeReadersNotInProfiledServers(profiledServers);
-
-            createProfilingReaders(profiledServers);
-
         }else{
-            LOG.warn("new config was not applied");
+            LOG.info("config is unchanged");
         }
+
+        restartChangedWriter();
+
+        final List<ProfiledServerDto> profiledServers = getProfiledServers(CONFIG);
+
+        resolveMongodAdresses(profiledServers);
+
+        removeReadersNotInProfiledServers(profiledServers);
+
+        createProfilingReaders(profiledServers);
     }
     
     private void restartChangedWriter() {
@@ -187,7 +186,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
                         profilingReaderCreatorlist.add(new ProfilingReaderCreator(0, mongodAddress, dto, db, collectionsPerDb.get(db), this, writerMongo));
                     }else{
                         //ToDo: if reader exists already, config changes such as dbs label, user/pw etc. won't be applied and thus are not shown on the app page
-                        LOG.info("Reader already exists for: {}/{}", mongodAddress, db );
+                        LOG.debug("Reader already exists for: {}/{}", mongodAddress, db );
                     }
                 }
             }
@@ -261,7 +260,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
                 reader.start();
                 LOG.info("New ProfilingReader added and started for {}/{}", reader.getServerAddress(), reader.getDatabase());
             }else{
-                LOG.info("New ProfilingReader added but not started for {}/{} because it's not enabled", reader.getServerAddress(), reader.getDatabase());
+                LOG.info("New ProfilingReader added but not started for {}/{} because collecting it's not enabled", reader.getServerAddress(), reader.getDatabase());
             }
         }else{
             LOG.info("No need to start reader because it already exists for: {}/{}", reader.getServerAddress(), reader.getDatabase());
@@ -377,7 +376,9 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         }finally {
             readLock.unlock();
         }
-        terminateReaders(readersToBeRemoved);
+        if(readersToBeRemoved.size() > 0){
+            terminateReaders(readersToBeRemoved);
+        }
     }
 
 
@@ -554,7 +555,10 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
     }
 
     public ApplicationStatusDto getApplicationStatus(boolean isAuthenticated) {
-        LOG.info(">>> getApplicationStatus isAuthenticated: {} ", isAuthenticated);
+        LOG.debug(">>> getApplicationStatus isAuthenticated: {} ", isAuthenticated);
+
+        reloadConfig(CONFIG.toJson());
+
         final List<Integer> idList = Lists.newLinkedList();
         try{
             readLock.lock();
@@ -565,7 +569,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
         }finally {
             readLock.unlock();
         }
-        LOG.info("<<< getApplicationStatus isAuthenticated: {} ", isAuthenticated);
+        LOG.debug("<<< getApplicationStatus isAuthenticated: {} ", isAuthenticated);
 
         return getApplicationStatus(idList, isAuthenticated);
     }
@@ -573,7 +577,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
 
     public ApplicationStatusDto getApplicationStatus(List<Integer> idList, boolean isAuthenticated) {
-        LOG.info(">>> getApplicationStatus listSize: {} ", idList.size());
+        LOG.debug(">>> getApplicationStatus listSize: {} ", idList.size());
         ApplicationStatusDto result = new ApplicationStatusDto();
         HashSet<Integer> idSet = new HashSet<Integer>();
         idSet.addAll(idList);
@@ -616,7 +620,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
                             try{
                                 Object ok = future.get(dto.getResponseTimeout(), TimeUnit.MILLISECONDS);
                                 if(ok == null){
-                                    LOG.info("Task finished correctly for '"+dto.getLabel()+"' at " + reader.getServerAddress());
+                                    LOG.debug("Task finished correctly for '"+dto.getLabel()+"' at " + reader.getServerAddress());
                                 }else{
                                     LOG.error("Task did not finish correctly for '"+dto.getLabel()+"' at " + reader.getServerAddress());
                                 }
@@ -702,7 +706,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
         result.setLastRefresh(new Date());
 
-        LOG.info("<<< getApplicationStatus");
+        LOG.debug("<<< getApplicationStatus");
         return result;
     }
 

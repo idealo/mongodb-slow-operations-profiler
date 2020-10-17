@@ -34,7 +34,7 @@
 <form name="input" action="gui" method="get">
 	<table  align="top" cellpadding="10">
 		<tr>
-			<td valign="top"><strong>Filter by</strong>
+			<td valign="top" class="infoFilter"><strong>Filter by</strong> <img src="img/info.gif" alt="info" title="info">
 				<table>
 					<tr><td>Earliest date</td><td><div id="datetimepickerFrom" class="date"><input type="text" id="fromDate" name="fromDate" size="30" readonly <% 	if(!isEmpty(request,"fromDate")){out.print("value=\""+request.getParameter("fromDate")+"\"");}else{out.print("value=\""+request.getAttribute("fromDate")+"\"");}%> ><span class="add-on"><i data-time-icon="icon-time" data-date-icon="icon-calendar"></i></span></div></td></tr>
 					<tr><td>Latest date</td><td><div id="datetimepickerTo" class="date"><input type="text" id="toDate" name="toDate" size="30" readonly <% 			if(!isEmpty(request,"toDate")){out.print("value=\""+request.getParameter("toDate")+"\"");}else{out.print("value=\""+request.getAttribute("toDate")+"\"");}%> ><span class="add-on"><i data-time-icon="icon-time" data-date-icon="icon-calendar"></i></span></div></td></tr>
@@ -85,7 +85,7 @@
                     <tr><td>&nbsp;</td></tr>
                     <tr><td>&nbsp;</td></tr>
                     <tr><td>&nbsp;</td></tr>
-                    <tr><td><input type="submit" value="Submit"></td></tr>
+                    <tr><td><input type="submit" value="Submit" onclick="javascript=this.disabled = true; form.submit();"></td></tr>
 				</table>
 			</td>
 			<td valign="top">
@@ -492,6 +492,7 @@ a:hover {
 
         $(".infoResolution").tooltip({content:function(){return $("#infoResolutionContent").html();}});
         $(".infoGroup").tooltip({content:function(){return $("#infoGroupContent").html();}});
+        $(".infoFilter").tooltip({content:function(){return $("#infoFilterContent").html();}});
 
     } );
 </script>
@@ -545,6 +546,7 @@ a:hover {
   <tbody>
  </table>
 
+<span id="infoFilterContent" style="display:none">All search criteria can be regular expressions (regex).<br>For example, the value <code>bar</code> will match also <code>barely</code> or <code>unbar</code>. To match exactly <code>bar</code>, type in <code>^bar$</code>.<br>Regex metacharacters need to be escaped by <code>&bsol;</code> e.g. to match <code>bar.$gt</code>, type in <code>bar&bsol;.&bsol;$gt</code> because <code>.</code> and <code>$</code> are regex metacharacters.<br><strong>Exceptions</strong>:<br><code>Earliest date</code>, <code>Latest date</code>, <code>Millis from</code>, and <code>to</code> are exact timestamps respectively positive integer numbers. <code>Label</code> and <code>Database</code> will match documents that <strong>begin</strong> with the entered search string(s). Both should <strong>not be empty</strong> for best query performance. If they are empty, they will be automatically set to the regex <code>&bsol;w</code> which means that <strong>all</strong> alphanumeric words are matched which may result in long query execution times or even timeouts if the timespan is large.<br><br>Textfields annotated by <code>1</code> or <code>2</code> can contain multiple search values separated by semicolon (<code>;</code>). These values are <strong>logically combined</strong> by <code>or</code> (<code>1</code>) respectively <code>and</code> (<code>2</code>).</span>
 <span id="infoGroupContent" style="display:none">The more criteria are selected, the more characteristics allow to distinguish between the different slow-operation types.<br>To see concrete examples of slow operations, select at least the following criteria:<ul><li>Label</li><li>Database</li><li>Collection</li><li>Operation</li></ul>Furthermore select <ul><li>Queried fields</li><li>Sorted fields</li><li>Projected fields</li></ul>because they define the query shape for which you probably want to see a specific example.</span>
 <span id="infoResolutionContent" style="display:none">Only use a fine grained resolution if the selected time period is short enough to return data that fit in the maximum allowed BSON document size (16 MB).</span>
 

@@ -8,7 +8,7 @@ import de.idealo.mongodb.slowops.grapher.AggregatedProfilingId;
 import org.bson.Document;
 
 import java.util.Date;
-import java.util.Set;
+import java.util.LinkedHashSet;
 
 /**
  * 
@@ -27,9 +27,9 @@ public class ProfilingEntry {
     final String col;
     final String op;
     final String user;
-    final Set<String> fields;
-    final Set<String> sort;
-    final Set<String> proj;
+    final LinkedHashSet<String> fields;
+    final LinkedHashSet<String> sort;
+    final LinkedHashSet<String> proj;
     final Integer nret;
     final Integer respLen;
     final Integer millis;
@@ -46,7 +46,7 @@ public class ProfilingEntry {
     
     
     public ProfilingEntry(Date ts, ServerAddress adr, String db, String col, String op, String user,
-                          Set<String> fields, Set<String> sort, Set<String> proj, Integer nret, Integer respLen, Integer millis,
+                          LinkedHashSet<String> fields, LinkedHashSet<String> sort, LinkedHashSet<String> proj, Integer nret, Integer respLen, Integer millis,
                           Long cId, Integer keys, Integer docs, Boolean isSort, Integer del, Integer ins,
                           Integer mod) {
         super();
