@@ -11,7 +11,7 @@
     "ssl":false
   },
   "profiled":[
-    { "enabled": false,
+    {
       "label":"dbs foo",
       "hosts":[
         "someHost1:27017",
@@ -22,11 +22,12 @@
         "anotherDatabase.anotherCollection"],
       "adminUser":"",
       "adminPw":"",
+      "collect": false,
       "ssl":false,
       "slowMS":250,
       "responseTimeoutInMs": 1500
     },
-    { "enabled": false,
+    {
       "label":"dbs bar",
       "hosts":["someMongoRouter:27017"],
       "ns":[
@@ -36,16 +37,18 @@
         "!excludedDb"],
       "adminUser":"",
       "adminPw":"",
+      "collect": false,
       "ssl":false,
       "slowMS":250,
       "responseTimeoutInMs": 3000
     },
-    { "enabled": false,
+    {
       "label":"dbs with many databases to be profiled",
       "hosts":["someOtherMongoRouter:27017"],
       "ns":["*.*", "!excludedDb"],
       "adminUser":"",
       "adminPw":"",
+      "collect": false,
       "ssl":true,
       "slowMS":250,
       "responseTimeoutInMs": 3000

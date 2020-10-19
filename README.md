@@ -16,18 +16,17 @@ The more "Group by" checkboxes are checked, the more details constitute slow ope
 
 ### Example
 
-For example, the following screenshot shows that only one database has been **filtered**, defined in the search form by its label, server addresses, replica set and database name for a specific time period.
-Since the slow operations are defined in the search form to be **grouped by** their collections, operations, queried and sorted fields, the legend below on the right shows these 4 details grouped together for the time period which is being hovered over by the mouse, here at 00:03 o'clock. As the the **resolution** is set to `Minute`, all slow operations occurred during within the minute hovered over by the mouse, here from 00:03 until 00:04 o'clock, are shown on the right-hand side in the legend.
+For example, the following screenshot shows that only one database has been **filtered**, defined in the search form by its `Label` and `Database` name for a time span of 1 hour.
+Since the slow operations are defined in the search form to be **grouped by** their collections, operations, queried and sorted fields, the legend below on the right shows these 4 details grouped together for the time period which is being hovered over by the mouse, here at 15:37 o'clock. As the the **resolution** is set to `Minute`, all slow operations occurred during within the minute hovered over by the mouse, here from 15:37 until 15:38 o'clock, are shown on the right-hand side in the legend.
 
-In this example, from 23:58 to 00:06 o'clock occurred 5 different slow operation types which are printed in different colors in both the diagram and the legend. As the legend is sorted by y-axis, thus execution time in milliseconds, the **slowest** operation type is shown first. Instead, you may select "sort legend by:" `count-value` to see in the legend the **most profiled** slow operation types first (which correspond to the biggest circles).
+The different slow operation types are printed in different colors in both the diagram and the legend. As the legend is sorted by y-axis, thus execution time in milliseconds, the **slowest** operation type is shown first. Instead, you may select "sort legend by:" `count-value` to see in the legend the **most profiled** slow operation types first (which correspond to the biggest circles).
 
-In this screenshot, the slowest operation type at 00:03 o'clock happened on collection `apiOfferlist` by executing a `query` on both fields `_id.productId` and `_id.siteId`. This slow operation type occurred 112 times at this precise minute, its minimum duration was 2 ms, maximum 47 ms, average 10 ms and the sum of all these queries was 1.115 ms.
+Since the profiler was set to a threshold of 100 ms, only operations slower than 100 ms are profiled. In this screenshot, we zoomed-in to see only slow operations that were faster than 360 ms. The legend shows all slow operations that occurred at 15:37 o'clock since that's the position of the mouse pointer. The first one happened on collection `producOffer` by executing a `getmore.find` operation on both fields `_id.listIdentifier` with an `$in` operator and `_id.siteId` with an equality condition. This slow operation type occurred 86 times at this precise minute, its minimum duration was 103 ms (of all profiled operations slower than 100 ms), its maximum 1514 ms, average 354 ms and the accumulated execution time (`sum`) of all these queries during this minute was 30.465 ms.
 
-Below you see how many documents (min, max, avg, sum, stdDev) were returned by this operation. And last but not least you have some metrics about how many index keys were read (`rKeys`), how many documents were read (`rDocs`) and written (`wDocs`) and also that no in-memory sort (`memSort`) had to be done (no sort at all in this case since no `sort` field was defined). 
+Below you see `Returned` which informs how many documents (`min`, `max`, `avg`, `sum`, `stdDev`) were returned by this operation.
+ Furthermore `Bytes` gives information about the size in bytes of the response(s). And last but not least, `R/W` shows metrics about how many index keys were read (`rKeys`), how many documents were read (`rDocs`) and written (`wDocs`) and also that no in-memory sort (`memSort`) had to be done (no sort at all in this case since no `sort` field was defined). 
 
-The second slowest operation type in this screenshot is a `getmore` operation. Since v2.9.0 the application shows also the originating query of the `getmore`operation. In this example, the query logically combined both fields `_id.productId`and `parentProductId` by OR and its result was logically combined by AND with the field `_id.siteId`. 
-
-The metrics about execution times, returned documents, read and written documents and/or index keys are to read in the same manner as above.
+The second slowest operation type in this screenshot at 15:37 o'clock is a `query` operation. Regarding its queried fields, it's the originating command of the previously described `getmore.find` operation. It occurred more often than the originating command (318 versus 86), so its circle in the diagramm is also a bit larger. 
 
 ## Example screenshot of the analysis page
 
@@ -35,18 +34,18 @@ The metrics about execution times, returned documents, read and written document
 ![Screenshot](img/slow_operations_gui_diagram_low.png "Screenshot of the analysis page")
 
 
-### How to interpret slow operation types
+### How to read queried, projected and sorted fields of slow operation types
 
-The fields that make up a slow operation, such as query, projection and sort, are retrieved and stored without their exact values in the collector database. They are shown on the analysys page when analyzing slow operations as follows:
-  + queried fields are suffixed by their operator if no equality condition was used 
-     + e.g. the find expression `{field:{$gt:3}}` is shown as `field.$gt` 
-  + if the operator applies to multiple operands, operands are enclosed in square brackets 
-     + e.g. the find expression `$and:[$or:[a:1, b:2], c:3]` is show as `$and[$or[a, b], c]` 
-  + nested fields are shown in dot notation 
-     + e.g. the find expression `$and:[{"a.x":1},{"a.y":2}]` is shown as `$and[a.x, a.y]`
-  + nested documents are surrounded by curly braces
-     + e.g. the find expression `p:{x:1,y:2}` is shown as `p{x,y}`
-  + stages of an aggregation pipeline are shown separated by semicolon
+The fields that make up a slow operation, such as query, projection and sort, are retrieved and stored without their exact values in the collector database. They are shown on the analysis page when analyzing slow operations as follows:
+  + **queried fields** are suffixed by their operator if no equality condition was used 
+     + e.g. the expression `{field:{$gt:3}}` is shown as `field.$gt` 
+  + if the operator applies to **multiple operands**, operands are enclosed in square brackets 
+     + e.g. the expression `$and:[$or:[a:1, b:2], c:3]` is show as `$and[$or[a, b], c]` 
+  + **nested fields** are shown in dot notation 
+     + e.g. the expression `$and:[{"a.x":1},{"a.y":2}]` is shown as `$and[a.x, a.y]`
+  + **nested documents** are surrounded by curly braces
+     + e.g. the expression `p:{x:1,y:2}` is shown as `p{x,y}`
+  + **stages** of an aggregation pipeline are shown separated by semicolon
      + e.g. the pipeline `[{$match:{a:1, b:2}}, {$project:{_id: 1}}]` is shown as `'$match{a, b}'; '$project._id'`   
 
 If you want to see an original document (from the `system.profile` collection) which corresponds to the profiled slow operation type, you need to select in the `Group By` section the following checkboxes: 
@@ -62,7 +61,7 @@ If you want to see an original document (from the `system.profile` collection) w
 
 ### Summarized table
 
-Since v1.0.3 the user analysis page, besides the diagram, has also a table of all selected slow operation types. The
+Since v1.0.3, the user analysis page, besides the diagram, has also a table of all selected slow operation types. The
 table is filterable. Columns are sortable and selectable to be hidden or shown. Wherever it makes sense, the sum of the
 values of a column is displayed at the bottom of the column.
 
@@ -70,18 +69,20 @@ For example, to see the most expensive slow operations first, just sort descendi
 
 Here is a reduced screenshot of the table without any filter on rows because the `Search` textbox is empty. However not all columns are shown. You can toggle a column to be shown or hidden by clicking its name in the table header. The table here is sorted by column `Sum ms`, so we see in the first row the most **expensive** slow operation type: either there were many of this type or they were generally slow. 
 
-Let's interpret the first row to get you familiar with. In the column `Group` you see the attributes you've grouped by (selected in the search form above). Here again, the slow ops occurred in the collection (`col`) "apiOfferlist". The slow operations (`op`) were "updates" and the field (`fields`) to select the documents to be modified was an `_id` field having a sub-document querying the 3 fields `productId`, `siteId` and `segments`. Sub-documents being queried on more than one field are enclosed by curly brackets `{}`. However, if only one sub-document field was queried, dot-notation is preferably used.
+Let's interpret the first row to get you familiar with. In the column `Group` you see the attributes you've grouped by (selected in the search form above). Here again, the slow ops occurred in the collection (`col`) "productOffer". The slow-op operation (`op`) was a "query". To match the documents, the field (`fields`) shows that 2 fields were used: `_id.listIdentifier` with an `$in` operator and the field `_id.siteId` with an equality condition.
 
 Since v2.13.0, documents of profiled slow operations are stored in the collector database in order to show them as an example for any given slow operation type which may help to understand better the output of more complex queries. 
-So, the column `Group` in the data table adds for each slow operation type, an [example](#) link to see an original document from the `system.profile` collection as an example of a profiled slow operation. The example matches the namespace (label, database, collection) and the query shape of the given slow operation type as long as the checkboxes `Label`, `Database`, `Collection` `Operation`, `Queried fields`, `Sorted fields` and `Projected fields` have been selected in the `Group by` section of the search form.
-Since v2.14.0, slow operation examples will automatically be removed when they become older than the oldest stored slow operation e.g. if the slow ops collection is a capped collection, when the oldest entries get removed then all older example documents will be removed as well. A new example entry will be added automatically when the corresponding query is collected again. However, if such a query is not collected again, other still stored slow ops might have lost their example document if they have the same fingerprint as the removed example document.
+So, the column `Group` in the data table adds for each slow operation type, an [example](#) link to see an original document from the `system.profile` collection as an example of a profiled slow operation. The example matches the namespace (label, database, collection) and the query shape of the given slow operation type as long as the checkboxes `Label`, `Database`, `Collection` `Operation`, `Queried fields`, `Sorted fields` and `Projected fields` have been selected in the `Group by` section of the search form, which is not the case in the screenshot above.
 
 The rest of the columns in the data table should be self-explanatory. High values in the column `ms/ret` (and vice versa low values in column `ret/ms`) may indicate a performance problem for operations which return documents, because these columns show the time in ms needed to return 1 document respectively the number of documents returned within 1 ms.
+
+Since v2.14.0, slow operation examples will automatically be removed when they become older than the oldest stored slow operation e.g. if the slow ops collection is a capped collection, when the oldest entries get removed then all older example documents will be removed as well. A new example entry will be added automatically when the corresponding query is collected again. However, if such a query is not collected again, other still stored slow ops might have lost their example document if they have the same fingerprint as the removed example document.
+
 
 ![Screenshot](img/slow_operations_gui_table_low.png "Screenshot of the table")
 
 <a name="sumtable_v2.9.0"></a>
-Since version 2.9.0 the analysis page shows additional metrics about:
+Since version 2.9.0, the analysis page shows additional metrics about:
 * number of read keys from the index (`rKeys`)
 * number of read documents (`rDocs`)
 * number of written documents (`wDocs`)
@@ -101,7 +102,7 @@ The value of `memSort`is `true` if no index could be used to sort the documents.
 
 ## Application status page
 
-Since v1.0.3 there is also a page to show the application status. Besides showing the status of the collector, means where and how many slow operations have been collected (read and written) since application restart, it shows also every registered database in a table. Since profiling works per database, each database to be profiled is in one row.
+Since v1.0.3, there is also a page to show the application status. Besides showing the status of the collector, means where and how many slow operations have been collected (read and written) since application restart, it shows also every registered database in a table. Since profiling works per database, each database to be profiled is in one row.
 
 The table is filterable. Columns are sortable and selectable to be hidden or shown. Wherever it makes sense, the sum of
 the values of a column is displayed at the bottom of the column. The table is by default sorted by the columns `DBS Label`,
@@ -118,7 +119,7 @@ At its right side, the table has a bunch of time slot columns (10 sec, 1 min, 10
 
 Since v2.0.2, an **Actions panel** is shown always on top in order to choose actions that can be executed against the databases of selected row(s). Both `refresh` and `analyse` actions were implemented already before v2.0.0. `refresh` gets and shows the latest data of the selected database(s). `analyse` opens the above mentionned analysis page to show the slow operation types of the last 24 hours of the selected node(s) respectively database(s). Both `collecting start/stop` and `set slowMs` were also already implemented before but since v2.0.0 they are only shown to authorized users. "Authorized users" are users who used the url parameter `adminToken` set to the right value (see below under "configuration" for more details).
 
-Since v2.0.0. you may execute **commands** against the selected database system(s). Since v2.0.3 you can choose whether the command has to run against the corresponding database system (i.e. mongoS-router) or against the individually selected nodes (i.e. mongoD). The difference is that the command will run either against the entry point of the database system (i.e. router or primary) or against all selected nodes wich may be secondaries as well. Current implemented commands are:
+Since v2.0.0, you may execute **commands** against the selected database system(s). Since v2.0.3, you can choose whether the command has to run against the corresponding database system (i.e. mongoS-router) or against the individually selected nodes (i.e. mongoD). The difference is that the command will run either against the entry point of the database system (i.e. router or primary) or against all selected nodes wich may be secondaries as well. Current implemented commands are:
 
 + show database statistics
 + show collection statistics
