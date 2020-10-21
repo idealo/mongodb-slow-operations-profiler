@@ -140,8 +140,8 @@ This being said, from v2.0.0 on, the webapp may be extended from a pure monitori
 #### Dynamic configurations
 
 Since v1.2.0, authorized users may dynamically upload new configurations in order to add, remove or change databases to be registered respectively to be profiled. The configuration of the collector writer may also be changed. "Authorized users" are users, who used the url parameter `adminToken` set to the right value (see [Configuration](#config) below for more details).
-The uploaded config is **not** persisted server side and will be lost upon webapp restart. All servers of changed "profiled"-entries are (re)started. Also the collector needs to be restarted if its config changed. Even though stops and starts are executed simultaneously, it may take some time depending on how many changes need to be applied, thus how many readers, respectively the writer, are involved by the config change.
-
+The uploaded config is **not** persisted server side and will be lost upon webapp restart. 
+Depending on how many changes need to be applied, especially how many `system.profile` readers are involved by the config change, it may take some seconds until the new configuration is applied.
 
 ##   Setup
 
