@@ -309,6 +309,8 @@ In v2.11.0 a new option has been introduced:
 
 
 ## Version history
+* v3.0.1
+  + bugfix: the index access statistics may have been empty if the database had a `system.js` collection because the `$indexStats` is unauthorized to be run on `system` collections. The `system.profile` collection was already excluded from the index stats but not `system.js`. Now it is fixed, even for other collections that may be unauthorized to get index stats from.   
 * v3.0.0
   + update: in the config file, the boolean property `enabled` has been renamed to `collect`. **Attention**: Please rename this property in your config file `config.json`!
   + improvement: the collector database has a new index `{lbl:1, db:1, ts:-1}` which performs for most use cases better than the previous index `{ts:-1, lbl:1}`, especially if you are profiling a lot of different database systems which have more than only 1 database. **Attention**: The app will automatically create the new index if it does not yet exist. The old index `{ts:-1, lbl:1}` will be dropped automatically. If you have upgraded from an earlier version and your collector database contains already many documents, the start-up of the app may take a while due to the index creation. The new index is created in the background so that the collector database will not get blocked during this operation. However, the app is waiting until the index has been created.

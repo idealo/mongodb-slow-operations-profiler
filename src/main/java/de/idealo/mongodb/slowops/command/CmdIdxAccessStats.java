@@ -2,6 +2,7 @@ package de.idealo.mongodb.slowops.command;
 
 import com.google.common.collect.Lists;
 import com.mongodb.BasicDBObject;
+import com.mongodb.MongoCommandException;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -64,9 +65,13 @@ public class CmdIdxAccessStats implements ICommand {
 
         if(collNames != null){
             for(String collName : collNames){
-                if(!"system.profile".equals(collName)) {
-                    final TableDto collStats = getIndexStats(database.getCollection(collName), profilingReader.getProfiledServerDto().getLabel());
-                    result.addRows(collStats);
+                if(!"system.profile".equals(collName) && !"system.js".equals(collName)) {
+                    try {
+                        final TableDto collStats = getIndexStats(database.getCollection(collName), profilingReader.getProfiledServerDto().getLabel());
+                        result.addRows(collStats);
+                    }catch(MongoCommandException e){
+                        LOG.error("Error while getting index stats for namespace '{}'", database.getName() + "." + collName, e);
+                    }
                 }
             }
         }
