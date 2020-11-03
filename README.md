@@ -309,6 +309,8 @@ In v2.11.0 a new option has been introduced:
 
 
 ## Version history
+* v3.0.2
+  + improvement: on the analysis page, if multiple `Labels` , `Databases` or `Collections` are entered that are wrongly separated by colon instead of semicolon, the app automatically corrects them. Also, curly braces are ignored. Since curly braces are added by [Grafana multi-value variables in text panels|https://github.com/grafana/grafana/issues/10005], it was not possible until now to create correct URL parameters `lbl`, `db` and `col` to pre-fill the search form with these values originating from Grafana. 
 * v3.0.1
   + bugfix: the index access statistics may have been empty if the database had a `system.js` collection because the `$indexStats` is unauthorized to be run on `system` collections. The `system.profile` collection was already excluded from the index stats but not `system.js`. Now it is fixed, even for other collections that may be unauthorized to get index stats from.   
 * v3.0.0

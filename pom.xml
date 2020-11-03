@@ -4,7 +4,7 @@
 
 	<groupId>de.idealo.mongodb</groupId>
 	<artifactId>mongodb-slow-operations-profiler</artifactId>
-	<version>3.0.1</version>
+	<version>3.0.2</version>
 	<packaging>war</packaging>
 
 	<name>mongodb-slow-operations-profiler</name>

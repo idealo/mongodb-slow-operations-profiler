@@ -78,7 +78,7 @@ public class SlowOps extends HttpServlet {
             //to use the index {lbl:1, db:1, ts:-1}, regexp has to be /^lbl/
             //see: https://docs.mongodb.com/manual/reference/operator/query/regex/#index-use
             pipeline.append("lbl:{$in:#},");
-            params.add(getBeginsWithPatternArray(request.getParameter("lbl")));
+            params.add(getBeginsWithPatternArray(replaceUnwantedChars(request.getParameter("lbl"))));
         }
         if(isEmpty(request, "db")) {
             pipeline.append("db:#,");
@@ -87,7 +87,7 @@ public class SlowOps extends HttpServlet {
             //to use the index {lbl:1, db:1, ts:-1}, regexp has to be /^db/
             //see: https://docs.mongodb.com/manual/reference/operator/query/regex/#index-use
             pipeline.append("db:{$in:#},");
-            params.add(getBeginsWithPatternArray(request.getParameter("db")));
+            params.add(getBeginsWithPatternArray(replaceUnwantedChars(request.getParameter("db"))));
         }
         if(!isEmpty(request, "adr")) {
             pipeline.append("adr:{$in:#},");
@@ -99,7 +99,7 @@ public class SlowOps extends HttpServlet {
         }
         if(!isEmpty(request, "col")) {
             pipeline.append("col:{$in:#},");
-            params.add(getPatternArray(request.getParameter("col")));
+            params.add(getPatternArray(replaceUnwantedChars(request.getParameter("col"))));
         }
         if(!isEmpty(request, "user")) {
             pipeline.append("user:{$in:#},");
@@ -146,12 +146,12 @@ public class SlowOps extends HttpServlet {
         }
         if(fromDate == null && toDate == null) {
             toDate = new Date();
-            fromDate = new Date(toDate.getTime() - (1000*60*60*24));
+            fromDate = new Date(toDate.getTime() - (1000*60*60));//-1h
         }else if(fromDate == null) {
             toDate = new Date();
-            fromDate = new Date(toDate.getTime() - (1000*60*60*24));
+            fromDate = new Date(toDate.getTime() - (1000*60*60));//-1h
         }if(toDate == null) {
-            toDate = new Date(fromDate.getTime() + (1000*60*60*24));
+            toDate = new Date(fromDate.getTime() + (1000*60*60));//+1h
         }
         pipeline.append("ts:{$gt: #, $lt: # }");
         params.add(fromDate);
@@ -231,6 +231,10 @@ public class SlowOps extends HttpServlet {
             result.add(Pattern.compile(prefix + params[i].trim() + suffix));
         }
         return result;
+    }
+
+    private String replaceUnwantedChars(String input) {
+        return input.replace(',', ';').replace('{',' ').replace('}', ' ');
     }
 
     private StringBuffer getGroupExp(HttpServletRequest request) {
