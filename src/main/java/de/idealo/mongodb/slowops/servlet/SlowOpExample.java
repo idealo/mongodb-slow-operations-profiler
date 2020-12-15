@@ -33,6 +33,12 @@ public class SlowOpExample extends HttpServlet {
         List<Document> result = Lists.newLinkedList();
 	    if(!isEmpty(request, "fp")) {
             String fp=request.getParameter("fp");
+
+			if(!isEmpty(request, "del")) {
+				boolean deleted = ExampleSlowOpsCache.INSTANCE.remove(fp);
+				request.setAttribute("deleted", deleted);
+			}
+
             result = ExampleSlowOpsCache.INSTANCE.getSlowOp(fp);
         }
 

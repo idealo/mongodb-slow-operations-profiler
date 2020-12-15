@@ -9,6 +9,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.result.DeleteResult;
 import de.idealo.mongodb.slowops.dto.CollectorServerDto;
 import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
 import de.idealo.mongodb.slowops.util.ConfigReader;
@@ -197,6 +198,26 @@ public class ExampleSlowOpsCache {
             writeLock.unlock();
         }
         LOG.debug("<<< addToCache fp:{}", fp);
+    }
+
+    public boolean remove(String fp) {
+        try{
+            writeLock.lock();
+            if(cache.remove(fp)){
+                LOG.debug("fingerprint removed from cache:{}", fp);
+                final MongoCollection<Document> exampleCollection = getExampleCollection();
+                final Document doc = new Document("fp", fp);
+                final DeleteResult dr = exampleCollection.deleteOne(doc);
+                if(dr.getDeletedCount()==1) {
+                    LOG.debug("fingerprint removed from database fp:{}", fp);
+                    return true;
+                }
+            }
+        }finally {
+            writeLock.unlock();
+        }
+
+        return false;
     }
 
 

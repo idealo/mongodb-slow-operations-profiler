@@ -309,6 +309,8 @@ In v2.11.0 a new option has been introduced:
 
 
 ## Version history
+* v3.0.3
+  + improvement: new option to delete slow operation example document which might be helpful if other things than the query shape have changed (e.g. indexes), and you want to reflect them in this slow operations example document. A new example document will be re-created as soon as such an operation is collected again.
 * v3.0.2
   + improvement: on the analysis page, if multiple `Labels` , `Databases` or `Collections` are entered that are wrongly separated by colon instead of semicolon, the app automatically corrects them. Also, curly braces are ignored. Since curly braces are added by [Grafana multi-value variables in text panels](https://github.com/grafana/grafana/issues/10005), it was not possible until now to create correct URL parameters `lbl`, `db` and `col` to pre-fill the search form with these values originating from Grafana. 
 * v3.0.1
