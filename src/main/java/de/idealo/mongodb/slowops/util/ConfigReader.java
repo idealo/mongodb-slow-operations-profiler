@@ -224,7 +224,9 @@ public class ConfigReader {
                     getBoolean(serverDoc, "ssl", false),
                     getLong(serverDoc, "slowMS", ConfigReader.getLong(doc, Util.DEFAULT_SLOW_MS, MongoDbAccessor.DEFAULT_SLOW_MS)),
                     (int)getLong(serverDoc, "responseTimeoutInMs", getLong(doc, Util.DEFAULT_RESPONSE_TIMEOUT_IN_MS, MongoDbAccessor.DEFAULT_CONNECT_TIMEOUT_MS)),
-                    exDbs
+                    exDbs,
+                    getLong(serverDoc, Util.SYSTEM_PROFILE_MAX_SIZE_MB, ConfigReader.getLong(doc, Util.SYSTEM_PROFILE_MAX_SIZE_MB, 1))//if not defined, we take monogdb's default size of only 1 MB
+
             );
             result.add(dto);
         }

@@ -9,11 +9,13 @@ import com.mongodb.*;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.CreateCollectionOptions;
 import de.idealo.mongodb.slowops.dto.ApplicationStatusDto;
 import de.idealo.mongodb.slowops.dto.CollectorStatusDto;
 import de.idealo.mongodb.slowops.dto.HostInfoDto;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
 import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
+import de.idealo.mongodb.slowops.util.Util;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +44,8 @@ public class ProfilingReader extends Thread implements Terminable{
     private static final long MAX_RETRY_TIMEOUT_MSEC = 60*60*1000;//1 hour
     private static final int MAX_LOG_LINE_LENGTH = 1000;
     private static AtomicInteger instances = new AtomicInteger(1);
+    private static final String SYSTEM_PROFILE = "system.profile";
+    private static final long ONE_MEGA_BYTE = 1024*1024;
 
     private final ServerAddress serverAddress;
     private final ProfiledServerDto profiledServerDto;
@@ -50,6 +54,7 @@ public class ProfilingReader extends Thread implements Terminable{
     private final List<String> collections;
     private final AtomicLong doneJobs;
     private long slowMs;
+    private long systemProfileMaxSizeInBytes;
     private boolean isProfiling;
     private volatile String replSet;
     private volatile ReplicaStatus replSetStatus;
@@ -134,6 +139,7 @@ public class ProfilingReader extends Thread implements Terminable{
         this.collections = collNames;
         this.doneJobs = new AtomicLong(doneJobs);
         this.slowMs = slowMs;
+        this.systemProfileMaxSizeInBytes = 0;
         this.profiledDocumentHandler = new ProfiledDocumentHandler(serverAddress);
         this.stop = stop;
         this.isProfiling = false;
@@ -203,9 +209,9 @@ public class ProfilingReader extends Thread implements Terminable{
         for(String col : collections){
             if("*".equals(col)){
                 LOG.info("found collection placeholder *");
-                //if at least one collection name is * then use regex to match all collections except system.profile
+                //if at least one collection name is * then use regex to match all collections except SYSTEM_PROFILE
                 query.append("ns", new BasicDBObject("$regex", "^" + database + ".")
-                                             .append("$ne", database + ".system.profile"));
+                                             .append("$ne", database + "." + SYSTEM_PROFILE));
                 namespaces.clear();
                 break;
             }else {
@@ -221,13 +227,19 @@ public class ProfilingReader extends Thread implements Terminable{
 
 
         final MongoDatabase db = mongo.getMongoDatabase(database);
-        final MongoCollection<Document> profileCollection = db.getCollection("system.profile");
-        if (profileCollection == null) {
-            throw new IllegalArgumentException("Can't continue without profile collection for database " + database +  " at " + serverAddress);
+        if (!systemProfileExists(db)) {
+            increaseSizeOfSystemProfileCollection();//it will create the SYSTEM_PROFILE collection
         }
 
-        return profileCollection.find(query).sort(orderBy).cursorType(CursorType.TailableAwait).iterator();
+        setSystemProfileMaxSizeInBytes(getSystemProfileMaxSizeInBytes(db));
 
+
+        return db.getCollection(SYSTEM_PROFILE).find(query).sort(orderBy).cursorType(CursorType.TailableAwait).iterator();
+
+    }
+
+    private boolean systemProfileExists(MongoDatabase db){
+        return db.listCollectionNames().into(new ArrayList<String>()).contains(SYSTEM_PROFILE);
     }
 
     private void readSystemProfile() {
@@ -256,7 +268,7 @@ public class ProfilingReader extends Thread implements Terminable{
                 }
             } catch (Exception e) {
                 if (! (e instanceof IllegalStateException)) { //don't log it as an error
-                    LOG.error("Exception occurred on {}/{} , will return and try again.", new Object[]{serverAddress, database}, e);
+                    LOG.error("Exception occurred on {}/{} , will return and try again.", new Object[]{serverAddress, database, e});
                 }
                 throw (e);
             } finally {
@@ -331,12 +343,12 @@ public class ProfilingReader extends Thread implements Terminable{
             if (ok instanceof Double && Double.valueOf(ok.toString()).doubleValue() == 1.0) {
                 slowMs = ms;
                 isProfiling = profile==0?false:true;
-                LOG.info("setSlowMs successfully set to {} ms on {}/{}", new Object[]{ms, serverAddress, database});
+                LOG.info("slowMs successfully set to {} ms and isProfiling={} on {}/{}", new Object[]{slowMs, isProfiling, serverAddress, database});
             }else{
                 LOG.error("setSlowMs failed on {}/{}", serverAddress, database);
             }
         } catch (MongoCommandException e) {
-            LOG.error("Could not setSlowMs on {}/{}", new Object[]{serverAddress, database}, e);
+            LOG.error("Could not setSlowMs on {}/{}", new Object[]{serverAddress, database, e});
         }
     }
 
@@ -459,6 +471,8 @@ public class ProfilingReader extends Thread implements Terminable{
             LOG.info("Could not determine profile status on database {} at {}", database, serverAddress);
         }
 
+        setSystemProfileMaxSizeInBytes(getSystemProfileMaxSizeInBytes(mongo.getMongoDatabase(database)));
+
         LOG.debug("<<< updateProfileStatus");
     }
 
@@ -467,6 +481,11 @@ public class ProfilingReader extends Thread implements Terminable{
     public long getDoneJobs() { return doneJobs.get(); }
 
     public long getSlowMs() { return slowMs; }
+
+    public void setSystemProfileMaxSizeInBytes(long systemProfileMaxSizeInBytes) { this.systemProfileMaxSizeInBytes = systemProfileMaxSizeInBytes; }
+
+    public long getSystemProfileMaxSizeInBytes() { return systemProfileMaxSizeInBytes; }
+
 
     public ReplicaStatus getReplicaStatus() { return replSetStatus; }
 
@@ -545,7 +564,7 @@ public class ProfilingReader extends Thread implements Terminable{
                 } finally {
                     if(!stop){
                         if(d.before(getLastTs())){
-                            errorCount = 0;  //reset errorCount because lastTS has increased, which means that the system.profile collection could be read at least one time
+                            errorCount = 0;  //reset errorCount because lastTS has increased, which means that the SYSTEM_PROFILE collection could be read at least one time
                         }else{
                             errorCount++;
                         }
@@ -553,16 +572,17 @@ public class ProfilingReader extends Thread implements Terminable{
                         if(ex != null) {
                             String msg = "ProfilingReader for '" + profiledServerDto.getLabel() + "' at " + serverAddress + "/" + database + " will be restarted in " + (sleepMs / 1000) + " seconds ";
                             if (ex instanceof MongoQueryException && (ex.getMessage().indexOf("error code 96") != -1 || ex.getMessage().indexOf("error code 136") != -1)) {
-                                msg += "because the number of profiled operations was too high or the system.profile collection too small to keep up reading. You may increase the slow operations threshold (slowMs), decrease the number of running operations and/or increase the size of the system.profile collection.";
-                            }
-                            if (ex instanceof IllegalStateException){ //this case it's rather an info than an error, so log it appropriately
-                                msg += "because no slow operations exist yet in system.profile collection.";
-                                LOG.info(msg, ex);
-                            }else{
+                                msg += "because the number of profiled operations was too high or the " + SYSTEM_PROFILE + " collection too small to keep up reading. You may increase the slow operations threshold (slowMs), decrease the number of running operations and/or increase the size of the " + SYSTEM_PROFILE + " collection.";
                                 ApplicationStatusDto.addWebLog(msg);
                                 LOG.warn(msg, ex);
+                                increaseSizeOfSystemProfileCollection();
+                            }else if (ex instanceof IllegalStateException){ //this case it's rather an info than an error, so log it appropriately
+                                msg += "because no slow operations exist yet in " + SYSTEM_PROFILE + " collection.";
+                                LOG.info(msg, ex);
+                            }else{
+                                msg += "with unspecified reason";
+                                LOG.info(msg, ex);
                             }
-
 
                         }
                         sleepIfNotStopped(sleepMs);
@@ -574,6 +594,70 @@ public class ProfilingReader extends Thread implements Terminable{
             terminate();
         }
         LOG.info("Run terminated {}", serverAddress);
+    }
+
+    private long getSystemProfileMaxSizeInBytes(MongoDatabase db){
+        if(systemProfileExists(db)) {
+            final Document collStatsResults = db.runCommand(new Document("collStats", SYSTEM_PROFILE));
+            return Util.getNumber(collStatsResults, "maxSize", 0);
+        }
+        return 0;
+    }
+
+    private void increaseSizeOfSystemProfileCollection(){
+        final MongoDbAccessor mongo = getMongoDbAccessor();
+        boolean needToPauseProfiling=false;
+
+        try {
+
+            final MongoDatabase db = mongo.getMongoDatabase(database);
+            final Document isMaster = mongo.runCommand("admin", new BasicDBObject("isMaster", "1"));
+
+            if(isMaster.getBoolean("ismaster")){
+                final long currentMaxSize = getSystemProfileMaxSizeInBytes(db);
+                if (currentMaxSize < ONE_MEGA_BYTE * profiledServerDto.getSystemProfileMaxSizeInMB()) {
+
+                    if (isProfiling) {
+                        needToPauseProfiling = true;
+                        setSlowMs(0, slowMs * -1);//pause profiling
+                    }
+                    if(currentMaxSize > 0) {
+                        db.getCollection(SYSTEM_PROFILE).drop();//drop only if it exists which is the case when size > 0
+                        while(systemProfileExists(db)){
+                            try {
+                                LOG.warn("Collection {} could not be dropped on {}/{}, so try again in 1 sec", new Object[]{SYSTEM_PROFILE, serverAddress, database});
+                                Thread.sleep(1000);
+                                db.getCollection(SYSTEM_PROFILE).drop();//try to drop again
+                            } catch (InterruptedException e) {
+                                LOG.error("InterruptedException while sleeping.");
+                            }
+                        }
+                    }
+
+                    final long newMaxSize = currentMaxSize + ONE_MEGA_BYTE;
+                    final CreateCollectionOptions opts = new CreateCollectionOptions().capped(true).sizeInBytes(newMaxSize);
+                    db.createCollection(SYSTEM_PROFILE, opts);
+                    setSystemProfileMaxSizeInBytes(newMaxSize);
+                    final String msg = "Max size of collection '" + SYSTEM_PROFILE + "' successfully increased by 1 MB to " + Math.round(newMaxSize / ONE_MEGA_BYTE) + " MB on " + serverAddress + "/" + database;
+                    LOG.info(msg);
+                    ApplicationStatusDto.addWebLog(msg);
+                } else {
+                    final String msg = "Max size of collection '" + SYSTEM_PROFILE + "' on " + serverAddress + "/" + database + " will not be increased because its current maxSize of " + currentMaxSize + " Bytes is greater than the configured max size of " + ONE_MEGA_BYTE * profiledServerDto.getSystemProfileMaxSizeInMB() + " Bytes.";
+                    ApplicationStatusDto.addWebLog(msg);
+                    LOG.warn(msg);
+                }
+            }else{
+                final String msg = "Can't increase max size of collection '" + SYSTEM_PROFILE + "' on " + serverAddress + "/" + database + " because it's not a Primary";
+                ApplicationStatusDto.addWebLog(msg);
+                LOG.warn(msg);
+            }
+        }catch (MongoCommandException e) {
+            LOG.error("There was an error while trying to increase the size of collection {} on {}/{}", new Object[]{SYSTEM_PROFILE, serverAddress, database, e});
+        }finally {
+            if(needToPauseProfiling){
+                setSlowMs(1, slowMs);//continue profiling if we had to pause it
+            }
+        }
     }
 
     private void sleepIfNotStopped(long ms){
@@ -595,7 +679,7 @@ public class ProfilingReader extends Thread implements Terminable{
         final ServerAddress address =  new ServerAddress("localhost",27017);
 
         BlockingQueue<ProfilingEntry> jobQueue = new LinkedBlockingQueue<ProfilingEntry>();
-        ProfiledServerDto dto = new ProfiledServerDto(true, "some label", new ServerAddress[]{new ServerAddress("127.0.0.1:27017")}, new String[]{"offerStore.*"}, null, null, false, 0, 2000, Lists.newArrayList());
+        ProfiledServerDto dto = new ProfiledServerDto(true, "some label", new ServerAddress[]{new ServerAddress("127.0.0.1:27017")}, new String[]{"offerStore.*"}, null, null, false, 0, 2000, Lists.newArrayList(), 1);
         ProfilingReader reader = new ProfilingReader(0, jobQueue, address, null, dto, "offerStore", Lists.newArrayList("*"), false, 0, 0);
         reader.start();
         //reader.setSlowMs(1, 3);
@@ -622,6 +706,7 @@ public class ProfilingReader extends Thread implements Terminable{
                 isStopped(),
                 isProfiling(),
                 getSlowMs(),
+                getSystemProfileMaxSizeInBytes(),
                 getReplicaStatus().name(),
                 getLastTs(),
                 getDoneJobsHistory(),

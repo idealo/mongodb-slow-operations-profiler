@@ -33,11 +33,12 @@ public class ProfiledServerDto {
     private HashSet<ServerAddress> resolvedHosts;
     private List<String> resolvedDatabases;
     private List<String> excludedDbs;
+    private long systemProfileMaxSizeInMB;
     private final ReadWriteLock globalLock = new ReentrantReadWriteLock();
     private final Lock readLock = globalLock.readLock();
     private final Lock writeLock = globalLock.writeLock();
 
-    public ProfiledServerDto(boolean enabled, String label, ServerAddress[] hosts, String[] ns, String adminUser, String adminPw, boolean ssl, long slowMs, int responseTimeout, List<String> excludedDbs) {
+    public ProfiledServerDto(boolean enabled, String label, ServerAddress[] hosts, String[] ns, String adminUser, String adminPw, boolean ssl, long slowMs, int responseTimeout, List<String> excludedDbs, long systemProfileMaxSizeInMB) {
         this.enabled = enabled;
         this.label = label;
         this.hosts = hosts;
@@ -50,6 +51,7 @@ public class ProfiledServerDto {
         this.resolvedHosts = new HashSet<ServerAddress>();
         this.resolvedDatabases = Lists.newLinkedList();
         this.excludedDbs = excludedDbs;
+        this.systemProfileMaxSizeInMB = systemProfileMaxSizeInMB;
     }
 
     /**
@@ -165,6 +167,10 @@ public class ProfiledServerDto {
 
     public void setResponseTimeout(int responseTimeout) { this.responseTimeout=responseTimeout; }
 
+    public long getSystemProfileMaxSizeInMB() { return systemProfileMaxSizeInMB; }
+
+    public void setSystemProfileMaxSizeInMB(long systemProfileMaxSizeInMB) { this.systemProfileMaxSizeInMB = systemProfileMaxSizeInMB; }
+
     public HashSet<ServerAddress> getResolvedHosts() {
         return resolvedHosts;
     }
@@ -188,6 +194,7 @@ public class ProfiledServerDto {
 
         if (enabled != that.enabled) return false;
         if (slowMs != that.slowMs) return false;
+        if (systemProfileMaxSizeInMB != that.systemProfileMaxSizeInMB) return false;
         if (responseTimeout != that.responseTimeout) return false;
         if (label != null ? !label.equals(that.label) : that.label != null) return false;
         if (!Arrays.equals(hosts, that.hosts)) return false;
@@ -207,6 +214,7 @@ public class ProfiledServerDto {
         result = 31 * result + (adminPw != null ? adminPw.hashCode() : 0);
         result = 31 * result + (Boolean.hashCode(ssl));
         result = 31 * result + (int) (slowMs ^ (slowMs >>> 32));
+        result = 31 * result + (int) (systemProfileMaxSizeInMB ^ (systemProfileMaxSizeInMB >>> 32));
         result = 31 * result + (responseTimeout ^ (responseTimeout >>> 32));
         return result;
     }

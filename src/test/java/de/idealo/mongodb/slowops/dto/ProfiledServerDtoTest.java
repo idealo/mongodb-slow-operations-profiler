@@ -22,7 +22,7 @@ public class ProfiledServerDtoTest {
         List<String> defaultExcludedDbs = Lists.newArrayList();
         defaultExcludedDbs.add("admin");
         defaultExcludedDbs.add("local");
-        ProfiledServerDto dto = new ProfiledServerDto(false, "label", hosts, ns, "adminUser", "adminPw", false, 100, 1000, defaultExcludedDbs);
+        ProfiledServerDto dto = new ProfiledServerDto(false, "label", hosts, ns, "adminUser", "adminPw", false, 100, 1000, defaultExcludedDbs, 1);
         HashMap<String, List<String>> computedCollectionsPerDb =  dto.getCollectionsPerDatabase();
 
         HashMap<String, List<String>> expectedCollectionsPerDb =  new HashMap<String, List<String>>();
@@ -34,7 +34,7 @@ public class ProfiledServerDtoTest {
 
         //test to exclude default and one specific db
         ns = new String[]{"db1.col1", "admin", "dbToBeExcluded.foo", "!dbToBeExcluded"};
-        dto = new ProfiledServerDto(false, "label", hosts, ns, "adminUser", "adminPw", false, 100, 1000, defaultExcludedDbs);
+        dto = new ProfiledServerDto(false, "label", hosts, ns, "adminUser", "adminPw", false, 100, 1000, defaultExcludedDbs, 1);
         computedCollectionsPerDb =  dto.getCollectionsPerDatabase();
 
         expectedCollectionsPerDb =  new HashMap<String, List<String>>();
@@ -44,7 +44,7 @@ public class ProfiledServerDtoTest {
 
         //test wrong way to exclude db
         ns = new String[]{"db1.col1", "!dbToBeExcluded", "dbToBeExcluded.foo"};
-        dto = new ProfiledServerDto(false, "label", hosts, ns, "adminUser", "adminPw", false, 100, 1000, defaultExcludedDbs);
+        dto = new ProfiledServerDto(false, "label", hosts, ns, "adminUser", "adminPw", false, 100, 1000, defaultExcludedDbs, 1);
         computedCollectionsPerDb =  dto.getCollectionsPerDatabase();
 
         expectedCollectionsPerDb =  new HashMap<String, List<String>>();

@@ -51,7 +51,8 @@
       "collect": false,
       "ssl":true,
       "slowMS":250,
-      "responseTimeoutInMs": 3000
+      "responseTimeoutInMs": 3000,
+      "systemProfileCollectionMaxSizeInMB": 64
     }
   ],
   "yAxisScale":"milliseconds",
@@ -59,5 +60,6 @@
   "defaultSlowMS" : 100,
   "defaultResponseTimeoutInMs" : 2000,
   "defaultExcludedDBs": ["admin", "local", "config"],
-  "maxWeblogEntries" : 100
+  "maxWeblogEntries" : 100,
+  "systemProfileCollectionMaxSizeInMB": 16
 }

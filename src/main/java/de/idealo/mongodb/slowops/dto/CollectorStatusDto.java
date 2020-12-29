@@ -28,6 +28,7 @@ public class CollectorStatusDto {
     private final String database;
     private final List<String> collections;
     private long slowMs;
+    private long systemProfileMaxSizeInBytes;
     private boolean isCollecting;
     private boolean isProfiling;
     private final Date lastTs;
@@ -52,6 +53,7 @@ public class CollectorStatusDto {
                               @JsonProperty("isCollecting") boolean isCollecting,
                               @JsonProperty("isProfiling") boolean isProfiling,
                               @JsonProperty("slowMs") long slowMs,
+                              @JsonProperty("systemProfileMaxSizeInBytes") long systemProfileMaxSizeInBytes,
                               @JsonProperty("replSetStatus") String replSetStatus,
                               @JsonProperty("lastTs") Date lastTs,
                               @JsonProperty("doneJobsHistory") ArrayList<Long> doneJobsHistory,
@@ -67,6 +69,7 @@ public class CollectorStatusDto {
         this.database = database;
         this.collections = collections;
         this.slowMs = slowMs;
+        this.systemProfileMaxSizeInBytes = systemProfileMaxSizeInBytes;
         this.replSetStatus = replSetStatus;
         this.isCollecting = isCollecting;
         this.isProfiling = isProfiling;
@@ -122,6 +125,8 @@ public class CollectorStatusDto {
     }
 
     public long getSlowMs() { return slowMs; }
+
+    public long getSystemProfileMaxSizeInBytes() { return systemProfileMaxSizeInBytes; }
 
     public boolean isProfiling() { return isProfiling; }
 

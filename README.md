@@ -259,7 +259,8 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
       "collect":false,
       "ssl":false,
       "slowMS":250,
-      "responseTimeoutInMs":2000
+      "responseTimeoutInMs":2000,
+      "systemProfileCollectionMaxSizeInMB": 64
     }
   ],
   "yAxisScale":"milliseconds",
@@ -267,7 +268,8 @@ The application is configured by the file "`mongodb-slow-operations-profiler/src
   "defaultSlowMS":100,
   "defaultResponseTimeoutInMs":2000,
   "defaultExcludedDBs": ["admin", "local", "config"],
-  "maxWeblogEntries":100
+  "maxWeblogEntries":100,
+  "systemProfileCollectionMaxSizeInMB": 16
 }
 ```
 This example configuration defines first the `collector` running as a replica set consisting of 3 members on hosts "myCollectorHost_member[1|2|3]" on port 27017, using the collection "slowops" of database "profiling". Both `adminUser` and `adminPw` are empty because the mongodb instance runs without authentication. If mongoD runs with authentication, the user must exist for the admin database with role "root".
@@ -289,26 +291,28 @@ Fields of `profiled` entries explained:
 * `ssl`= if set to `true`, use ssl to connect to the server
 * `slowMS`= threshold of slow operations in milliseconds
 * `responseTimeoutInMs`= response timeout in ms
+* `systemProfileCollectionMaxSizeInMB` = size in MB that the `system.profile` collection is allowed to grow. For more details see below in the version history of [v3.1.0](#v3.1.0)
 
+The fields at root level define global or default properties: 
 
-The field `yAxisScale` is to be set either to the value "milliseconds" or "seconds". It defines the scale of the y-axis in the diagram of the analysis page.
+* `yAxisScale` = defines the scale of the y-axis in the diagram of the analysis page. It is to be set either to the value "milliseconds" or "seconds". 
+* `adminToken` = has been introduced to restrict access to administrative functionalities i.e. stop/start of collecting slow operations, setting the threshold `slowMs`, seeing the currently used configuration or uploading a new configuration. To grant access to these functionalities, add the parameter `adminToken=` followed by your configured value, i.e. `mySecureAdminToken`, to the URL of the application status page, i.e. `http://your-server:your-port/mongodb-slow-operations-profiler/app?adminToken=mySecureAdminToken`.
+* `defaultSlowMS` = default threshold of slow operations in milliseconds for all `profiled` entries that don't have specified `slowMS` (default: 100 ms)
+* `defaultResponseTimeoutInMs` = default response timeout for all `profiled` entries that don't have specified `responseTimeoutInMs` (default: 2000 ms)
+* `defaultExcludedDBs` = an array of Strings which defines databases to be excluded from profiling and collecting and thus are not shown on the application status page (see example above)
+* `maxWeblogEntries` = the maximal number of log messages shown in the application status page (default: 100)
+* `systemProfileCollectionMaxSizeInMB` = size in MB that the `system.profile` collection is allowed to grow. For more details see below in the version history of [v3.1.0](#v3.1.0)
 
-In v2.0.0 the field `adminToken` has been introduced to restrict access to administrative functionalities i.e.
-stop/start of collecting slow operations, setting the threshold `slowMs`, seeing the currently used configuration or
-uploading a new configuration. To grant access to these functionalities, add the parameter `adminToken=` followed by
-your configured value, i.e. `mySecureAdminToken`, to the URL of the application status page, i.e.
-`http://your-server:your-port/mongodb-slow-operations-profiler/app?adminToken=mySecureAdminToken`.
-
-In v2.4.0 some new options have been introduced:
-* `defaultResponseTimeoutInMs` defines a default response timeout for all `profiled` entries that don't have specified `responseTimeoutInMs` (default: 2000 ms)
-* `defaultSlowMS` defines a default threshold of slow operations in milliseconds for all `profiled` entries that don't have specified `slowMS` (default: 100 ms)
-* `maxWeblogEntries` defines the maximal number of log messages shown in the application status page (default: 100)
-
-In v2.11.0 a new option has been introduced:
-* `defaultExcludedDBs` is an array of Strings which defines databases to be excluded from profiling and collecting and thus are not shown on the application status page (see example above)
 
 
 ## Version history
+<a name="v3.1.0"></a>
+* v3.1.0
+  + new: option `systemProfileCollectionMaxSizeInMB` has been added which allows to define the maximum size in MB for the capped collection `system.profile` (MongoDB's default is 1 MB). When profiling is activated, slow operations are first written into the `system.profile` collection of the related database and then continously read by a tailable cursor in order to copy the slow operations to the globally used collector database. However, if many huge slow operations are being read from a too small `system.profile` collection, it may happen that the tailable cursor is reset when it couldn't keep up reading because the next document the cursor was about to read has already been pushed out the capped collection by a new inserted one. If this happens and `systemProfileCollectionMaxSizeInMB` has been set to more than MongoDB's default max size of 1 MB, upon each reset of the tailable cursor, the app will successively increment the maximum size of the `system.profile` capped collection by steps of 1 MB until it reaches the max size of `systemProfileCollectionMaxSizeInMB`. 
+    
+    The app will not *decrease* the maximum size of the `system.profile` collection to its MongoDB default of 1 MB. However, you may drop the collection `system.profile` and the app will recreate it, beginning with a maximum size of 1 MB, as soon as collecting is activated.
+    
+    The rounded current maxSize of the `system.profile` collection is shown in the column `maxMB` in the table of the application status page. If it's `0`, it means that the `system.profile` does not (yet) exist or that its max size is less than 0.5 MB.  
 * v3.0.3
   + improvement: new option to delete slow operation example document which might be helpful if other things than the query shape have changed (e.g. indexes), and you want to reflect them in this slow operations example document. A new example document will be re-created as soon as such an operation is collected again.
 * v3.0.2

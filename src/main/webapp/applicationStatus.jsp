@@ -38,6 +38,7 @@
 					{"visible":true, "name": "SlowMs"},
 					{"visible":true, "name": "Profiling"},
 					{"visible":true, "name": "Collecting"},
+                    {"visible":true, "name": "MaxMB"},
 					{"visible":true, "name": "LastTS"},
 					{"visible":true, "name": "#SlowOps"},
 					{"visible":true, "name": "#10sec"},
@@ -76,6 +77,7 @@
 						{ "data": "slowMs" },
 						{ "data": "profiling" },
 						{ "data": "collecting", "render": function ( data, type, full, meta ) { return !data }},
+                        { "data": "systemProfileMaxSizeInBytes", "render": function ( data, type, full, meta ) { return data==0?0:Math.round(data/1024/1024) } },
 						{ "data": "lastTsFormatted" },
 						{ "data": "doneJobsHistory.0" },
 						{ "data": "doneJobsHistory.1" },
@@ -95,25 +97,25 @@
 						var intVal = function ( i ) {
 							return typeof i === 'string' ? i.replace(/[\$,]/g, '')*1 : typeof i === 'number' ? i : 0;
 						};
-						if(api.column( 15 ).data().length) {//don't compute sum on initial draw before data is loaded
+						if(api.column( 16 ).data().length) {//don't compute sum on initial draw before data is loaded
 							// Total over current page so that search results reflect the sum
-							var total1 = api.column( 15, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total2 = api.column( 16, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total3 = api.column( 17, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total4 = api.column( 18, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total5 = api.column( 19, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total6 = api.column( 20, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total7 = api.column( 21, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
-							var total8 = api.column( 22, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total1 = api.column( 16, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total2 = api.column( 17, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total3 = api.column( 18, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total4 = api.column( 19, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total5 = api.column( 20, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total6 = api.column( 21, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total7 = api.column( 22, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
+							var total8 = api.column( 23, { page: 'current'} ).data().reduce( function (a, b) {return intVal(a) + intVal(b);});
 							// Update footer
-							$( api.column( 15 ).footer() ).html('Sum #SlowOps: '+ $.number(total1, 0, ".", ","));
-							$( api.column( 16 ).footer() ).html('Sum #10sec: '+ $.number(total2, 0, ".", ","));
-							$( api.column( 17 ).footer() ).html('Sum #1Min: '+ $.number(total3, 0, ".", ","));
-							$( api.column( 18 ).footer() ).html('Sum #10Min: '+ $.number(total4, 0, ".", ","));
-							$( api.column( 19 ).footer() ).html('Sum #30Min: '+ $.number(total5, 0, ".", ","));
-							$( api.column( 20 ).footer() ).html('Sum #1Hour: '+ $.number(total6, 0, ".", ","));
-							$( api.column( 21 ).footer() ).html('Sum #12Hours: '+ $.number(total7, 0, ".", ","));
-							$( api.column( 22 ).footer() ).html('Sum #1Day: '+ $.number(total8, 0, ".", ","));
+							$( api.column( 16 ).footer() ).html('Sum #SlowOps: '+ $.number(total1, 0, ".", ","));
+							$( api.column( 17 ).footer() ).html('Sum #10sec: '+ $.number(total2, 0, ".", ","));
+							$( api.column( 18 ).footer() ).html('Sum #1Min: '+ $.number(total3, 0, ".", ","));
+							$( api.column( 19 ).footer() ).html('Sum #10Min: '+ $.number(total4, 0, ".", ","));
+							$( api.column( 20 ).footer() ).html('Sum #30Min: '+ $.number(total5, 0, ".", ","));
+							$( api.column( 21 ).footer() ).html('Sum #1Hour: '+ $.number(total6, 0, ".", ","));
+							$( api.column( 22 ).footer() ).html('Sum #12Hours: '+ $.number(total7, 0, ".", ","));
+							$( api.column( 23 ).footer() ).html('Sum #1Day: '+ $.number(total8, 0, ".", ","));
 						}
 					},
 					"drawCallback": function ( settings ) {
@@ -218,7 +220,7 @@
                 }
 
                 makeColumnGroup("Specs", [5,6,7,8]);
-                makeColumnGroup("LastSlowOps", [14,15,16,17,18,19,20,21,22]);
+                makeColumnGroup("LastSlowOps", [15,16,17,18,19,20,21,22,23]);
 
 
 
