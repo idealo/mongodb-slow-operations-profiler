@@ -5,6 +5,7 @@ package de.idealo.mongodb.slowops.collector;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.mongodb.MongoCommandException;
 import com.mongodb.ServerAddress;
 import de.idealo.mongodb.slowops.dto.ApplicationStatusDto;
 import de.idealo.mongodb.slowops.dto.CollectorServerDto;
@@ -601,14 +602,22 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
                     final Future future = executorService.submit(new Runnable() {
                         public void run() {
-                            final MongoDbAccessor mongo = reader.getMongoDbAccessor();
-                            //update only once the replSet status and host info for all profilingReaders having unique serverAddresses
-                            if (uniqueServerAdresses.putIfAbsent(reader.getServerAddress(), reader) == null) {
-                                reader.updateReplSetStatus(mongo);
-                                reader.updateHostInfo(mongo);
+                            try {
+                                final MongoDbAccessor mongo = reader.getMongoDbAccessor();
+                                //update only once the replSet status and host info for all profilingReaders having unique serverAddresses
+                                if (uniqueServerAdresses.putIfAbsent(reader.getServerAddress(), reader) == null) {
+                                    reader.updateReplSetStatus(mongo);
+                                    reader.updateHostInfo(mongo);
+                                }
+                                reader.updateProfileStatus(mongo);
+                            }catch(MongoCommandException e){
+                                final ProfilingReader updatedReader=uniqueServerAdresses.get(reader.getServerAddress());
+                                if(e.getMessage().indexOf("error 13") != 0 &&  updatedReader!=null && updatedReader.getReplicaStatus()==ProfilingReader.ReplicaStatus.ARBITER){
+                                    LOG.info("Can't authenticate on arbiter {} to get status due to bug https://jira.mongodb.org/browse/SERVER-5479 ", reader.getServerAddress());
+                                }else {
+                                    LOG.error("Error while getting status {}", reader.getReplicaStatus(), e);
+                                }
                             }
-                            reader.updateProfileStatus(mongo);
-
                         }
                     });
 
@@ -627,7 +636,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
                             }
                             catch (InterruptedException | ExecutionException | TimeoutException e){
-                                final String errMsg = e.getClass().getSimpleName() + " while getting updated server status within "+dto.getResponseTimeout()+" ms for '"+dto.getLabel()+"' at " + reader.getServerAddress();
+                                final String errMsg = e.getClass().getSimpleName() + " while getting updated server status within " + dto.getResponseTimeout() + " ms for '" + dto.getLabel() + "' at " + reader.getServerAddress();
                                 future.cancel(true);
                                 LOG.error("{}", errMsg, e);
                                 ApplicationStatusDto.addWebLog(errMsg);

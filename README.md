@@ -306,6 +306,8 @@ The fields at root level define global or default properties:
 
 
 ## Version history
+* v3.1.1
+  + bugfix: on the application status page, show arbiters correctly as arbiters. This did not work if authentication was enabled, because we can't authenticate on arbiters to get their replSet status due to bug https://jira.mongodb.org/browse/SERVER-5479 . The workaround is to issue the `ismaster` command which also shows the role of the mongod instance (e.g. arbiter) but does not require authentication of the client.   
 <a name="v3.1.0"></a>
 * v3.1.0
   + new: option `systemProfileCollectionMaxSizeInMB` has been added which allows to define the maximum size in MB for the capped collection `system.profile` (MongoDB's default is 1 MB). When profiling is activated, slow operations are first written into the `system.profile` collection of the related database and then continously read by a tailable cursor in order to copy the slow operations to the globally used collector database. However, if many huge slow operations are being read from a too small `system.profile` collection, it may happen that the tailable cursor is reset when it couldn't keep up reading because the next document the cursor was about to read has already been pushed out the capped collection by a new inserted one. If this happens and `systemProfileCollectionMaxSizeInMB` has been set to more than MongoDB's default max size of 1 MB, upon each reset of the tailable cursor, the app will successively increment the maximum size of the `system.profile` capped collection by steps of 1 MB until it reaches the max size of `systemProfileCollectionMaxSizeInMB`. 

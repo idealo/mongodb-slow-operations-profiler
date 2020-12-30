@@ -366,7 +366,7 @@ public class ProfilingReader extends Thread implements Terminable{
 
     public synchronized void updateReplSetStatus(MongoDbAccessor mongo){
         LOG.debug(">>> updateReplSetStatus");
-
+        replSetStatus = ReplicaStatus.UNKNOWN;
         try {
             try {
                 Document doc = mongo.runCommand("admin", new BasicDBObject("replSetGetStatus", 1));
@@ -380,8 +380,21 @@ public class ProfilingReader extends Thread implements Terminable{
                 }
 
             } catch (MongoCommandException e) {
-                if(e.getErrorMessage().indexOf("error 13")!=-1){
-                    LOG.info("Not authorized to get replSet status for server {} (if it's an arbiter we may have run into this bug: https://jira.mongodb.org/browse/SERVER-5479 ) ", serverAddress, e);
+                if(e.getErrorCode()==13){
+                    try {
+                        final Document doc = mongo.runCommand("admin", new BasicDBObject("ismaster", 1));
+                        final Boolean isArbiter = doc.getBoolean("arbiterOnly");
+                        if(isArbiter){
+                            replSet = doc.getString("setName");
+                            replSetStatus = ReplicaStatus.ARBITER;
+                            LOG.info("Can't authenticate on arbiter {} to get replSet status due to bug https://jira.mongodb.org/browse/SERVER-5479 ", serverAddress);
+                        }else{
+                            LOG.warn("Not authorized to get replSet status for server {}", serverAddress, e);
+                        }
+                    } catch (Throwable e2) {
+                        LOG.error("Could not execute ismaster command on server {} ", serverAddress, e2);
+                    }
+
                 }else {
                     LOG.info("This mongod seems not to be a replSet member {}", serverAddress);
                     replSetStatus = ReplicaStatus.SINGLE;
@@ -389,7 +402,7 @@ public class ProfilingReader extends Thread implements Terminable{
             }
 
         } catch (MongoCommandException e) {
-            LOG.info("Could not determine replSet status on {}", serverAddress, e);
+            LOG.info("Could not determine replSet status on {}", serverAddress);
         }
         LOG.debug("<<< updateReplSetStatus");
     }
@@ -437,7 +450,6 @@ public class ProfilingReader extends Thread implements Terminable{
             if(buildInfoDoc != null) {
                 hostInfoDto.setMongodbVersion(buildInfoDoc.getString("version"));
             }
-
 
 
         } catch (MongoCommandException e) {

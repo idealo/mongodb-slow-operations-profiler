@@ -98,12 +98,18 @@ public class MongoResolver implements Callable<MongoResolver> {
                     return result;
                 }
             }catch (MongoCommandException e2) {//single nodes do not know the command replSets, thus throwing an Exception
-                final Document doc = mongo.runCommand("admin", new BasicDBObject("serverStatus", 1));
-                final Object repl = doc.get("repl");//single nodes don't have serverStatus().repl
-                if(repl == null) {
-                    if(serverAddress.length > 0)
-                    result.add(serverAddress[0]);
+                try {
+                    final Document doc = mongo.runCommand("admin", new BasicDBObject("serverStatus", 1));
+                    final Object repl = doc.get("repl");//single nodes don't have serverStatus().repl
+                    if(repl == null) {
+                        if(serverAddress.length > 0)
+                            result.add(serverAddress[0]);
+                    }
+                } catch (MongoCommandException e3) {
+                    LOG.error("Could not execute serverStatus command on server {} ", serverAddress, e3);
                 }
+
+
             }
         }
 

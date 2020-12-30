@@ -159,7 +159,7 @@ public class MongoDbAccessor {
            try {
                result = getMongoDatabase(dbName).runCommand((Bson) cmd, isSecondaryReadPreferred ? ReadPreference.secondaryPreferred() : ReadPreference.primaryPreferred());
            }catch (Throwable e){
-               LOG.warn("runCommand failed {} on {}/{}", new Object[]{cmd.toString(), serverAddresses, dbName});
+               LOG.debug("runCommand failed {} on {}/{}", new Object[]{cmd.toString(), serverAddresses, dbName});
                throw e;
            }
            long end = System.currentTimeMillis();
