@@ -576,21 +576,21 @@ public class ProfilingReader extends Thread implements Terminable{
                     ex = e;
                 } finally {
                     if(!stop){
-                        if(d.before(getLastTs()) || d.equals(getLastTs())){
-                            errorCount = 0;  //reset errorCount because lastTS is either unchanged or has increased, which means that the SYSTEM_PROFILE collection has either no new entry or could be read at least one time
+                        if(d.before(getLastTs())){
+                            errorCount = 0;  //reset errorCount because lastTS has increased, which means that the SYSTEM_PROFILE collection could be read at least one time
                         }else{
-                            if(errorCount < maxErrorCount) errorCount++;//avoid overflow of Math.pow(2, errorCount) when calculating sleepMs, so don't increment errorCount if sleepMs would be already greater than MAX_RETRY_TIMEOUT_MSEC
+                            if(errorCount < maxErrorCount) errorCount++;//avoid overflow of sleepMs when calculating Math.pow(2, errorCount), so don't increment errorCount if sleepMs would be already greater than MAX_RETRY_TIMEOUT_MSEC
                         }
                         final long sleepMs = Math.min( (long)Math.pow(2, errorCount) * MIN_RETRY_TIMEOUT_MSEC, MAX_RETRY_TIMEOUT_MSEC); //double sleep time with each error up to MAX_RETRY_TIMEOUT_MSEC
                         if(ex != null) {
                             String msg = "ProfilingReader for '" + profiledServerDto.getLabel() + "' at " + serverAddress + "/" + database + " will be restarted in " + (sleepMs / 1000) + " seconds ";
-                            if (ex instanceof MongoQueryException && (ex.getMessage().indexOf("error code 96") != -1 || ex.getMessage().indexOf("error code 136") != -1)) {
+                            if (ex instanceof MongoQueryException && (((MongoQueryException) ex).getCode() == 96 || ((MongoQueryException) ex).getCode() == 136)) {
                                 msg += "because the number of profiled operations was too high or the " + SYSTEM_PROFILE + " collection too small to keep up reading. You may increase the slow operations threshold (slowMs), decrease the number of running operations and/or increase the size of the " + SYSTEM_PROFILE + " collection.";
                                 ApplicationStatusDto.addWebLog(msg);
                                 LOG.warn(msg, ex);
                                 increaseSizeOfSystemProfileCollection();
                             }else if (ex instanceof IllegalStateException){ //this case it's rather an info than an error, so log it appropriately
-                                msg += "because no slow operations exist yet in " + SYSTEM_PROFILE + " collection.";
+                                msg += "because no new slow operations exist yet in " + SYSTEM_PROFILE + " collection.";
                                 LOG.info(msg, ex);
                             }else{
                                 msg += "with unspecified reason";
