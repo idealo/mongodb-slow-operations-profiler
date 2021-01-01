@@ -306,6 +306,8 @@ The fields at root level define global or default properties:
 
 
 ## Version history
+* v3.1.2
+  + bugfix: collecting of slow operations might have terminated erroneously if the collecting started with an empty (or already fully consumed) `system.profile` collection **and** no new slow operations were inserted into the `system.profile` collection within the next 12 hours
 * v3.1.1
   + bugfix: on the application status page, show arbiters correctly as arbiters. This did not work if authentication was enabled, because we can't authenticate on arbiters to get their replSet status due to bug https://jira.mongodb.org/browse/SERVER-5479 . The workaround is to issue the `ismaster` command which also shows the role of the mongod instance (e.g. arbiter) but does not require authentication of the client.   
 <a name="v3.1.0"></a>

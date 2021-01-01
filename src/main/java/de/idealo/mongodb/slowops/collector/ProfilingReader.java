@@ -565,6 +565,7 @@ public class ProfilingReader extends Thread implements Terminable{
         LOG.info("Run started {}", serverAddress);
         try {
             double errorCount = 0;
+            final double maxErrorCount = Math.log(MAX_RETRY_TIMEOUT_MSEC / MIN_RETRY_TIMEOUT_MSEC)/Math.log(2);
             while(!stop) {
                 final Date d = getLastTs();
                 Exception ex = null;
@@ -575,10 +576,10 @@ public class ProfilingReader extends Thread implements Terminable{
                     ex = e;
                 } finally {
                     if(!stop){
-                        if(d.before(getLastTs())){
-                            errorCount = 0;  //reset errorCount because lastTS has increased, which means that the SYSTEM_PROFILE collection could be read at least one time
+                        if(d.before(getLastTs()) || d.equals(getLastTs())){
+                            errorCount = 0;  //reset errorCount because lastTS is either unchanged or has increased, which means that the SYSTEM_PROFILE collection has either no new entry or could be read at least one time
                         }else{
-                            errorCount++;
+                            if(errorCount < maxErrorCount) errorCount++;//avoid overflow of Math.pow(2, errorCount) when calculating sleepMs, so don't increment errorCount if sleepMs would be already greater than MAX_RETRY_TIMEOUT_MSEC
                         }
                         final long sleepMs = Math.min( (long)Math.pow(2, errorCount) * MIN_RETRY_TIMEOUT_MSEC, MAX_RETRY_TIMEOUT_MSEC); //double sleep time with each error up to MAX_RETRY_TIMEOUT_MSEC
                         if(ex != null) {

@@ -636,7 +636,7 @@ public class CollectorManager extends Thread implements CollectorManagerMBean {
 
                             }
                             catch (InterruptedException | ExecutionException | TimeoutException e){
-                                final String errMsg = e.getClass().getSimpleName() + " while getting updated server status within " + dto.getResponseTimeout() + " ms for '" + dto.getLabel() + "' at " + reader.getServerAddress();
+                                final String errMsg = e.getClass().getSimpleName() + " while getting updated server status within " + dto.getResponseTimeout() + " ms for '" + dto.getLabel() + "' at " + reader.getServerAddress() + "/" + reader.getDatabase();
                                 future.cancel(true);
                                 LOG.error("{}", errMsg, e);
                                 ApplicationStatusDto.addWebLog(errMsg);
