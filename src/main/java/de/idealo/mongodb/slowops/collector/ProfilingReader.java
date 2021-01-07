@@ -593,7 +593,7 @@ public class ProfilingReader extends Thread implements Terminable{
                                 msg += "because no new slow operations exist yet in " + SYSTEM_PROFILE + " collection.";
                                 LOG.info(msg);
                             }else{//any other case it good to see in the web interface and also its stacktrace in the log file
-                                msg += "with unspecified reason";
+                                msg += "due to " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
                                 ApplicationStatusDto.addWebLog(msg);
                                 LOG.warn(msg, ex);
                             }
