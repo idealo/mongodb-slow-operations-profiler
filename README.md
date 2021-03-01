@@ -306,6 +306,8 @@ The fields at root level define global or default properties:
 
 
 ## Version history
+* v3.1.3
+  + new: the table header on the analysis page has now a button `clean`. Once clicked, it will show only the most important table columns to analyze slow operations, making the table "cleaner".
 * v3.1.2
   + bugfix: collecting of slow operations might have been terminated erroneously if the collecting started with an empty (or already fully consumed) `system.profile` collection **and** no new slow operations were inserted into the `system.profile` collection within the next 12 hours
 * v3.1.1
@@ -327,7 +329,7 @@ The fields at root level define global or default properties:
   + update: in the config file, the boolean property `enabled` has been renamed to `collect`. **Attention**: Please rename this property in your config file `config.json`!
   + improvement: the collector database has a new index `{lbl:1, db:1, ts:-1}` which performs for most use cases better than the previous index `{ts:-1, lbl:1}`, especially if you are profiling a lot of different database systems which have more than only 1 database. **Attention**: The app will automatically create the new index if it does not yet exist. The old index `{ts:-1, lbl:1}` will be dropped automatically. If you have upgraded from an earlier version and your collector database contains already many documents, the start-up of the app may take a while due to the index creation. The new index is created in the background so that the collector database will not get blocked during this operation. However, the app is waiting until the index has been created.
   + improvement: all search parameters are compiled to avoid injections
-  + improvement: replace junit v4.12 by v14.13.1 to to close a potential security vulnerability
+  + improvement: replace junit v4.12 by v4.13.1 to to close a potential security vulnerability
   + improvement: on the analysis page
     + the search tokens entered in the `Filter by` section are now transformed into regular expressions (regex) instead of plain text. For example, when the textfield `Queried fields` contains `foo;bar` then only slow operations having an equality condition on the fields `foo` or `bar` were matched up to now. From now on, it will match also slow queries whose queried fields **contain** `foo` or `bar` e.g. it would match also the queried fields `foot`, `barely` or `foo.$gt` or `$group{foot}`. This is important since operators (e.g. `$gt`, `$lt` or `$in`) are concatenated with the queried field, the `Filter by` could only find them if they were entered completely with their operators (e.g. `$gt`, `$lt` or `$in`) respectively with their pipelines (e.g. `$match` or `$group`).
     Furthermore, you can use your own regular expression within your search. For example, if you want to match slow operations that were queried on field `foo` (and not `foot`) with an equality condition (so no operator follows), just type in the regular expression `^foo$`. `^` matches the beginning and `$` matches the end of the string. 

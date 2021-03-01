@@ -489,6 +489,7 @@ a:hover {
         makeColumnGroup("Durations", [2,3,4,5,6]);
         makeColumnGroup("ReturnedDocs", [7,8,9,10,11,12,13]);
         makeColumnGroup("Bytes", [14,15,16,17,18]);
+        makeColumnGroup("Clean", [2,7,8,11,14,16,18]);
 
         $(".infoResolution").tooltip({content:function(){return $("#infoResolutionContent").html();}});
         $(".infoGroup").tooltip({content:function(){return $("#infoGroupContent").html();}});
