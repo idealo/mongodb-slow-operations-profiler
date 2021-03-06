@@ -98,6 +98,9 @@ The value of `wDocs` is the sum of how many documents have been deleted, inserte
 
 The value of `memSort`is `true` if no index could be used to sort the documents. In this case you should consider adding or adjusting indexes so that no in-memory sort is needed anymore.
 
+I made a tutorial "how to quickly analyze slow operations" which has been published on YouTube:
+
+[![Tutorial on YouTube](https://user-images.githubusercontent.com/17042479/110221743-5b984280-7ece-11eb-8741-84745e167720.png)](https://www.youtube.com/watch?v=zvQSZiTU1Zg)
 
 
 ## Application status page
