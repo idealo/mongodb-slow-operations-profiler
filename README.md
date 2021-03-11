@@ -14,7 +14,7 @@ I also made a tutorial "How to Analyze slow MongoDB Operations" which has been p
 [![Tutorial on YouTube](img/video.png)](https://www.youtube.com/watch?v=zvQSZiTU1Zg)
 
 
-### Example
+### Example of the analysis page
 
 The following first screenshot demonstrates how slow operations are visualized in the diagram: The higher a point or circle on the y-axis, the slower was the execution time of this operation. The greater the diameter of the circle, the more slow operations of this type were executed at this time.
 
@@ -35,9 +35,6 @@ Below you see `Returned` which informs how many documents (`min`, `max`, `avg`, 
  Furthermore `Bytes` gives information about the size in bytes of the response(s). And last but not least, `R/W` shows metrics about how many index keys were read (`rKeys`), how many documents were read (`rDocs`) and written (`wDocs`) and also that no in-memory sort (`memSort`) had to be done (no sort at all in this case since no `sort` field was defined). 
 
 The second slowest operation type in this screenshot at 15:37 o'clock is a `query` operation. Regarding its queried fields, it's the originating command of the previously described `getmore.find` operation. It occurred more often than the originating command (318 versus 86), so its circle in the diagramm is also a bit larger. 
-
-## Example screenshot of the analysis page
-
 
 ![Screenshot](img/slow_operations_gui_diagram_low.png "Screenshot of the analysis page")
 
