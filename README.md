@@ -5,6 +5,17 @@ Since v2.0.0 it may be easily extended to an administration tool by implementing
 The initial version of the software has been presented during the [MongoDB User Group Berlin on 4th of June 2013](http://www.meetup.com/MUGBerlin/events/119503502/).
 Slides of the presentation can be found [here](http://www.slideshare.net/Kay1A/slow-ops). Version 2.4 has been presented in November 2018 at the [Percona Live Europe Conference](https://www.percona.com/live/e18/sessions/how-to-visually-spot-and-analyze-slow-mongodb-operations).
 
+I wrote a blog "Practical Guide To Analyzing Slow MongoDB Queries" which has been published on [medium.com](https://medium.com/idealo-tech-blog/practical-guide-to-analyze-slow-mongodb-operations-9363035b01fb):
+
+[![Blog post on medium](img/blog.png)](https://medium.com/idealo-tech-blog/practical-guide-to-analyze-slow-mongodb-operations-9363035b01fb)
+
+I also made a tutorial "How to Analyze slow MongoDB Operations" which has been published on [youtube.com](https://www.youtube.com/watch?v=zvQSZiTU1Zg):
+
+[![Tutorial on YouTube](img/video.png)](https://www.youtube.com/watch?v=zvQSZiTU1Zg)
+
+
+### Example
+
 The following first screenshot demonstrates how slow operations are visualized in the diagram: The higher a point or circle on the y-axis, the slower was the execution time of this operation. The greater the diameter of the circle, the more slow operations of this type were executed at this time.
 
 You can zoom-in by drawing a rectangle with the mouse around the area you are interested in. I suggest to zoom-in **first** horizontally, and then zoom-in vertically. Press Shift + drag mouse in order to move the visible area around. Double click returns to the initial viewport.
@@ -12,9 +23,6 @@ You can zoom-in by drawing a rectangle with the mouse around the area you are in
 While the mouse hovers over the diagram, the corresponding slow operations are shown in bold and details of them are displayed on the right-hand side legend. The different colors in the legend are just to better distinguish the different entries and have no further meaning.
 
 The more "Group by" checkboxes are checked, the more details constitute slow operation types, thus the more details you'll see for each slow operation type.
-
-
-### Example
 
 For example, the following screenshot shows that only one database has been **filtered**, defined in the search form by its `Label` and `Database` name for a time span of 1 hour.
 Since the slow operations are defined in the search form to be **grouped by** their collections, operations, queried and sorted fields, the legend below on the right shows these 4 details grouped together for the time period which is being hovered over by the mouse, here at 15:37 o'clock. As the the **resolution** is set to `Minute`, all slow operations occurred during within the minute hovered over by the mouse, here from 15:37 until 15:38 o'clock, are shown on the right-hand side in the legend.
@@ -97,15 +105,6 @@ If `rDocs` is 0 then the query was "covered" which means that all information ne
 The value of `wDocs` is the sum of how many documents have been deleted, inserted or modified by the corresponding slow operation type. This being said, you may tick **Operation**  in your **Group by** settings to know the number of written docs for the corresponding write-operation type (i.e. `remove`, `insert`, `update`).
 
 The value of `memSort`is `true` if no index could be used to sort the documents. In this case you should consider adding or adjusting indexes so that no in-memory sort is needed anymore.
-
-I wrote a blog "Practical Guide To Analyzing Slow MongoDB Queries" which has been published on [medium.com](https://medium.com/idealo-tech-blog/practical-guide-to-analyze-slow-mongodb-operations-9363035b01fb):
-
-[![Blog post on medium](img/blog.png)](https://medium.com/idealo-tech-blog/practical-guide-to-analyze-slow-mongodb-operations-9363035b01fb)
-
-I also made a tutorial "How to Analyze slow MongoDB Operations" which has been published on [youtube.com](https://www.youtube.com/watch?v=zvQSZiTU1Zg):
-
-[![Tutorial on YouTube](img/video.png)](https://www.youtube.com/watch?v=zvQSZiTU1Zg)
-
 
 ## Application status page
 
