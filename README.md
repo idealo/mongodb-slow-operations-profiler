@@ -98,9 +98,13 @@ The value of `wDocs` is the sum of how many documents have been deleted, inserte
 
 The value of `memSort`is `true` if no index could be used to sort the documents. In this case you should consider adding or adjusting indexes so that no in-memory sort is needed anymore.
 
-I made a tutorial "how to quickly analyze slow operations" which has been published on YouTube:
+I wrote a blog "Practical Guide To Analyzing Slow MongoDB Queries" which has been published on [medium.com](https://medium.com/idealo-tech-blog/practical-guide-to-analyze-slow-mongodb-operations-9363035b01fb):
 
-[![Tutorial on YouTube](https://user-images.githubusercontent.com/17042479/110221743-5b984280-7ece-11eb-8741-84745e167720.png)](https://www.youtube.com/watch?v=zvQSZiTU1Zg)
+[![Blog post on medium](img/blog.png)](https://medium.com/idealo-tech-blog/practical-guide-to-analyze-slow-mongodb-operations-9363035b01fb)
+
+I also made a tutorial "How to Analyze slow MongoDB Operations" which has been published on [youtube.com](https://www.youtube.com/watch?v=zvQSZiTU1Zg):
+
+[![Tutorial on YouTube](img/video.png)](https://www.youtube.com/watch?v=zvQSZiTU1Zg)
 
 
 ## Application status page
