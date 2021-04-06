@@ -309,6 +309,8 @@ The fields at root level define global or default properties:
 
 
 ## Version history
+* v3.1.4
+    + improvement: replace com.google.guava v26.0 by v30.0 to to close a potential security vulnerability
 * v3.1.3
   + new: the table header on the analysis page has now a button `clean`. Once clicked, it will show only the most important table columns to analyze slow operations, making the table "cleaner".
 * v3.1.2
