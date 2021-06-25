@@ -1,65 +1,32 @@
 {
-  "collector":{
-    "hosts":[
-      "myCollectorHost_member1:27017",
-      "myCollectorHost_member2:27017",
-      "myCollectorHost_member3:27017"],
-    "db":"profiling",
-    "collection":"slowops",
-    "adminUser":"",
-    "adminPw":"",
-    "ssl":false
+  "collector": {
+    "hosts": [
+      "collector-db:27017"
+    ],
+    "db": "mongodba",
+    "collection": "slowops"
   },
-  "profiled":[
+  "profiled": [
     {
-      "label":"dbs foo",
-      "hosts":[
-        "someHost1:27017",
-        "someHost2:27017",
-        "someHost3:27017"],
-      "ns":[
-        "someDatabase.someCollection",
-        "anotherDatabase.anotherCollection"],
-      "adminUser":"",
-      "adminPw":"",
-      "collect": false,
-      "ssl":false,
-      "slowMS":250,
-      "responseTimeoutInMs": 1500
-    },
-    {
-      "label":"dbs bar",
-      "hosts":["someMongoRouter:27017"],
-      "ns":[
-        "someDatabase.someCollection",
-        "anotherDatabase.*",
-        "*.myCollection",
-        "!excludedDb"],
-      "adminUser":"",
-      "adminPw":"",
-      "collect": false,
-      "ssl":false,
-      "slowMS":250,
-      "responseTimeoutInMs": 3000
-    },
-    {
-      "label":"dbs with many databases to be profiled",
-      "hosts":["someOtherMongoRouter:27017"],
-      "ns":["*.*", "!excludedDb"],
-      "adminUser":"",
-      "adminPw":"",
-      "collect": false,
-      "ssl":true,
-      "slowMS":250,
-      "responseTimeoutInMs": 3000,
-      "systemProfileCollectionMaxSizeInMB": 64
+      "label": "test-dbs",
+      "hosts": [
+        "test-db:27017"
+      ],
+      "ns": [
+        "myDB.myCollection",
+        "anotherDB.*",
+        "test.*"
+      ],
+      "slowMS": 3000,
+      "adminUser": "",
+      "adminPw": "",
+      "collect": true
     }
   ],
-  "yAxisScale":"milliseconds",
+  "yAxisScale": "milliseconds",
   "adminToken": "mySecureAdminToken",
-  "defaultSlowMS" : 100,
-  "defaultResponseTimeoutInMs" : 2000,
-  "defaultExcludedDBs": ["admin", "local", "config"],
-  "maxWeblogEntries" : 100,
+  "defaultSlowMS": 100,
+  "defaultResponseTimeoutInMs": 3000,
+  "maxWeblogEntries": 100,
   "systemProfileCollectionMaxSizeInMB": 16
 }

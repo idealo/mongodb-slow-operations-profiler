@@ -7,6 +7,8 @@ WORKDIR /usr/src/app/
 RUN mvn package
 
 FROM tomcat:9-jdk11-openjdk-slim
-COPY --from=builder /usr/src/app/target/mongodb-slow-operations-profiler.war /usr/local/tomcat/webapps/
-RUN chown -R nobody /usr/local/tomcat/webapps/
-USER nobody
+COPY --from=builder /usr/src/app/target/mongodb-slow-operations-profiler.war /tmp
+WORKDIR /usr/local/tomcat/webapps/mongodb-slow-operations-profiler/
+RUN jar -xfv /tmp/mongodb-slow-operations-profiler.war
+RUN chown -R nobody:nogroup /usr/local/tomcat/webapps/
+USER nobody:nogroup

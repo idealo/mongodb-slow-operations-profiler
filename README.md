@@ -284,7 +284,7 @@ Fields of `profiled` entries explained:
 * `collect` = whether collecting has to be started automatically upon (re)start of the application, default=`false` (the name of this property has been renamed from `enabled` to `collect` in v3.0.0)
 * `label` = a label of the database system in order to be able to filter, sort and group on it
 * `hosts` = an array of members of the same replica set, or just a single host, or one or more mongo router of the same cluster
-* `ns` = an array of the namespaces to be collected in the format of `databaseName.collectionName`. The placeholder `*` may be used instead of `databaseName` and/or `collectionName` to collect from all databases and/or all collections. If the placeholder is used to profile all databases, you may prefix database names with `!` in order to exclude them. Examples:
+* `ns` = an array of the namespaces to be collected in the format of `databaseName.collectionName`. The placeholder `*` may be used instead of `databaseName` and/or `collectionName` to collect from all databases and/or all collections. If the placeholder `*.*` is used to profile all databases, you may prefix one or more database names with `!` in order to exclude them. Examples:
   * `databaseName.*` collects from all collections from database `databaseName`
   * `*.collectionName` collects from all databases from collection `collectionName`
   * `*.*` collects from all collections from all databases
@@ -309,6 +309,10 @@ The fields at root level define global or default properties:
 
 
 ## Version history
+
+* v3.1.5
+    + bugfix: added a valid config file so that the web-app, started by docker-compose, shows its configured databases to play around with
+    + improvement: the Dockerfile installs now the war-file as exploded files. This is needed when deployed in Kubernetes because the config file needs to be mounted which is not possible from within a war-file. A mounted config file allows the use of secret tokens without exposing them.
 * v3.1.4
     + improvement: replace com.google.guava v26.0 by v30.0 to to close a potential security vulnerability
 * v3.1.3
