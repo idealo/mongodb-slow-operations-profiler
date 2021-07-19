@@ -38,6 +38,8 @@ public class Util {
     public final static String MAX_WEBLOG_ENTRIES = "maxWeblogEntries";
     public final static String SYSTEM_PROFILE_MAX_SIZE_MB = "systemProfileCollectionMaxSizeInMB";
     public final static String CONFIG_FILE = "config.json";
+    public final static String CONFIG_FILE_NAME = "config";
+    public final static String CONFIG_FILE_EXT = ".json";
 
 
     public static List<ServerAddress> getServerAddresses(String serverAddresses) {
