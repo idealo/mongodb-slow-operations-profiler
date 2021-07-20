@@ -1,0 +1,31 @@
+{
+  "collector": {
+    "hosts": [
+      "aws-p-nv-gri-mongo-01.whitesourcesoftware.com:27017"
+    ],
+    "db": "gri",
+    "collection": "profilerSlowops"
+  },
+  "profiled": [
+    {
+      "label": "gri-prod",
+      "hosts": [
+        "aws-p-nv-gri-mongo-01.whitesourcesoftware.com:27017",
+        "aws-p-nv-gri-mongo-02.whitesourcesoftware.com:27017"
+      ],
+      "ns": [
+        "gri.*"
+      ],
+      "slowMS": 1000,
+      "adminUser": "",
+      "adminPw": "",
+      "collect": false
+    }
+  ],
+  "yAxisScale": "milliseconds",
+  "adminToken": "mySecureAdminToken",
+  "defaultSlowMS": 100,
+  "defaultResponseTimeoutInMs": 3000,
+  "maxWeblogEntries": 100,
+  "systemProfileCollectionMaxSizeInMB": 16
+}
