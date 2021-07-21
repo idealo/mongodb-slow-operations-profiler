@@ -33,7 +33,8 @@ public class ConfigReader {
 
     
     static {
-        CONFIG = getConfig(Util.CONFIG_FILE);
+        String envFilePostfix = System.getenv("ENV");
+        CONFIG = envFilePostfix == null ? getConfig(Util.CONFIG_FILE) : getConfig(Util.CONFIG_FILE_NAME+"-"+envFilePostfix+Util.CONFIG_FILE_EXT);
     }
 
     /**
@@ -142,6 +143,7 @@ public class ConfigReader {
 
 
     private static Document  getConfig(String fileName) {
+        LOG.info("loading {}"+fileName);
         Document result = null;
         try {
             InputStream in;

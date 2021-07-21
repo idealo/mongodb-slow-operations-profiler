@@ -1,0 +1,30 @@
+{
+  "collector": {
+    "hosts": [
+      "mongo-gri.whitesourcedev.com:27017"
+    ],
+    "db": "gri",
+    "collection": "profilerSlowops"
+  },
+  "profiled": [
+    {
+      "label": "gri-dev",
+      "hosts": [
+        "mongo-gri.whitesourcedev.com:27017"
+      ],
+      "ns": [
+        "gri.*"
+      ],
+      "slowMS": 2000,
+      "adminUser": "",
+      "adminPw": "",
+      "collect": false
+    }
+  ],
+  "yAxisScale": "milliseconds",
+  "adminToken": "mySecureAdminToken",
+  "defaultSlowMS": 100,
+  "defaultResponseTimeoutInMs": 3000,
+  "maxWeblogEntries": 100,
+  "systemProfileCollectionMaxSizeInMB": 16
+}
