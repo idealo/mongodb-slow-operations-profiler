@@ -8,6 +8,7 @@ import de.idealo.mongodb.slowops.dto.CommandResultDto;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
 import de.idealo.mongodb.slowops.dto.TableDto;
 import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
+import de.idealo.mongodb.slowops.util.Util;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,14 +68,14 @@ public abstract class CmdCurrentOp implements ICommand {
                             final List<Object> row = Lists.newArrayList();
                             row.add(profilingReader.getProfiledServerDto().getLabel());
                             row.add("" + entryDoc.get("opid"));
-                            row.add(entryDoc.getLong("microsecs_running"));
-                            row.add(entryDoc.get("secs_running", Number.class));//may be Long (v4) or Integer (v3.4)
+                            row.add(Util.getNumber(entryDoc,"microsecs_running", 0));
+                            row.add(Util.getNumber(entryDoc, "secs_running", 0));//may be Long (v4) or Integer (v3.4)
                             row.add(entryDoc.getString("op"));
                             row.add(entryDoc.getString("ns"));
                             final String originatingCommand = getJson(entryDoc, "originatingCommand");
                             row.add(originatingCommand.equals("")?getJson(entryDoc, "command"):originatingCommand);
                             row.add(entryDoc.getString("planSummary"));
-                            row.add(entryDoc.getInteger("numYields", -1));
+                            row.add(Util.getNumber(entryDoc, "numYields", 0));
                             row.add(entryDoc.getBoolean("active"));
                             table.addRow(row);
 

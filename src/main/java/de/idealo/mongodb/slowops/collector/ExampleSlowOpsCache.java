@@ -61,7 +61,7 @@ public class ExampleSlowOpsCache {
             // e.g. when the slow ops collection is a capped collection
             // then entries older than the oldest slow op can be removed from the example collection.
             // The entry may be added automatically anew if the corresponding query is collected again.
-            // However, if such query is not collected again, other still stored slow ops might have lost their example document if the have the same fingerprint.
+            // However, if such query is not collected again, other still stored slow ops might have lost their example document if they have the same fingerprint.
             LOG.info("Create index {ts:1} in the background if it does not yet exists");
             exampleCollection.createIndex(new BasicDBObject("ts", 1), indexOptions);
 

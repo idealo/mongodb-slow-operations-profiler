@@ -80,11 +80,11 @@ public class CmdCollectionStats implements ICommand {
                 row.add(collName);
                 row.add(collStats.getBoolean("sharded"));
                 row.add(Util.getNumber(collStats, "size",0));
-                row.add(collStats.getInteger("count"));
+                row.add(Util.getNumber(collStats, "count", 0));
                 row.add(Util.getNumber(collStats, "avgObjSize",0));
                 row.add(Util.getNumber(collStats, "storageSize",0));
                 row.add(collStats.getBoolean("capped"));
-                row.add(collStats.getInteger("nindexes"));
+                row.add(Util.getNumber(collStats, "nindexes", 0));
                 row.add(Util.getNumber(collStats, "totalIndexSize",0));
                 row.add(((Document)collStats.get("indexSizes")).toJson());
                 table.addRow(row);

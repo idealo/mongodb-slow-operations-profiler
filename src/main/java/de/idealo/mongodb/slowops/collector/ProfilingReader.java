@@ -435,13 +435,13 @@ public class ProfilingReader extends Thread implements Terminable{
                     final Document extraDoc = (Document) extra;
                     hostInfoDto.setHostName(systemDoc.getString("hostname"));
                     hostInfoDto.setCpuArch(systemDoc.getString("cpuArch"));
-                    hostInfoDto.setNumCores(systemDoc.getInteger("numCores"));
+                    hostInfoDto.setNumCores(Util.getNumber(systemDoc,"numCores", 0));
                     hostInfoDto.setCpuFreqMHz((Math.round(Double.parseDouble(extraDoc.getString("cpuFrequencyMHz")))));
-                    hostInfoDto.setMemSizeMB(systemDoc.getInteger("memSizeMB"));
+                    hostInfoDto.setMemSizeMB(Util.getNumber(systemDoc, "memSizeMB", -0));
                     hostInfoDto.setNumaEnabled(systemDoc.getBoolean("numaEnabled"));
-                    hostInfoDto.setPageSize(extraDoc.getLong("pageSize"));
-                    hostInfoDto.setNumPages(extraDoc.getInteger("numPages"));
-                    hostInfoDto.setMaxOpenFiles(extraDoc.getInteger("maxOpenFiles"));
+                    hostInfoDto.setPageSize(Util.getNumber(extraDoc,"pageSize", 0));
+                    hostInfoDto.setNumPages(Util.getNumber(extraDoc, "numPages", 0));
+                    hostInfoDto.setMaxOpenFiles(Util.getNumber(extraDoc, "maxOpenFiles", 0));
                     hostInfoDto.setOsName(osDoc.getString("name"));
                     hostInfoDto.setOsVersion(osDoc.getString("version"));
                     hostInfoDto.setLibcVersion(extraDoc.getString("libcVersion"));

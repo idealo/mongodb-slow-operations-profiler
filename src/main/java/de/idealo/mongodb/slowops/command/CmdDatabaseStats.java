@@ -69,11 +69,11 @@ public class CmdDatabaseStats implements ICommand {
             row.add(profilingReader.getProfiledServerDto().getLabel());
             row.add(hostname);
             row.add(profilingReader.getDatabase());
-            row.add(dbStats.getInteger("objects"));
+            row.add(Util.getNumber(dbStats, "objects", 0));
             row.add(Util.getNumber(dbStats, "avgObjSize", 0));
             row.add(Util.getNumber(dbStats, "dataSize",0));
             row.add(Util.getNumber(dbStats, "storageSize",0));
-            row.add(dbStats.getInteger("indexes"));
+            row.add(Util.getNumber(dbStats, "indexes", 0));
             row.add(Util.getNumber(dbStats, "indexSize",0));
             table.addRow(row);
 

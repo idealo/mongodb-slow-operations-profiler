@@ -13,6 +13,7 @@ import de.idealo.mongodb.slowops.dto.CommandResultDto;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
 import de.idealo.mongodb.slowops.dto.TableDto;
 import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
+import de.idealo.mongodb.slowops.util.Util;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,7 +103,7 @@ public class CmdIdxAccessStats implements ICommand {
             final Object accesses = doc.get("accesses");
             if(accesses instanceof Document){
                 final Document accDoc = (Document) accesses;
-                row.add(accDoc.getLong("ops"));
+                row.add(Util.getNumber(accDoc,"ops", 0));
                 final Date date = accDoc.getDate("since");
                 final LocalDateTime localDateTime = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
                 row.add(localDateTime.format(DATE_TIME_FORMATTER));

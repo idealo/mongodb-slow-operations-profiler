@@ -36,9 +36,9 @@ public class CollectorStatusDto {
     private final String lastTsFormatted;
     private final String replSetStatus;
     private final String cpuArch;
-    private final int numCores;
-    private final long cpuFreqMHz;
-    private final int memSizeMB;
+    private final Number numCores;
+    private final Number cpuFreqMHz;
+    private final Number memSizeMB;
     private final String mongodbVersion;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -58,9 +58,9 @@ public class CollectorStatusDto {
                               @JsonProperty("lastTs") Date lastTs,
                               @JsonProperty("doneJobsHistory") ArrayList<Long> doneJobsHistory,
                               @JsonProperty("cpuArch") String cpuArch,
-                              @JsonProperty("numCores") int numCores,
-                              @JsonProperty("cpuFreqMHz") long cpuFreqMHz,
-                              @JsonProperty("memSizeMB") int memSizeMB,
+                              @JsonProperty("numCores") Number numCores,
+                              @JsonProperty("cpuFreqMHz") Number cpuFreqMHz,
+                              @JsonProperty("memSizeMB") Number memSizeMB,
                               @JsonProperty("mongodbVersion") String mongodbVersion) {
         this.instanceId = instanceId;
         this.label = label;
@@ -140,11 +140,11 @@ public class CollectorStatusDto {
 
     public String getCpuArch() {return cpuArch;}
 
-    public int getNumCores() {return numCores;}
+    public Number getNumCores() {return numCores;}
 
-    public long getCpuFreqMHz() {return cpuFreqMHz;}
+    public Number getCpuFreqMHz() {return cpuFreqMHz;}
 
-    public int getMemSizeMB() {return memSizeMB;}
+    public Number getMemSizeMB() {return memSizeMB;}
 
     public String getMongodbVersion() {return mongodbVersion;}
 }

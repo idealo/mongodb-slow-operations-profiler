@@ -7,6 +7,7 @@ import de.idealo.mongodb.slowops.dto.CommandResultDto;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
 import de.idealo.mongodb.slowops.dto.TableDto;
 import de.idealo.mongodb.slowops.monitor.MongoDbAccessor;
+import de.idealo.mongodb.slowops.util.Util;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,13 +79,13 @@ public class CmdHostInfo implements ICommand {
                         row.add("unknown");
                     }
                     row.add(systemDoc.getString("cpuArch"));
-                    row.add(systemDoc.getInteger("numCores"));
+                    row.add(Util.getNumber(systemDoc, "numCores", 0));
                     row.add((Math.round(Double.parseDouble(extraDoc.getString("cpuFrequencyMHz")))));
-                    row.add(systemDoc.getInteger("memSizeMB"));
+                    row.add(Util.getNumber(systemDoc, "memSizeMB", 0));
                     row.add(systemDoc.getBoolean("numaEnabled").toString());
-                    row.add(extraDoc.getLong("pageSize"));
-                    row.add(extraDoc.getInteger("numPages"));
-                    row.add(extraDoc.getInteger("maxOpenFiles"));
+                    row.add(Util.getNumber(extraDoc, "pageSize", 0));
+                    row.add(Util.getNumber(extraDoc, "numPages", 0));
+                    row.add(Util.getNumber(extraDoc, "maxOpenFiles",0));
                     row.add(osDoc.getString("name"));
                     row.add(osDoc.getString("version"));
                     row.add(extraDoc.getString("libcVersion"));

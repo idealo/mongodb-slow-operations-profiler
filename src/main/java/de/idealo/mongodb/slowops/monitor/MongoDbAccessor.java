@@ -233,26 +233,22 @@ public class MongoDbAccessor {
     }
 
     public static void main(String[] args) throws UnknownHostException {
-        //ServerAddress adr = new ServerAddress("localhost:27017");
-        ServerAddress adr = new ServerAddress("mongo-arbiter-01.db00.pro07.eu.idealo.com:27058");
-        MongoClient mongo = new MongoClient(Lists.newArrayList(adr));
-        Document doc = mongo.getDatabase("admin").runCommand(new BasicDBObject("replSetGetStatus", 1), ReadPreference.secondaryPreferred());
-        LOG.info("doc: {}", doc);
+/*
+        //previously to do if SSL/TLS is to be used: keytool -importcert -file /path/to/your/ca-cert.ctr -keystore /path/to/your/truststore
+        System.setProperty("javax.net.ssl.trustStore", "/path/to/your/truststore");
+        System.setProperty("javax.net.ssl.trustStorePassword", "YOUR_TRUST_STORE_PASSWORD");
 
-        //previously todo: keytool -importcert -file /Users/kay.agahd/Downloads/ca-idealo-intern-2020.crt -keystore cacerts
-        /*System.setProperty("javax.net.ssl.trustStore", "/Library/Java/JavaVirtualMachines/jdk-11.0.2.jdk/Contents/Home/lib/security/cacerts");
-        System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
-        ServerAddress adr = new ServerAddress("mongo-charlie01-01.db00.tst05.eu.idealo.com:27017");
+        ServerAddress adr = new ServerAddress("localhost:27017");
 
-        MongoDbAccessor monitor = new MongoDbAccessor(1000, 1000, "admin", "<ADMINPW>", true, adr);
-        Document doc = monitor.runCommand("admin", new BasicDBObject("isMaster", "1"));
+        MongoDbAccessor mongoDbAccessor = new MongoDbAccessor(1000, 1000, "admin", "<ADMINPW>", true, adr);
+        Document doc = mongoDbAccessor.runCommand("admin", new BasicDBObject("isMaster", "1"));
         LOG.info("doc: {}", doc);
         LOG.info("ismaster: {}",  doc.get("ismaster"));
 
-        for(ServerAddress sa : monitor.getAllAddresses()){
+        for(ServerAddress sa : mongoDbAccessor.getAllAddresses()){
             LOG.info("adr: {}", sa);
         }
-        */
+*/
 
     }
 

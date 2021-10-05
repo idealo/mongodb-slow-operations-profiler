@@ -13,11 +13,11 @@ package de.idealo.mongodb.slowops.dto;
  */
 public class HostInfoDto {
 
-    private int memSizeMB;
-    private int numCores;
-    private int numPages;
-    private int maxOpenFiles;
-    private long pageSize;
+    private Number memSizeMB;
+    private Number numCores;
+    private Number numPages;
+    private Number maxOpenFiles;
+    private Number pageSize;
     private boolean numaEnabled;
     private String hostName;
     private String osName;
@@ -32,61 +32,61 @@ public class HostInfoDto {
     /**
      * @return the memSizeMB
      */
-    public int getMemSizeMB() {
+    public Number getMemSizeMB() {
         return memSizeMB;
     }
     /**
      * @param memSizeMB the memSizeMB to set
      */
-    public void setMemSizeMB(int memSizeMB) {
+    public void setMemSizeMB(Number memSizeMB) {
         this.memSizeMB = memSizeMB;
     }
     /**
      * @return the numCores
      */
-    public int getNumCores() {
+    public Number getNumCores() {
         return numCores;
     }
     /**
      * @param numCores the numCores to set
      */
-    public void setNumCores(int numCores) {
+    public void setNumCores(Number numCores) {
         this.numCores = numCores;
     }
     /**
      * @return the numPages
      */
-    public int getNumPages() {
+    public Number getNumPages() {
         return numPages;
     }
     /**
      * @param numPages the numPages to set
      */
-    public void setNumPages(int numPages) {
+    public void setNumPages(Number numPages) {
         this.numPages = numPages;
     }
     /**
      * @return the maxOpenFiles
      */
-    public int getMaxOpenFiles() {
+    public Number getMaxOpenFiles() {
         return maxOpenFiles;
     }
     /**
      * @param maxOpenFiles the maxOpenFiles to set
      */
-    public void setMaxOpenFiles(int maxOpenFiles) {
+    public void setMaxOpenFiles(Number maxOpenFiles) {
         this.maxOpenFiles = maxOpenFiles;
     }
     /**
      * @return the pageSize
      */
-    public long getPageSize() {
+    public Number getPageSize() {
         return pageSize;
     }
     /**
      * @param pageSize the pageSize to set
      */
-    public void setPageSize(long pageSize) {
+    public void setPageSize(Number pageSize) {
         this.pageSize = pageSize;
     }
     /**
