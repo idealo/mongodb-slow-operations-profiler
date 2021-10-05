@@ -311,12 +311,12 @@ The fields at root level define global or default properties:
 ## Version history
 
 * v3.1.6
-  + bugfix: data types of some metrics changed in newer versions of mongoDB which may have lead to java.lang.ClassCastException which is now fixed once for all by using generics (see #13)  
+  + bugfix: data types of some metrics changed in newer versions of mongoDB which may have lead to java.lang.ClassCastException which is now fixed once for all by using generics (see [#13](/../../issues/13))  
 * v3.1.5
-    + bugfix: added a valid config file so that the web-app, started by docker-compose, shows its configured databases to play around with
-    + improvement: the Dockerfile installs now the war-file as exploded files. This is needed when deployed in Kubernetes because the config file needs to be mounted which is not possible from within a war-file. A mounted config file allows the use of secret tokens without exposing them.
+  + bugfix: added a valid config file so that the web-app, started by docker-compose, shows its configured databases to play around with
+  + improvement: the Dockerfile installs now the war-file as exploded files. This is needed when deployed in Kubernetes because the config file needs to be mounted which is not possible from within a war-file. A mounted config file allows the use of secret tokens without exposing them.
 * v3.1.4
-    + improvement: replace com.google.guava v26.0 by v30.0 to to close a potential security vulnerability
+  + improvement: replace com.google.guava v26.0 by v30.0 to to close a potential security vulnerability
 * v3.1.3
   + new: the table header on the analysis page has now a button `clean`. Once clicked, it will show only the most important table columns to analyze slow operations, making the table "cleaner".
 * v3.1.2
