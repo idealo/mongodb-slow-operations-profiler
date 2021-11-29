@@ -38,16 +38,20 @@ The second slowest operation type in this screenshot at 15:37 o'clock is a `quer
 
 ![Screenshot](img/slow_operations_gui_diagram_low.png "Screenshot of the analysis page")
 
-
+<a name="how_to_read"></a>
 ### How to read queried, projected and sorted fields of slow operation types
 
-The fields that make up a slow operation, such as query, projection and sort, are retrieved and stored without their exact values in the collector database. They are shown on the analysis page when analyzing slow operations as follows:
+The parameter fields that make up a slow operation, such as query, projection and sort, are retrieved and stored with their field **names** without their field **values** in the collector database. They are shown on the analysis page when analyzing slow operations as follows:
   + **queried fields** are suffixed by their operator if no equality condition was used 
-     + e.g. the expression `{field:{$gt:3}}` is shown as `field.$gt` 
+     + e.g. the expression `{field: {$gt:3}}` is shown as `field.$gt` 
   + if the operator applies to **multiple operands**, operands are enclosed in square brackets 
      + e.g. the expression `$and:[$or:[a:1, b:2], c:3]` is show as `$and[$or[a, b], c]` 
+  + if the operator applies to **multiple operands with identical field names**, only 1 field name suffixed with * is shown
+     + e.g. the expression `$in:[{x:1}, {x:5}]` is shown as `$in[x*]`  
+  + the previous point applies also for **documents having same field names**
+     + e.g. the expression `$in:[{a:1, b:2}, {a:3, b:4}]` is shown as `$in[{a, b}*]`
   + **nested fields** are shown in dot notation 
-     + e.g. the expression `$and:[{"a.x":1},{"a.y":2}]` is shown as `$and[a.x, a.y]`
+     + e.g. the expression `$and:[{"a.x":1}, {"a.y":2}]` is shown as `$and[a.x, a.y]`
   + **nested documents** are surrounded by curly braces
      + e.g. the expression `p:{x:1,y:2}` is shown as `p{x,y}`
   + **stages** of an aggregation pipeline are shown separated by semicolon
@@ -310,13 +314,21 @@ The fields at root level define global or default properties:
 
 ## Version history
 
+* v3.2.0
+  + new: slow operations with operators that apply to **multiple operands** which have multiple occurrences of **identical** field names are shortened to only 1 field suffixed with *  
+
+    For example, a query expression `{$in:[a:1, a:2, a:3]}` was shown in the analysis page up to now as `{$in:[a, a, a]}` and will be shown from now on as `{$in:[a*]}`
+    
+    This also works for documents, for example, a query expression `{$in:[{a:1, b:2}, {a:3, b:4}]}` was shown up to now as `{$in:[{a, b}, {a, b}]}` and will be shown from now on as `{$in:[{a, b}*]}`
+  
+    With this change, it becomes obvious that those query expressions belong to the **same** slow operation type since they will be grouped together as one operation type. For more details [see above](#how_to_read)
 * v3.1.6
   + bugfix: data types of some metrics changed in newer versions of mongoDB which may have lead to java.lang.ClassCastException which is now fixed once for all by using generics (see [#13](/../../issues/13))  
 * v3.1.5
   + bugfix: added a valid config file so that the web-app, started by docker-compose, shows its configured databases to play around with
   + improvement: the Dockerfile installs now the war-file as exploded files. This is needed when deployed in Kubernetes because the config file needs to be mounted which is not possible from within a war-file. A mounted config file allows the use of secret tokens without exposing them.
 * v3.1.4
-  + improvement: replace com.google.guava v26.0 by v30.0 to to close a potential security vulnerability
+  + improvement: replace com.google.guava v26.0 by v30.0 to close a potential security vulnerability
 * v3.1.3
   + new: the table header on the analysis page has now a button `clean`. Once clicked, it will show only the most important table columns to analyze slow operations, making the table "cleaner".
 * v3.1.2

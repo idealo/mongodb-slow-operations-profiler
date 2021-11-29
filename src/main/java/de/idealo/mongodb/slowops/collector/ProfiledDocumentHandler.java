@@ -759,12 +759,21 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
                         //sorting is required because querying the fields [a, b] is the same as [b, a], thus has to be grouped into the same slow-op type
                         Collections.sort( sKeys );
                         if(!sKeys.isEmpty()){
+                            final String keyBak = key;
                             key = key + "[";
+                            String prevSubKey = null;
+                            boolean isIdentical = true;
                             for(String k : sKeys){
                                 key += k + ", ";
+                                if(isIdentical && prevSubKey!=null && !prevSubKey.equals(k)) isIdentical=false;
+                                prevSubKey = k;
                             }
-                            key=key.substring(0, key.length()-2); //cut last ,
-                            key += "]";
+                            if(isIdentical && sKeys.size()>1){
+                                key = keyBak + "[" + prevSubKey + "*]"; //multiple occurrences of identical keys are shortened to only 1 key suffixed with *
+                            }else {
+                                key = key.substring(0, key.length() - 2); //cut last ,
+                                key += "]";
+                            }
                         }
                     }
                 }
@@ -782,8 +791,8 @@ offerlistservice01:PRIMARY> db.system.profile.findOne({op:"update","command.$tru
             for(String sKey : sortedList){
                 key += sKey + ", ";
             }
-            key = key.substring(0, key.length()-2); //cut last ,
-            key += "}";
+                key = key.substring(0, key.length() - 2); //cut last ,
+                key += "}";
         }else{ //only one key so we can separate with separator (e.g. dot notation)
             LinkedHashSet<String> subDocKeys = getFields(subObj);
             for(String sKey : subDocKeys){
