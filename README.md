@@ -5,11 +5,11 @@ Since v2.0.0 it may be easily extended to an administration tool by implementing
 The initial version of the software has been presented during the [MongoDB User Group Berlin on 4th of June 2013](http://www.meetup.com/MUGBerlin/events/119503502/).
 Slides of the presentation can be found [here](http://www.slideshare.net/Kay1A/slow-ops). Version 2.4 has been presented in November 2018 at the [Percona Live Europe Conference](https://www.percona.com/live/e18/sessions/how-to-visually-spot-and-analyze-slow-mongodb-operations).
 
-I wrote a blog "Practical Guide To Analyzing Slow MongoDB Queries" which has been published on [medium.com](https://medium.com/idealo-tech-blog/practical-guide-to-analyze-slow-mongodb-operations-9363035b01fb):
+The "Practical Guide To Analyzing Slow MongoDB Queries", which has been published on [medium.com](https://medium.com/idealo-tech-blog/practical-guide-to-analyze-slow-mongodb-operations-9363035b01fb), may help you to start analyze slow queries.
 
 [![Blog post on medium](img/blog.png)](https://medium.com/idealo-tech-blog/practical-guide-to-analyze-slow-mongodb-operations-9363035b01fb)
 
-I also made a tutorial "How to Analyze slow MongoDB Operations" which has been published on [youtube.com](https://www.youtube.com/watch?v=zvQSZiTU1Zg):
+There is also a tutorial "How to Analyze slow MongoDB Operations" which has been published on [youtube.com](https://www.youtube.com/watch?v=zvQSZiTU1Zg):
 
 [![Tutorial on YouTube](img/video.png)](https://www.youtube.com/watch?v=zvQSZiTU1Zg)
 
@@ -218,9 +218,9 @@ not enabled.
   - `git clone
      https://github.com/idealo/mongodb-slow-operations-profiler.git`
 2. Enter the server addresses, database and collection names in file "`mongodb-slow-operations-profiler/src/main/resources/config.json`" (see [Configuration](#config) below)
-3. While being in the in the project folder "`mongodb-slow-operations-profiler/`", build a war file by executing in a shell:
+3. While being in the project folder "`mongodb-slow-operations-profiler/`", build a war file by executing in a shell:
    - `mvn package`
-4. Deploy the resulted war file `mongodb-slow-operations-profiler.war` on a java webserver (e.g. tomcat). Dependent on the above mentionned `config.json`, it may automatically start collecting slow operations. If no slow operations exist yet on the mongoD's, the collector(s) will sleep 1 hour before retrying.
+4. Deploy the resulted war file `mongodb-slow-operations-profiler.war` on a java webserver with a Servlet API version < 5.0 (e.g. [tomcat v9](https://tomcat.apache.org/tomcat-9.0-doc/index.html)). Dependent on the above-mentioned `config.json`, it may automatically start collecting slow operations. If no slow operations exist yet on the mongoD's, the collector(s) will sleep 1 hour before retrying.
 5. The application can be accessed through a web browser by the URL:
    - [http://your-server:your-port/mongodb-slow-operations-profiler[-VERSION-NUMBER-if-less-than-2.10]/app](http://your-server:your-port/mongodb-slow-operations-profiler/app)
 6. To visualize and analyze slow operations either select one or more entries and click "analyse" or use the following
@@ -313,7 +313,9 @@ The fields at root level define global or default properties:
 
 
 ## Version history
-
+* v3.2.1
+  + update: in Dockerfile, the alpine image is replaced by an image that supports also arm64 besides amd64 architectures. Doing so, the container can also run on Mac's equipped with M1 CPU for example
+  + update: in docker-compose.yaml, the default port mapping exposes now all interfaces in order to allow communication also from within a VM, e.g. [Podman](https://podman.io) or [Lima](https://github.com/lima-vm/lima) on MacOS 
 * v3.2.0
   + new: slow operations with operators that apply to **multiple operands** which have multiple occurrences of **identical** field names are shortened to only 1 field suffixed with *  
 

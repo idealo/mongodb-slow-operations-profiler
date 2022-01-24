@@ -15,7 +15,12 @@ services:
       - collector-db
       - test-db
     ports:
-      - "127.0.0.1:8080:8080"
+      - "8080:8080"
+      # You may restrict the mapping to the host IP only
+      # if run on localhost e.g. Docker:
+      #- "127.0.0.1:8080:8080"
+      # if run inside VM e.g. Podman or Lima on MacOS:
+      #- "192.168.127.2:8080:8080"
     links:
       - "collector-db"
       - "test-db"
