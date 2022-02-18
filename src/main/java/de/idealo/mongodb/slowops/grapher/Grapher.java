@@ -58,7 +58,7 @@ public class Grapher {
 
     private MongoCollection getProfilingCollection() {
         CollectorServerDto serverDto = ConfigReader.getCollectorServer();
-;
+
         try{
             MongoDbAccessor mongo = new MongoDbAccessor(60000, -1, true, serverDto.getAdminUser(), serverDto.getAdminPw(), serverDto.getSsl(), serverDto.getHosts());
             DB db = mongo.getMongoDB(serverDto.getDb());
@@ -125,7 +125,6 @@ public class Grapher {
                     "mod : { $sum : '$mod' }," +
                     "sortstages : { $addToSet : '$sortstg' }" +
                     "}" +
-                    "}" +
                   "}"
             )
             .and("{$sort:{" +
@@ -136,11 +135,11 @@ public class Grapher {
             .as(AggregatedProfiling.class);
             LOG.debug("Duration in ms: {}", ((new Date()).getTime() - begin.getTime()));
         }catch(MongoException e) {
-            LOG.warn("MongoException while aggreating.", e);
+            LOG.warn("MongoException while aggregating.", e);
             result.setErrorMessage(e.getMessage());
             return result;
         }catch(IllegalArgumentException e) {
-            LOG.warn("MongoException while aggreating.", e);
+            LOG.warn("MongoException while aggregating.", e);
             result.setErrorMessage("Please enter only valid values!");
             return result;
         }

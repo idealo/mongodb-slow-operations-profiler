@@ -313,6 +313,9 @@ The fields at root level define global or default properties:
 
 
 ## Version history
+* v3.2.2
+  + bugfix: some output format changed in mongodb v5.0 causing an error in the slow-operations-profiler which is fixed now  (see [#18](/../../issues/18))
+  + update: in docker-compose use mongodb v5.0 instead of mongodb v4.2 
 * v3.2.1
   + update: in Dockerfile, the alpine image is replaced by an image that supports also arm64 besides amd64 architectures. Doing so, the container can also run on Mac's equipped with M1 CPU for example
   + update: in docker-compose.yaml, the default port mapping exposes now all interfaces in order to allow communication also from within a VM, e.g. [Podman](https://podman.io) or [Lima](https://github.com/lima-vm/lima) on MacOS 

@@ -436,8 +436,8 @@ public class ProfilingReader extends Thread implements Terminable{
                     hostInfoDto.setHostName(systemDoc.getString("hostname"));
                     hostInfoDto.setCpuArch(systemDoc.getString("cpuArch"));
                     hostInfoDto.setNumCores(Util.getNumber(systemDoc,"numCores", 0));
-                    hostInfoDto.setCpuFreqMHz((Math.round(Double.parseDouble(extraDoc.getString("cpuFrequencyMHz")))));
-                    hostInfoDto.setMemSizeMB(Util.getNumber(systemDoc, "memSizeMB", -0));
+                    hostInfoDto.setCpuFreqMHz(Util.getNumber(extraDoc,"cpuFrequencyMHz", 0));
+                    hostInfoDto.setMemSizeMB(Util.getNumber(systemDoc, "memSizeMB", 0));
                     hostInfoDto.setNumaEnabled(systemDoc.getBoolean("numaEnabled"));
                     hostInfoDto.setPageSize(Util.getNumber(extraDoc,"pageSize", 0));
                     hostInfoDto.setNumPages(Util.getNumber(extraDoc, "numPages", 0));

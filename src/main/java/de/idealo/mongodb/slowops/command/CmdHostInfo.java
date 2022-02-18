@@ -80,7 +80,7 @@ public class CmdHostInfo implements ICommand {
                     }
                     row.add(systemDoc.getString("cpuArch"));
                     row.add(Util.getNumber(systemDoc, "numCores", 0));
-                    row.add((Math.round(Double.parseDouble(extraDoc.getString("cpuFrequencyMHz")))));
+                    row.add(Util.getNumber(extraDoc, "cpuFrequencyMHz", 0));
                     row.add(Util.getNumber(systemDoc, "memSizeMB", 0));
                     row.add(systemDoc.getBoolean("numaEnabled").toString());
                     row.add(Util.getNumber(extraDoc, "pageSize", 0));
