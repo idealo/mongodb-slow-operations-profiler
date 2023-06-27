@@ -30,7 +30,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
-				<version>2.4</version>
+				<version>3.4.0</version>
                 <configuration>
                   <archive>
                       <manifest>
@@ -64,7 +64,7 @@
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
-			<version>1.2.0</version>
+			<version>1.4.8</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.collections</groupId>
@@ -74,7 +74,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>32.0.0-jre</version>
+			<version>32.0.1-jre</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jongo</groupId>

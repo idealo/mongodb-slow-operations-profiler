@@ -313,6 +313,10 @@ The fields at root level define global or default properties:
 
 
 ## Version history
+* v3.2.3
+  + improvement: update `guava` from v32.0.0 to v32.0.1 to close a potential security vulnerability
+  + improvement: update `logback-classic` from v1.2.0 to v1.4.8 to close a potential security vulnerability
+  + improvement: update `maven-war-plugin` from v2.4 to v3.4.0
 * v3.2.2
   + bugfix: some output format changed in mongodb v5.0 causing an error in the slow-operations-profiler which is fixed now  (see [#18](/../../issues/18))
   + update: in docker-compose use mongodb v5.0 instead of mongodb v4.2 
