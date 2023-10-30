@@ -1,5 +1,5 @@
 FROM alpine/git AS cloner
-RUN cd /root && git clone https://github.com/idealo/mongodb-slow-operations-profiler.git
+RUN cd /root && git clone https://github.com/gocomet-india/mongodb-slow-operations-profiler.git
 
 FROM maven:3.8.4-openjdk-11-slim AS builder
 COPY --from=cloner /root/mongodb-slow-operations-profiler/ /usr/src/app/
