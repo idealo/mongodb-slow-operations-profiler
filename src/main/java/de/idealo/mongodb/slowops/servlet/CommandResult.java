@@ -11,6 +11,7 @@ import de.idealo.mongodb.slowops.command.*;
 import de.idealo.mongodb.slowops.dto.CommandResultDto;
 import de.idealo.mongodb.slowops.dto.ProfiledServerDto;
 import de.idealo.mongodb.slowops.dto.TableDto;
+import de.idealo.mongodb.slowops.util.JsonParser;
 import de.idealo.mongodb.slowops.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-@WebServlet("/cmd")
+@WebServlet(name = "cmd", urlPatterns = {"/cmd", "/cmdj"})
 public class CommandResult extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final Logger LOG = LoggerFactory.getLogger(CommandResult.class);
@@ -45,10 +46,57 @@ public class CommandResult extends HttpServlet {
 		LOG.debug(">>> doGet");
         final String cmd = request.getParameter("cmd");
         final String mode = request.getParameter("mode");
+        final String s_pIds = request.getParameter("pIds");
+        CommandResultDto result = getCommandResultDto(cmd, mode, s_pIds);
+
+        String uri = request.getRequestURI();
+
+        if (uri.endsWith("/cmd")) {
+            renderHtml(result, request, response);
+        } else if (uri.endsWith("/cmdj")) {
+            renderJson(result, request, response);
+        } else {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        }
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletR: "Nonprod DB",
+    "command": "{\"$truncated\": \"{ aggregate: \\\"analytics_enquiry\\\", pipeline: [ { $match: { $and: [ { $and: [ { $and: [ { enquiry_type: { $eq: \\\"spot\\\" } }, { demo: { $eq: false } }, { deleted: { $eq: faequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	    doGet(request, response);
+	}
+
+    private void renderHtml(CommandResultDto result, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
+        request.setAttribute("commandResult", result);
+        RequestDispatcher view = request.getRequestDispatcher("/commandResult.jsp");
+        LOG.debug("doGet");
+        view.forward(request, response);
+        LOG.debug("<<< doGet");
+    }
+
+    private void renderJson(CommandResultDto result, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
+        String jsonData = jsonParser(result);
+
+        response.setContentType("application/json");
+        response.getWriter().write(jsonData);
+    }
+
+    private String jsonParser(CommandResultDto result){
+        LOG.debug("jsonParser START");
+        List<String> headers = result.getTableHeader();
+        List<List<Object>> data = result.getTableBody().getTableRows();
+
+        String parsedData = JsonParser.generateJSONString(headers, data);
+        LOG.debug("jsonParser END");
+        return parsedData;
+    }
+
+    private CommandResultDto getCommandResultDto(String cmd, String mode, String s_pIds){
         CommandResultDto result = null;
         if (cmd != null) {
             LOG.info("cmd: {}", cmd);
-            final String s_pIds = request.getParameter("pIds");
             if (s_pIds != null) {
                 LOG.info("pIds: {}", s_pIds);
                 try {
@@ -74,8 +122,6 @@ public class CommandResult extends HttpServlet {
                     }
 
                     result = executeCommand(command, readerList, mode);
-
-
                 } catch (Exception e) {
                     LOG.error("Exception while building command result", e);
                 }
@@ -83,19 +129,9 @@ public class CommandResult extends HttpServlet {
 
         }
 
-        request.setAttribute("commandResult", result!=null?result:new CommandResultDto());
-		RequestDispatcher view = request.getRequestDispatcher("/commandResult.jsp");
-		LOG.debug("doGet");
-		view.forward(request, response);
-		LOG.debug("<<< doGet");
-	}
-
-	/**
-	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
-	 */
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-	    doGet(request, response);
-	}
+        result = result != null ? result : new CommandResultDto();
+        return result;
+    }
 
 
     private CommandResultDto executeCommand(ICommand command, List<ProfilingReader> readerList, String mode ){
