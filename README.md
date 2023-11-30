@@ -314,8 +314,7 @@ The fields at root level define global or default properties:
 
 ## Version history
 * v3.2.4
-  + improvement: replace ch.qos.logback:logback-classic v1.2.0 by 1.3.12 to close a potential security vulnerability
-  + improvement: replace com.google.guava 30.0-jre by 32.0.0-jre
+  + improvement: update `logback-classic` from 1.4.8 to 1.4.12 to close a potential security vulnerability
 * v3.2.3
   + improvement: update `guava` from v32.0.0 to v32.0.1 to close a potential security vulnerability
   + improvement: update `logback-classic` from v1.2.0 to v1.4.8 to close a potential security vulnerability
