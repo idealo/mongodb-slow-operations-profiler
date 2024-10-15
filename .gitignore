@@ -6,7 +6,7 @@ slowOpsGui*.png
 .~lock*
 .checkstyle
 .classpath
-.git*
+.git_*
 .project
 .settings
 .idealo.yaml

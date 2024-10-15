@@ -4,7 +4,7 @@
 
 	<groupId>de.idealo.mongodb</groupId>
 	<artifactId>mongodb-slow-operations-profiler</artifactId>
-	<version>3.2.4</version>
+	<version>3.2.5</version>
 	<packaging>war</packaging>
 
 	<name>mongodb-slow-operations-profiler</name>
@@ -18,6 +18,14 @@
 	<build>
 		<finalName>${project.name}</finalName>
 		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>versions-maven-plugin</artifactId>
+				<version>2.17.1</version>
+				<configuration>
+					<generateBackupPoms>false</generateBackupPoms>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -49,7 +57,7 @@
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongodb-driver</artifactId>
-			<version>3.10.2</version>
+			<version>3.12.14</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -59,12 +67,12 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.13.1</version>
+			<version>4.13.2</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
-			<version>1.4.12</version>
+			<version>1.5.10</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.collections</groupId>
@@ -74,17 +82,17 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>32.0.1-jre</version>
+			<version>33.3.1-jre</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jongo</groupId>
 			<artifactId>jongo</artifactId>
-			<version>1.3.0</version>
+			<version>1.5.1</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>
-			<version>3.1.0</version>
+			<version>4.0.1</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -103,17 +111,17 @@
 		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-server</artifactId>
-			<version>1.19.2</version>
+			<version>1.19.4</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-servlet</artifactId>
-			<version>1.19.2</version>
+			<version>1.19.4</version>
 		</dependency>
 		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-json</artifactId>
-			<version>1.19.2</version>
+			<version>1.19.4</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.ws.rs</groupId>

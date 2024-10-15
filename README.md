@@ -222,10 +222,10 @@ not enabled.
    - `mvn package`
 4. Deploy the resulted war file `mongodb-slow-operations-profiler.war` on a java webserver with a Servlet API version < 5.0 (e.g. [tomcat v9](https://tomcat.apache.org/tomcat-9.0-doc/index.html)). Dependent on the above-mentioned `config.json`, it may automatically start collecting slow operations. If no slow operations exist yet on the mongoD's, the collector(s) will sleep 1 hour before retrying.
 5. The application can be accessed through a web browser by the URL:
-   - [http://your-server:your-port/mongodb-slow-operations-profiler[-VERSION-NUMBER-if-less-than-2.10]/app](http://your-server:your-port/mongodb-slow-operations-profiler/app)
+   - [http://your-server:your-port/mongodb-slow-operations-profiler/app](http://your-server:your-port/mongodb-slow-operations-profiler/app)
 6. To visualize and analyze slow operations either select one or more entries and click "analyse" or use the following
    URL:
-   - [http://your-server:your-port/mongodb-slow-operations-profiler[-VERSION-NUMBER-if-less-than-2.10]/gui](http://your-server:your-port/mongodb-slow-operations-profiler/gui)
+   - [http://your-server:your-port/mongodb-slow-operations-profiler/gui](http://your-server:your-port/mongodb-slow-operations-profiler/gui)
 
 ### <a name="config"></a> Configuration
 
@@ -313,6 +313,11 @@ The fields at root level define global or default properties:
 
 
 ## Version history
+* v3.2.5
+  + improvement: replace `logback-classic` v1.4.12 by v1.5.10 to close a potential security vulnerability
+  + improvement: update dependencies to its latest versions
+  + improvement: add plugin `versions-maven-plugin` to `pom.xml` to easily list dependency updates by `mvn versions:display-dependency-updates`
+  + improvement: in docker-compose use mongodb v8.0 instead of mongodb v5.0
 * v3.2.4
   + improvement: update `logback-classic` from 1.4.8 to 1.4.12 to close a potential security vulnerability
 * v3.2.3
