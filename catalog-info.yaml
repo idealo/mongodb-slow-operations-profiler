@@ -1,0 +1,13 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: mongodb-slow-operations-profiler
+  description: This java web application collects and stores slow operations from one or more mongoDB system(s) in order to visualize and analyze them.
+  annotations:
+    github.com/project-slug: idealo/mongodb-slow-operations-profiler
+    github.com/team-slug: idealo/persistence
+spec:
+  type: service
+  lifecycle: production
+  owner: group:persistence
+  system: database-management-toolset
