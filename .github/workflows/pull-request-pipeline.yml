@@ -1,6 +1,4 @@
 name: Pull request workflow
-permissions:
-  contents: read
 on:
   pull_request:
     branches:
