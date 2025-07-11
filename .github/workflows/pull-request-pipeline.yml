@@ -1,0 +1,16 @@
+name: Pull request workflow
+permissions:
+  contents: read
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  secrets_scanning:
+    name: Secrets Scanning
+    uses: idealo/security-prevention-workflow-secrets/.github/workflows/secrets-scanning.yml@4f9cf6d33ed5caf5bdb5bc289bb558c1b08909a0 # v3
+    with:
+      continue-on-error: false
+      false-positives-file-path: .secrets-scan-false-positives.json
