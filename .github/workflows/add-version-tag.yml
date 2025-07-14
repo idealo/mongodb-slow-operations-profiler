@@ -1,5 +1,8 @@
 name: Add version tag
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
