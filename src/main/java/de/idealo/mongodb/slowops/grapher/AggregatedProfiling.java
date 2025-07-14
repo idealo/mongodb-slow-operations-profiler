@@ -275,7 +275,7 @@ public class AggregatedProfiling {
 
 
         int sum[] = {0,0,0};
-        int avg[] = {0,0,0};
+        double avg[] = {0.0,0.0,0.0};
         for (int s = 0; s < sum.length; s++) {
             for (int i = 0; i < samples[s].length; i++) {
                 sum[s] += samples[s][i];
@@ -285,7 +285,7 @@ public class AggregatedProfiling {
             System.out.println("avg["+s+"]=" + avg[s]);
         }
 
-        int sumSig[] = {0,0,0};
+        double sumSig[] = {0.0,0.0,0.0};
         double sigma[] = {0,0,0};
         for (int s = 0; s < sumSig.length; s++) {
             for (int i = 0; i < samples[s].length; i++) {

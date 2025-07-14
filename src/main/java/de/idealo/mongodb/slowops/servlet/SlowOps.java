@@ -228,7 +228,7 @@ public class SlowOps extends HttpServlet {
         final List<Pattern> result = Lists.newArrayList();
         final String[] params = parameter.replaceAll("'", "").split(";");
         for (int i = 0; i < params.length; i++) {
-            result.add(Pattern.compile(prefix + params[i].trim() + suffix));
+            result.add(Pattern.compile(prefix + Pattern.quote(params[i].trim())+ suffix));
         }
         return result;
     }
