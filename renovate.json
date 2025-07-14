@@ -4,7 +4,7 @@
         "local>idealo/security-prevention-renovate-config"
     ],
     "baseBranches": [
-        "main",
+        "master",
         "development"
     ]
 }
