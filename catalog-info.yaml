@@ -5,9 +5,9 @@ metadata:
   description: This java web application collects and stores slow operations from one or more mongoDB system(s) in order to visualize and analyze them.
   annotations:
     github.com/project-slug: idealo/mongodb-slow-operations-profiler
-    github.com/team-slug: idealo/persistence
+    github.com/team-slug: idealo/cloud-core
 spec:
   type: service
   lifecycle: production
-  owner: group:persistence
+  owner: group:cloud-core
   system: database-management-toolset
