@@ -1,6 +1,36 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+
+  // Create PRs only for GitHub Security Alerts (Dependabot advisories)
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
+
+  // Prevent the extra Dependency Dashboard issue
   "extends": [
-    "local>idealo/renovate-config"
-  ]
+    ":disableDependencyDashboard"
+  ],
+
+  // Disable all regular updates (major/minor/patch/digest/pin/etc.)
+  // Security alert PRs remain allowed.
+  "packageRules": [
+    {
+      "description": "Disable all non-security updates across all managers",
+      // Applies to all managers when not specifying matchManagers
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch",
+        "pin",
+        "digest",
+        "rollback",
+        "bump",
+        "lockFileMaintenance"
+      ],
+      "enabled": false
+    }
+  ],
+
+  // Optional: add labels to security PRs
+  "labels": ["security", "renovate"]
 }
