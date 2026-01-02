@@ -10,13 +10,13 @@
 	<script src="js/jquery-3.6.4.min.js"></script>
 	<script src="js/jquery-ui-1.13.2.min.js"></script>
 	<script src="js/popper.min.js"></script>
-	<script src="js/bootstrap4.3.1.min.js"></script>
+	<script src="js/bootstrap4.6.2.min.js"></script>
 	<script src="js/jquery.dataTables-1.13.6.min.js"></script>
 	<script src="js/jquery.dataTables.sum.js"></script>
 	<script src="js/jquery.number.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/jquery.dataTables.css">
 	<link rel="stylesheet" type="text/css" href="css/jquery-ui.css">
-	<link rel="stylesheet" type="text/css" href="css/bootstrap4.3.1.min.css">
+	<link rel="stylesheet" type="text/css" href="css/bootstrap4.6.2.min.css">
 	<link rel="stylesheet" type="text/css" href="css/custom-tooltips.css">
 
     <title>application status of slow-operations-profiler</title>

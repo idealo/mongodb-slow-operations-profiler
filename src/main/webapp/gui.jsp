@@ -16,11 +16,11 @@
   <script src="js/jquery.dataTables.sum.js"></script>
   <script src="js/jquery.number.min.js"></script>
   <script src="js/popper.min.js"></script>
-  <script src="js/bootstrap4.3.1.min.js"></script>
+  <script src="js/bootstrap4.6.2.min.js"></script>
   <script src="js/tempusdominus-bootstrap-4.min.js"></script>
   <link rel="stylesheet" type="text/css" href="css/jquery.dataTables.css">
   <link rel="stylesheet" type="text/css" href="css/jquery-ui.css">
-  <link rel="stylesheet" type="text/css" href="css/bootstrap4.3.1.min.css">
+  <link rel="stylesheet" type="text/css" href="css/bootstrap4.6.2.min.css">
   <link rel="stylesheet" type="text/css" href="css/fontawesome.min.css">
   <link rel="stylesheet" type="text/css" href="css/tempusdominus-bootstrap-4.min.css">
   <link rel="stylesheet" type="text/css" href="css/custom-tooltips.css">
