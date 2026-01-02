@@ -7,7 +7,8 @@ package de.idealo.mongodb.slowops.servlet;
 import com.google.common.collect.Lists;
 import de.idealo.mongodb.slowops.collector.CollectorManagerInstance;
 import de.idealo.mongodb.slowops.dto.ApplicationStatusDto;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,16 +26,29 @@ import java.util.List;
 @Path("/action")
 public class Action {
 
-	private static final Logger LOG = LoggerFactory.getLogger(Action.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Action.class);
 
-	private static final int SLOWMS_DEFAULT = 100;
+    private static final int SLOWMS_DEFAULT = 100;
+
+    // Add a single shared, safely-configured ObjectMapper to avoid unsafe default typing
+    private static final ObjectMapper MAPPER = createSafeObjectMapper();
+
+    private static ObjectMapper createSafeObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        // Do not enable any default typing. If polymorphic deserialization is required,
+        // use a strict PolymorphicTypeValidator and explicitly enable only the allowed types.
+        // Basic safe defaults:
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        // ...other safe configuration can be added here if needed
+        return mapper;
+    }
 
 
-	@GET
-	@Produces({MediaType.APPLICATION_JSON})
-	public ApplicationStatusDto getApplicationJSON(@QueryParam("cmd") String cmd, @QueryParam("p") String p, @QueryParam("ms") String ms, @Context HttpServletRequest req) {
-		LOG.info(">>> getApplicationJSON cmd: {} p: {} ms:{}", new Object[]{cmd, p, ms});
-		ApplicationStatusDto result = null;
+    @GET
+    @Produces({MediaType.APPLICATION_JSON})
+    public ApplicationStatusDto getApplicationJSON(@QueryParam("cmd") String cmd, @QueryParam("p") String p, @QueryParam("ms") String ms, @Context HttpServletRequest req) {
+        LOG.info(">>> getApplicationJSON cmd: {} p: {} ms:{}", new Object[]{cmd, p, ms});
+        ApplicationStatusDto result = null;
         try {
 			final List<Integer> pList = Lists.newArrayList();
 			final boolean isAuthenticated = ApplicationStatus.isAuthenticated(req);
@@ -76,9 +90,9 @@ public class Action {
 
 			
 			try {
-				final ObjectMapper mapper = new ObjectMapper();
+				// Use shared, safely-configured mapper for logging/serialization
 				LOG.debug("getApplicationJSON result:");
-				LOG.debug(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result));
+				LOG.debug(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(result));
 			} catch (IOException e) {
 				LOG.error("IOException while logging ApplicationStatusDto", e);
 			}

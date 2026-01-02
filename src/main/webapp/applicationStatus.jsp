@@ -6,21 +6,21 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
     <link rel="shortcut icon" type="image/x-icon" href="img/mdb.ico">
     <link rel="icon" type="image/png" href="img/mdb.png">
-	<script type="text/javascript" src="js/dojo.js"></script>
-	<script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
-    <script type="text/javascript" src="js/bootstrap4.3.1.min.js"></script>
-	<script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" src="js/jquery.dataTables.sum.js"></script>
-	<script type="text/javascript" src="js/jquery.number.min.js"></script>
-	<script type="text/javascript" src="js/jquery-ui.min.js"></script>
-
+	<script src="js/dojo.js"></script>
+	<script src="js/jquery-3.6.4.min.js"></script>
+	<script src="js/jquery-ui-1.13.2.min.js"></script>
+	<script src="js/popper.min.js"></script>
+	<script src="js/bootstrap4.3.1.min.js"></script>
+	<script src="js/jquery.dataTables-1.13.6.min.js"></script>
+	<script src="js/jquery.dataTables.sum.js"></script>
+	<script src="js/jquery.number.min.js"></script>
     <link rel="stylesheet" type="text/css" href="css/jquery.dataTables.css">
 	<link rel="stylesheet" type="text/css" href="css/jquery-ui.css">
-    <link rel="stylesheet" type="text/css" href="css/bootstrap4.3.1.min.css">
-
+	<link rel="stylesheet" type="text/css" href="css/bootstrap4.3.1.min.css">
+	<link rel="stylesheet" type="text/css" href="css/custom-tooltips.css">
 
     <title>application status of slow-operations-profiler</title>
-		<script type="text/javascript" >
+		<script>
 			var mainTable;
 			$(document).ready(function() {
 
@@ -231,26 +231,44 @@
 					$(':checkbox', mainTable.rows().nodes()).prop('checked', this.checked);
 				});
 
+                (function(){
+                    var infoMap = {
+                        "infoSlowMs": "#infoSlowMsContent",
+                        "infoConfig": "#infoConfigContent",
+                        "infoOpsCount": "#infoOpsCountContent",
+                        "infoRefreshCollector": "#infoRefreshCollectorContent",
+                        "infoRefresh": "#infoRefreshContent",
+                        "infoAnalyse": "#infoAnalyseContent",
+                        "infoCurrentOps": "#infoCurrentOpsContent",
+                        "infoCurrentOpsNs": "#infoCurrentOpsNsContent",
+                        "infoCurrentOpsAll": "#infoCurrentOpsAllContent",
+                        "infoDBStat": "#infoDBStatContent",
+                        "infoCollStat": "#infoCollStatContent",
+                        "infoIdxAccStats": "#infoIdxAccStatsContent",
+                        "infoHostinfo": "#infoHostinfoContent",
+                        "infoProfiling": "#infoProfilingContent",
+                        "infoCollecting": "#infoCollectingContent",
+                        "infoCommand": "#infoCommandContent"
+                    };
 
-				$(".infoSlowMs").tooltip({content:function(){return $("#infoSlowMsContent").html();}});
-                $(".infoConfig").tooltip({content:function(){return $("#infoConfigContent").html();}});
-                $(".infoOpsCount").tooltip({content:function(){return $("#infoOpsCountContent").html();}});
-                $(".infoRefreshCollector").tooltip({content:function(){return $("#infoRefreshCollectorContent").html();}});
-                $(".infoRefresh").tooltip({content:function(){return $("#infoRefreshContent").html();}});
-                $(".infoAnalyse").tooltip({content:function(){return $("#infoAnalyseContent").html();}});
-                $(".infoCurrentOps").tooltip({content:function(){return $("#infoCurrentOpsContent").html();}});
-                $(".infoCurrentOpsNs").tooltip({content:function(){return $("#infoCurrentOpsNsContent").html();}});
-                $(".infoCurrentOpsAll").tooltip({content:function(){return $("#infoCurrentOpsAllContent").html();}});
-                $(".infoDBStat").tooltip({content:function(){return $("#infoDBStatContent").html();}});
-                $(".infoCollStat").tooltip({content:function(){return $("#infoCollStatContent").html();}});
-                $(".infoIdxAccStats").tooltip({content:function(){return $("#infoIdxAccStatsContent").html();}});
-				$(".infoHostinfo").tooltip({content:function(){return $("#infoHostinfoContent").html();}});
-                $(".infoProfiling").tooltip({content:function(){return $("#infoProfilingContent").html();}});
-                $(".infoCollecting").tooltip({content:function(){return $("#infoCollectingContent").html();}});
-                $(".infoCommand").tooltip({content:function(){return $("#infoCommandContent").html();}});
+                    $.each(infoMap, function(cls, contentSelector){
+                        var $imgs = $("." + cls + " img");
+                        $imgs.removeAttr('title').each(function(){
+                            $(this).tooltip({
+                                html: true,
+                                container: 'body',
+                                placement: 'auto',
+                                boundary: 'window',
+                                sanitize: false,
+                                title: function(){ return $(contentSelector).html(); }
+                            });
+                        });
+                    });
+                })();
 
 
-			} );
+
+            } );
 
 
 			function parallelAction(cmd){
@@ -293,6 +311,17 @@
 				});
 			}
 
+            function formatDateUtc(dateObject) {
+                var d = new Date(dateObject);
+                var day = getTwoDigits(d.getUTCDate());
+                var month = getTwoDigits(d.getUTCMonth() + 1);
+                var year = d.getUTCFullYear();
+                var h = getTwoDigits(d.getUTCHours());
+                var m = getTwoDigits(d.getUTCMinutes());
+                var s = getTwoDigits(d.getUTCSeconds());
+                return year + "/" + month + "/" + day + " " + h + ":" + m + ":" + s;
+            }
+
             function singleAction(cmd) {
 
                 if(cmd == "analyse") {
@@ -317,25 +346,27 @@
 
                     });
 
-                    var nowDate = new Date();
-                    var toDate = new Date(nowDate.getTime() + (1 * 60 * 60 * 1000));
-                    var fromDate = new Date(nowDate.getTime() - (1 * 60 * 60 * 1000));
-                    window.open("<%=request.getContextPath()%>/gui?fromDate=" + formatDate(fromDate) + "&toDate=" + formatDate(toDate)
-                            + "&lbl=" + lbl.values()
-                            + "&rs=" + rs.values()
-                            + "&adr=" + adr.values()
-                            + "&db=" + db.values()
-                            + "&col=" + col.values()
-                            + "&byLbl=lbl"
-                            + "&byDb=db"
-                            + "&byCol=col"
-                            + "&byOp=op"
-                            + "&byFields=fields"
-                            + "&bySort=sort"
-                            + "&byProj=proj"
-                            + "&resolution=minute"
-                            + "&sortLegend=y"
-                            , "_blank");
+                    var nowLocal = new Date();
+                    var nowUtc = new Date(nowLocal.getTime() + (nowLocal.getTimezoneOffset() * 60000));
+                    var toDate = new Date(nowUtc.getTime() + (1 * 60 * 60 * 1000));
+                    var fromDate = new Date(nowUtc.getTime() - (1 * 60 * 60 * 1000));
+
+                    window.open("<%=request.getContextPath()%>/gui?fromDate=" + encodeURIComponent(formatDateUtc(fromDate)) + "&toDate=" + encodeURIComponent(formatDateUtc(toDate))
+                        + "&lbl=" + encodeURIComponent(lbl.values())
+                        + "&rs=" + encodeURIComponent(rs.values())
+                        + "&adr=" + encodeURIComponent(adr.values())
+                        + "&db=" + encodeURIComponent(db.values())
+                        + "&col=" + encodeURIComponent(col.values())
+                        + "&byLbl=lbl"
+                        + "&byDb=db"
+                        + "&byCol=col"
+                        + "&byOp=op"
+                        + "&byFields=fields"
+                        + "&bySort=sort"
+                        + "&byProj=proj"
+                        + "&resolution=minute"
+                        + "&sortLegend=y"
+                        , "_blank");
                 }else{
 					var mode = $("input[name='mode']:checked").val();
                     var pIds = new StringSet();

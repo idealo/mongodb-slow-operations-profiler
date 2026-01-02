@@ -1,0 +1,31 @@
+/* compact, precise tooltip overrides for consistent look across pages */
+.tooltip {
+    pointer-events: none;
+}
+.tooltip,
+.tooltip.fade,
+.tooltip.show { opacity: 1 !important; }
+.tooltip .tooltip-inner,
+.tooltip-inner {
+  background-color: #f8f9fa !important; /* neutral light background */
+  color: #212529 !important;            /* dark text */
+  opacity: 1 !important;                /* fully opaque */
+  border: 1px solid #000 !important;    /* thin black border */
+  box-shadow: none !important;          /* no shadow */
+  padding: .25rem .4rem !important;     /* compact padding */
+  border-radius: .2rem !important;      /* small radius */
+  max-width: 320px !important;          /* wrap long content */
+  white-space: normal !important;       /* allow line breaks */
+  font-size: .9rem !important;
+  text-align: left !important;          /* match applicationStatus formatting */
+}
+/* ensure the arrow is visible and matches the inner background; include inset border so arrow looks bordered */
+.tooltip .arrow::before { opacity: 1 !important; }
+.bs-tooltip-auto[x-placement^=top] .arrow::before,
+.tooltip.bs-tooltip-top .arrow::before    { border-bottom-color: #f8f9fa !important; box-shadow: 0 -1px 0 #000 inset !important; }
+.bs-tooltip-auto[x-placement^=bottom] .arrow::before,
+.tooltip.bs-tooltip-bottom .arrow::before { border-top-color:    #f8f9fa !important; box-shadow: 0 1px 0 #000 inset !important; }
+.bs-tooltip-auto[x-placement^=left] .arrow::before,
+.tooltip.bs-tooltip-left .arrow::before   { border-right-color:  #f8f9fa !important; box-shadow: -1px 0 0 #000 inset !important; }
+.bs-tooltip-auto[x-placement^=right] .arrow::before,
+.tooltip.bs-tooltip-right .arrow::before  { border-left-color:   #f8f9fa !important; box-shadow: 1px 0 0 #000 inset !important; }

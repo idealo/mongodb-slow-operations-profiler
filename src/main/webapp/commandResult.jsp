@@ -9,16 +9,16 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 	<link rel="shortcut icon" type="image/x-icon" href="img/mdb.ico">
 	<link rel="icon" type="image/png" href="img/mdb.png">
-	<script type="text/javascript" src="js/dojo.js"></script>
-	<script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
-	<script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
-	<script type="text/javascript" src="js/jquery.dataTables.sum.js"></script>
-	<script type="text/javascript" src="js/jquery.number.min.js"></script>
-	<script type="text/javascript" src="js/jquery-ui.min.js"></script>
-	<link rel="stylesheet" type="text/css" href="css/jquery.dataTables.css">
-	<link rel="stylesheet" type="text/css" href="css/jquery-ui.css">
+	<script src="js/dojo.js"></script>
+	<script src="js/jquery-3.6.4.min.js"></script>
+	<script src="js/jquery.dataTables-1.13.6.min.js"></script>
+ 	<script src="js/jquery.dataTables.sum.js"></script>
+ 	<script src="js/jquery.number.min.js"></script>
+	<script src="js/jquery-ui-1.13.2.min.js"></script>
+ 	<link rel="stylesheet" type="text/css" href="css/jquery.dataTables.css">
+ 	<link rel="stylesheet" type="text/css" href="css/jquery-ui.css">
 	<title>command result page</title>
-		<script type="text/javascript" >
+		<script>
 
             var header = <%= commandResult.getTableHeaderAsDatatableJson() %>;
             var ds = <%= commandResult.getTableBodyAsJson() %>;

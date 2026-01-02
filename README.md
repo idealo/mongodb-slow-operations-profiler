@@ -156,9 +156,9 @@ Depending on how many changes need to be applied, especially how many `system.pr
 
 Either:
 
-1. java 1.8 or newer
-2. maven 2.0 or newer
-3. mongoDB 2.0 or newer
+1. Java 17 or newer
+2. Maven 3.x or newer
+3. MongoDB (compatible server; example docker-compose uses MongoDB 8.2)
 
 Or:
 
@@ -167,6 +167,8 @@ Or:
 ### Starting up
 
 #### Starting up by using Docker
+
+Note: the provided Docker setup builds with Maven using JDK 17 and runs the webapp on Tomcat 9; the example docker-compose uses MongoDB 8.2.
 
 1. Download both files
    [Dockerfile](https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/Dockerfile)
@@ -206,7 +208,7 @@ Or:
   /bin/bash`
 * stop a running docker container: `docker stop <CONTAINER-NAME>` e.g. `docker stop profiler-webapp`
 * rebuild and start all stopped docker containers belonging to this project: `docker-compose up -d --build`
-* stop all docker containers belonging to this project: `docker-compose down`
+* stop all docker containers belonging to this project and remove their attached volumes: `docker-compose down -v`
   
 Be aware that neither both mongoD instances (`collector-db` and `test-db`) nor the web server (`profiler-webapp`) are
 secured. This means that mongodb can be accessed without authentication from within their containers. Also SSL/TLS is
@@ -219,7 +221,7 @@ not enabled.
      https://github.com/idealo/mongodb-slow-operations-profiler.git`
 2. Enter the server addresses, database and collection names in file "`mongodb-slow-operations-profiler/src/main/resources/config.json`" (see [Configuration](#config) below)
 3. While being in the project folder "`mongodb-slow-operations-profiler/`", build a war file by executing in a shell:
-   - `mvn package`
+   - `mvn -B clean package`
 4. Deploy the resulted war file `mongodb-slow-operations-profiler.war` on a java webserver with a Servlet API version < 5.0 (e.g. [tomcat v9](https://tomcat.apache.org/tomcat-9.0-doc/index.html)). Dependent on the above-mentioned `config.json`, it may automatically start collecting slow operations. If no slow operations exist yet on the mongoD's, the collector(s) will sleep 1 hour before retrying.
 5. The application can be accessed through a web browser by the URL:
    - [http://your-server:your-port/mongodb-slow-operations-profiler/app](http://your-server:your-port/mongodb-slow-operations-profiler/app)
@@ -313,6 +315,39 @@ The fields at root level define global or default properties:
 
 
 ## Version history
+* v3.3.0
+  + added `dependency-check-maven` to `pom.xml` 
+    + run it with `mvn -DskipTests org.owasp:dependency-check-maven:check` to check for security vulnerabilities in dependencies
+      + this might require:
+        + to download the [NVD database](https://nvd.nist.gov/vuln/data-feeds#JSON_FEED) which can take some time
+        + to add `username` and `password ` (see your [API-token](https://ossindex.sonatype.org/user/settings)) to your maven `settings.xml` e.g.:
+        ```xml
+            <settings>
+                <servers>
+                  <server>
+                    <id>ossindex</id>
+                    <username>YOUR_USERNAME</username>
+                    <password>YOUR_API_TOKEN</password>
+                  </server>
+                </servers>
+            </settings>
+        ```
+  + security: updated and pinned transitive dependencies to close several CVEs
+    + Jackson 2.19.4
+    + Jersey 2.46
+    + bson4jackson 2.13.1
+    + Guava 33.3.1-jre
+    + mongodb-driver 3.12.14
+    + slf4j 2.0.9
+    + logback-classic 1.5.22 with Janino excluded
+  + improvement: upgraded frontend libraries for better browser compatibility
+    + jQuery 1.11.1 → 3.6.4
+    + jQuery UI → 1.13.2
+    + jQuery DataTables → 1.13.6
+    + Bootstrap 2 → Bootstrap 4.3.1
+    + replaced old bootstrap-datetimepicker with Tempus Dominus Bootstrap 4 datetimepicker
+    + added Font Awesome 5 for icons
+    + added moment.js for date handling
 * v3.2.5
   + improvement: replace `logback-classic` v1.4.12 by v1.5.10 to close a potential security vulnerability
   + improvement: update dependencies to its latest versions
@@ -339,7 +374,7 @@ The fields at root level define global or default properties:
   
     With this change, it becomes obvious that those query expressions belong to the **same** slow operation type since they will be grouped together as one operation type. For more details [see above](#how_to_read)
 * v3.1.6
-  + bugfix: data types of some metrics changed in newer versions of mongoDB which may have lead to java.lang.ClassCastException which is now fixed once for all by using generics (see [#13](/../../issues/13))  
+  + bugfix: data types of some metrics changed in newer versions of mongoDB which may have lead to java.lang.ClassCastException which is now fixed once for all by using generics (see [#13](/../../issues/13))
 * v3.1.5
   + bugfix: added a valid config file so that the web-app, started by docker-compose, shows its configured databases to play around with
   + improvement: the Dockerfile installs now the war-file as exploded files. This is needed when deployed in Kubernetes because the config file needs to be mounted which is not possible from within a war-file. A mounted config file allows the use of secret tokens without exposing them.
@@ -374,7 +409,7 @@ The fields at root level define global or default properties:
     Furthermore, you can use your own regular expression within your search. For example, if you want to match slow operations that were queried on field `foo` (and not `foot`) with an equality condition (so no operator follows), just type in the regular expression `^foo$`. `^` matches the beginning and `$` matches the end of the string. 
     Keep in mind that you need to **escape** characters that are regular expression metacharacters by `\`. For example, if you want to match slow operations that were queried on field `foo` with a `$gt` condition, you cannot just write `foo.$gt` because `.` and `$` are regex metacharacters that need to be escaped by `\`, so the correct expression would be `foo\.\$gt` in this example.
     There are 3 exceptions to the usage of regular expressions:
-      1. `Earliest date` and `Latest date` are always exact timestamps (no regex)
+      1. `Start time (UTC)` and `End time (UTC)` are always exact timestamps (no regex)
       2. `Label` and `Database` will always match dbs labels respectively database names that **begin** with the entered search string(s). If it's empty, they will match any alphanumeric word.
       3. `Millis from` and `to` are always positive integer numbers (no regex)                          
     + the per default selected `Group by` check boxes are now `Label`, `Database`, `Collection`, `Operation`, `Queried fieds`, `Sorted fieds`, and `Projected  fieds` because these allow to show example slow-operations documents
@@ -572,16 +607,15 @@ The fields at root level define global or default properties:
 
 ## Third party libraries
 
-* mongo-java-driver: [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
-* slf4j: [MIT License](http://opensource.org/licenses/MIT)
-* logback: [LGPL 2.1](http://www.gnu.org/licenses/old-licenses/lgpl-2.1)
-* google-collections (Guava): [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
-* jongo: [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
-* jackson: [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
-* bson4jackson: [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
-* dygraph: [MIT License](http://opensource.org/licenses/MIT)
-* bootstrap-datetimepicker: [Apache License 2.0](https://github.com/tarruda/bootstrap-datetimepicker)
-
+* mongodb-driver: Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0.html)
+* slf4j-api: MIT (https://opensource.org/licenses/MIT)
+* logback (core & classic): LGPL 2.1 (https://www.gnu.org/licenses/old-licenses/lgpl-2.1)
+* guava: Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0.html)
+* jongo: Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0.html)
+* jackson (core / databind / annotations / jaxrs provider / module-jaxb-annotations): Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0.html)
+* bson4jackson: Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0.html)
+* jersey (JAX-RS): CDDL or GPL (https://github.com/eclipse-ee4j/jersey/blob/master/LICENSE.txt)
+* junit (test scope): license info (https://junit.org/junit4/license.html)
 
 ## License
 
