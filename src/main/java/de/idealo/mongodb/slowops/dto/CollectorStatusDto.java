@@ -4,7 +4,7 @@
 package de.idealo.mongodb.slowops.dto;
 
 import com.mongodb.ServerAddress;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

@@ -1,9 +1,6 @@
-# Build from remote source code using git clone, Maven and run with Tomcat
-FROM alpine/git AS cloner
-RUN cd /root && git clone https://github.com/idealo/mongodb-slow-operations-profiler.git
-
+# Build from local source code using Maven and run with Tomcat
 FROM maven:3.9.12-eclipse-temurin-17 AS builder
-COPY --from=cloner /root/mongodb-slow-operations-profiler/ /usr/src/app/
+COPY . /usr/src/app/
 WORKDIR /usr/src/app/
 RUN mvn -B clean package
 

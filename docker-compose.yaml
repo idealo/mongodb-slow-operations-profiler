@@ -1,10 +1,9 @@
-version: '3.7'
 services:
   collector-db:
-    image: mongo:8.0
+    image: mongo:8.2
     container_name: collector-db
   test-db:
-    image: mongo:8.0
+    image: mongo:8.2
     container_name: test-db
   profiler-webapp:
     build:

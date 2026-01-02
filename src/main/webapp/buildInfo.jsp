@@ -1,7 +1,7 @@
 <hr>
 <%
 	java.util.jar.Manifest manifest = new java.util.jar.Manifest();
-	manifest.read(pageContext.getServletContext().getResourceAsStream("/META-INF/MANIFEST.MF"));
+	manifest.read(application.getResourceAsStream("/META-INF/MANIFEST.MF"));
 	java.util.jar.Attributes attributes = manifest.getMainAttributes();
 %>
 <small>

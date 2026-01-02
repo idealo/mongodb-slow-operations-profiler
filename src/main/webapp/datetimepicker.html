@@ -1,47 +1,49 @@
 <!DOCTYPE HTML>
 <html>
   <head>
-    <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script> 
-    <script type="text/javascript" src="js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="js/bootstrap-datetimepicker.min.js"></script>
-    <link href="css/bootstrap-combined.css" rel="stylesheet">
-    <link href="css/bootstrap-datetimepicker.min.css" rel="stylesheet" type="text/css" media="screen" >
-    
+    <link rel="stylesheet" href="css/bootstrap4.3.1.min.css">
+    <link rel="stylesheet" href="css/fontawesome.min.css">
+    <link rel="stylesheet" href="css/tempusdominus-bootstrap-4.min.css">
+
+    <script src="js/jquery-3.6.4.min.js"></script>
+    <script src="js/moment.min.js"></script>
+    <script src="js/bootstrap4.3.1.min.js"></script>
+    <script src="js/tempusdominus-bootstrap-4.min.js"></script>
   </head>
   <body>
+    <br>static html page to implement and test date-time-picker<br>
+
     <table>
       <tr>
         <td>
-			    <div id="datetimepicker" class="date">
-			      <input  type="text"></input>
-			      <span class="add-on"><i data-time-icon="icon-time" data-date-icon="icon-calendar"></i></span>
-			    </div>
-			  </td>
-			<tr>
-			<tr>
-        <td>
-            <input type="text"></input><br/>
-            <input type="text"></input><br/>
-            <input type="text"></input><br/>
+          <div class="input-group date" id="datetimepicker" data-target-input="nearest">
+            <input type="text" class="form-control datetimepicker-input" data-target="#datetimepicker"/>
+            <div class="input-group-append" data-target="#datetimepicker" data-toggle="datetimepicker">
+              <div class="input-group-text"><i class="fas fa-calendar"></i></div>
+            </div>
           </div>
         </td>
-      <tr>
-    <table>
-			
-    
-    
-    <script type="text/javascript">
-      $('#datetimepicker').datetimepicker({
-        format: 'dd.MM.yyyy hh:mm:ss',
-        language: 'de',
-        weekStart: 1
+      </tr>
+    </table>
+
+    <script>
+      $(function() {
+        $('#datetimepicker').datetimepicker({
+          format: 'DD/MM/YYYY HH:mm:ss',
+          icons: {
+            time: 'fas fa-clock',
+            date: 'fas fa-calendar',
+            up: 'fas fa-arrow-up',
+            down: 'fas fa-arrow-down',
+            previous: 'fas fa-chevron-left',
+            next: 'fas fa-chevron-right'
+          }
+        });
       });
     </script>
-    
-    text text text text text text text text text text text text text text text text text text text text <br>
-    text text text text text text text text text text text text text text text text text text text text <br>
-    text text text text text text text text text text text text text text text text text text text text <br>
-    text text text text text text text text text text text text text text text text text text text text <br>
-    
+    text text text text text text<br>
+    text text text text text text<br>
+    text text text text text text<br>
+    text text text text text text<br>
   </body>
-<html>
+</html>
