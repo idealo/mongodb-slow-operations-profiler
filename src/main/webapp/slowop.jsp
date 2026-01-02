@@ -12,7 +12,7 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 	<link rel="shortcut icon" type="image/x-icon" href="img/mdb.ico">
 	<link rel="icon" type="image/png" href="img/mdb.png">
-	<link rel="stylesheet" type="text/css" href="css/bootstrap4.3.1.min.css">
+	<link rel="stylesheet" type="text/css" href="css/bootstrap4.6.2.min.css">
 
 	<title>slow operation example</title>
 

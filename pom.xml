@@ -60,6 +60,9 @@
                     <ossIndexServerId>ossindex</ossIndexServerId>
                     <format>HTML</format>
                     <outputDirectory>${project.build.directory}/dependency-check-report</outputDirectory>
+                    <suppressionFiles>
+                        <suppressionFile>dependency-check-suppressions.xml</suppressionFile>
+                    </suppressionFiles>
                 </configuration>
             </plugin>
 		</plugins>
