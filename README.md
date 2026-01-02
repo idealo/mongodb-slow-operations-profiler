@@ -177,16 +177,17 @@ Note: the provided Docker setup builds with Maven using JDK 17 and runs the weba
      https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/Dockerfile`
    - `curl -O
      https://raw.githubusercontent.com/idealo/mongodb-slow-operations-profiler/master/docker-compose.yaml`
-2.  Being in the folder of both downloaded files, spin up the docker
-    containers by issuing the command: 
+2. Being in the folder of both downloaded files, build the docker containers by issuing the command:
+    - `docker-compose build --no-cache` 
+3. Being in the folder of both downloaded files, spin up the docker containers by issuing the commands 
     - `docker-compose up -d`
-3. The application can be accessed through a web browser by the URL:
+4. The application can be accessed through a web browser by the URL:
    -  [http://localhost:8080/mongodb-slow
    -operations-profiler/app?adminToken=mySecureAdminToken](http://localhost:8080/mongodb-slow-operations-profiler/app?adminToken=mySecureAdminToken)
       
       On the bottom of this page you can edit the current configuration
       and apply it by pressing the button `upload new config`
-4. To visualize and analyze slow operations either select one or more
+5. To visualize and analyze slow operations either select one or more
    entries and click "analyse" or use the following URL:
    - [http://localhost:8080/mongodb-slow-operations-profiler/gui](http://localhost:8080/mongodb-slow-operations-profiler/gui)
  

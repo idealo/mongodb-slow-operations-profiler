@@ -47,6 +47,7 @@
                       </manifest>
                       <manifestEntries>
                          <Build-Time>${maven.build.timestamp}</Build-Time>
+                         <Build-Jdk>${java.version}</Build-Jdk>
                      </manifestEntries>
                   </archive>
               </configuration>
