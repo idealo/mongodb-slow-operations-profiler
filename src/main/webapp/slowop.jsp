@@ -1,6 +1,7 @@
 <%@ page import="org.bson.Document" %>
 <%@ page import="org.bson.json.JsonWriterSettings" %>
 <%@ page import="java.util.List" %>
+<%@ page import="de.idealo.mongodb.slowops.util.Util" %>
 <!DOCTYPE html>
 <html>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="ISO-8859-1" %>
@@ -41,7 +42,7 @@
 			<li>Sorted fields</li>
 			<li>Projected fields</li>
 		</ul>
-		You may <a href="<%=request.getContextPath()%>/slowop?fp=<%=request.getParameter("fp")%>&del=1">delete this</a> example document e.g. if indexes have changed and you want to reflect them in this slow operations example document.<br>
+		You may <a href="<%=request.getContextPath()%>/slowop?fp=<%=Util.escapeHtml(request.getParameter("fp"))%>&del=1">delete this</a> example document e.g. if indexes have changed and you want to reflect them in this slow operations example document.<br>
 		A new example document will be re-created as soon as such an operation is collected again.
 	</span>
 	<pre><%JsonWriterSettings.Builder settingsBuilder = JsonWriterSettings.builder().indent(true);
