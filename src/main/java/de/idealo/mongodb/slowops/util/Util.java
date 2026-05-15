@@ -156,12 +156,14 @@ public class Util {
             char c = input.charAt(i);
             switch (c) {
                 case '\\': sb.append("\\\\"); break;
-                case '\'': sb.append("\\'"); break;
+                case '\'': sb.append("\\\'"); break;
                 case '"':  sb.append("\\\""); break;
                 case '\n': sb.append("\\n"); break;
                 case '\r': sb.append("\\r"); break;
                 case '<':  sb.append("\\x3c"); break;
                 case '>':  sb.append("\\x3e"); break;
+                case '\u2028': sb.append("\\u2028"); break;
+                case '\u2029': sb.append("\\u2029"); break;
                 default:   sb.append(c);
             }
         }

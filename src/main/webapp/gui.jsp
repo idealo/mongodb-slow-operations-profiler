@@ -258,7 +258,7 @@ function drawLegend(){
                 var rDocs = g.getValue(row, seriesProps.column + currentYIndex[18]);
                 var wDocs = g.getValue(row, seriesProps.column + currentYIndex[19]);
                 var memSort = g.getValue(row, seriesProps.column + currentYIndex[20]);
-                if (count != 0) {//0-values are necessary to put into the data matrix (instead of empty values) but they are not shown in the legend
+                if (count != 0) {//padding entries (count==0) are not shown in the legend
                     legend.push([seriesProps.color, pts[i], avg, count, minSec, maxSec, sumSec, stdDevMs, nRet, minRet, maxRet, avgRet, stdDevRet, len, minLen, maxLen, avgLen, stdDevLen, rKeys, rDocs, wDocs, memSort]);
                 }
             }

@@ -1,4 +1,4 @@
-<%@ page import="de.idealo.mongodb.slowops.util.Util, java.net.URLEncoder" %>
+<%@ page import="de.idealo.mongodb.slowops.util.Util, java.net.URLEncoder, java.nio.charset.StandardCharsets" %>
 <!DOCTYPE html>
 <html>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="ISO-8859-1" %>
@@ -59,7 +59,7 @@
 
 				mainTable = $('#main').DataTable({
 					"ajax": {
-						url: "<%=request.getContextPath()%>/rest/action?cmd=refresh&<%=Util.ADMIN_TOKEN + "=" + URLEncoder.encode(request.getParameter(Util.ADMIN_TOKEN) != null ? request.getParameter(Util.ADMIN_TOKEN) : "", "UTF-8")%>",
+						url: "<%=request.getContextPath()%>/rest/action?cmd=refresh&<%=Util.ADMIN_TOKEN + "=" + URLEncoder.encode(request.getParameter(Util.ADMIN_TOKEN) != null ? request.getParameter(Util.ADMIN_TOKEN) : "", StandardCharsets.UTF_8)%>",
 						dataSrc: "collectorStatuses"
 					},
 					"columns": [
