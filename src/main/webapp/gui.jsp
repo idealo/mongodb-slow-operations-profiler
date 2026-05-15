@@ -2,7 +2,7 @@
 <html>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
     pageEncoding="ISO-8859-1"
-    import="java.util.*,javax.servlet.http.HttpServletRequest,de.idealo.mongodb.slowops.dto.SlowOpsDto,de.idealo.mongodb.slowops.grapher.*" %>
+    import="java.util.*,javax.servlet.http.HttpServletRequest,de.idealo.mongodb.slowops.dto.SlowOpsDto,de.idealo.mongodb.slowops.grapher.*,de.idealo.mongodb.slowops.util.Util" %>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
   <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7; IE=EmulateIE9">
@@ -43,7 +43,7 @@
 				<table>
 					<tr><td>Start time (UTC)</td><td>
 						<div class="input-group date" id="datetimepickerFrom" data-target-input="nearest">
-							<input type="text" id="fromDate" name="fromDate" class="form-control datetimepicker-input" data-target="#datetimepickerFrom" <%  	if(!isEmpty(request,"fromDate")){ %> value="<%= request.getParameter("fromDate") %>" <% } else { %> value="<%= request.getAttribute("fromDate") %>" <% } %> />
+							<input type="text" id="fromDate" name="fromDate" class="form-control datetimepicker-input" data-target="#datetimepickerFrom" <%  	if(!isEmpty(request,"fromDate")){ %> value="<%= Util.escapeHtml(request.getParameter("fromDate")) %>" <% } else { %> value="<%= Util.escapeHtml(String.valueOf(request.getAttribute("fromDate"))) %>" <% } %> />
 							<div class="input-group-append" data-target="#datetimepickerFrom" data-toggle="datetimepicker">
 								<div class="input-group-text"><i class="fas fa-calendar"></i></div>
 							</div>
@@ -51,23 +51,23 @@
 					</td></tr>
 					<tr><td>End time (UTC)</td><td>
 						<div class="input-group date" id="datetimepickerTo" data-target-input="nearest">
-							<input type="text" id="toDate" name="toDate" class="form-control datetimepicker-input" data-target="#datetimepickerTo" <% 					if(!isEmpty(request,"toDate")){ %> value="<%= request.getParameter("toDate") %>" <% } else { %> value="<%= request.getAttribute("toDate") %>" <% } %> />
+							<input type="text" id="toDate" name="toDate" class="form-control datetimepicker-input" data-target="#datetimepickerTo" <% 					if(!isEmpty(request,"toDate")){ %> value="<%= Util.escapeHtml(request.getParameter("toDate")) %>" <% } else { %> value="<%= Util.escapeHtml(String.valueOf(request.getAttribute("toDate"))) %>" <% } %> />
 							<div class="input-group-append" data-target="#datetimepickerTo" data-toggle="datetimepicker">
 								<div class="input-group-text"><i class="fas fa-calendar"></i></div>
 							</div>
 						</div>
 					</td></tr>
-					<tr><td>Label</td><td><input type="text" name="lbl" size="30" <% 					if(!isEmpty(request,"lbl")){ %> value="<%= request.getParameter("lbl") %>" <% } %> ><sup>1</sup></td></tr>
-					<tr><td>Server address</td><td><input type="text" name="adr" size="30" <% 	if(!isEmpty(request,"adr")){ %> value="<%= request.getParameter("adr") %>" <% } %> ><sup>1</sup></td></tr>
-					<tr><td>ReplicaSet</td><td><input type="text" name="rs" size="30" <% 		if(!isEmpty(request,"rs")){ %> value="<%= request.getParameter("rs") %>" <% } %> ><sup>1</sup></td></tr>
-					<tr><td>Database</td><td><input type="text" name="db" size="30" <% 			if(!isEmpty(request,"db")){ %> value="<%= request.getParameter("db") %>" <% } %> ><sup>1</sup></td></tr>
-					<tr><td>Collection</td><td><input type="text" name="col" size="30" <% 		if(!isEmpty(request,"col")){ %> value="<%= request.getParameter("col") %>" <% } %> ><sup>1</sup></td></tr>
-					<tr><td>User</td><td><input type="text" name="user" size="30" <% 			if(!isEmpty(request,"user")){ %> value="<%= request.getParameter("user") %>" <% } %> ><sup>1</sup></td></tr>
-					<tr><td>Operation</td><td><input type="text" name="op" size="30" <% 		if(!isEmpty(request,"op")){ %> value="<%= request.getParameter("op") %>" <% } %> ><sup>1</sup></td></tr>
-					<tr><td>Queried fields</td><td><input type="text" name="fields" size="30" <%if(!isEmpty(request,"fields")){ %> value="<%= request.getParameter("fields") %>" <% } %> ><sup>2</sup></td></tr>
-                    <tr><td>Sorted fields</td><td><input type="text" name="sort" size="30" <% 	if(!isEmpty(request,"sort")){ %> value="<%= request.getParameter("sort") %>" <% } %> ><sup>2</sup></td></tr>
-                    <tr><td>Projected fields</td><td><input type="text" name="proj" size="30" <% 	if(!isEmpty(request,"proj")){ %> value="<%= request.getParameter("proj") %>" <% } %> ><sup>2</sup></td></tr>
-                    <tr><td>Millis from</td><td><input type="text" name="fromMs" size="10" <%    if(!isEmpty(request,"fromMs")){ %> value="<%= request.getParameter("fromMs") %>" <% } %> > to <input type="text" name="toMs" size="10" <%                if(!isEmpty(request,"toMs")){ %> value="<%= request.getParameter("toMs") %>" <% } %> ></td></tr>
+					<tr><td>Label</td><td><input type="text" name="lbl" size="30" <% 					if(!isEmpty(request,"lbl")){ %> value="<%= Util.escapeHtml(request.getParameter("lbl")) %>" <% } %> ><sup>1</sup></td></tr>
+					<tr><td>Server address</td><td><input type="text" name="adr" size="30" <% 	if(!isEmpty(request,"adr")){ %> value="<%= Util.escapeHtml(request.getParameter("adr")) %>" <% } %> ><sup>1</sup></td></tr>
+					<tr><td>ReplicaSet</td><td><input type="text" name="rs" size="30" <% 		if(!isEmpty(request,"rs")){ %> value="<%= Util.escapeHtml(request.getParameter("rs")) %>" <% } %> ><sup>1</sup></td></tr>
+					<tr><td>Database</td><td><input type="text" name="db" size="30" <% 			if(!isEmpty(request,"db")){ %> value="<%= Util.escapeHtml(request.getParameter("db")) %>" <% } %> ><sup>1</sup></td></tr>
+					<tr><td>Collection</td><td><input type="text" name="col" size="30" <% 		if(!isEmpty(request,"col")){ %> value="<%= Util.escapeHtml(request.getParameter("col")) %>" <% } %> ><sup>1</sup></td></tr>
+					<tr><td>User</td><td><input type="text" name="user" size="30" <% 			if(!isEmpty(request,"user")){ %> value="<%= Util.escapeHtml(request.getParameter("user")) %>" <% } %> ><sup>1</sup></td></tr>
+					<tr><td>Operation</td><td><input type="text" name="op" size="30" <% 		if(!isEmpty(request,"op")){ %> value="<%= Util.escapeHtml(request.getParameter("op")) %>" <% } %> ><sup>1</sup></td></tr>
+					<tr><td>Queried fields</td><td><input type="text" name="fields" size="30" <%if(!isEmpty(request,"fields")){ %> value="<%= Util.escapeHtml(request.getParameter("fields")) %>" <% } %> ><sup>2</sup></td></tr>
+                    <tr><td>Sorted fields</td><td><input type="text" name="sort" size="30" <% 	if(!isEmpty(request,"sort")){ %> value="<%= Util.escapeHtml(request.getParameter("sort")) %>" <% } %> ><sup>2</sup></td></tr>
+                    <tr><td>Projected fields</td><td><input type="text" name="proj" size="30" <% 	if(!isEmpty(request,"proj")){ %> value="<%= Util.escapeHtml(request.getParameter("proj")) %>" <% } %> ><sup>2</sup></td></tr>
+                    <tr><td>Millis from</td><td><input type="text" name="fromMs" size="10" <%    if(!isEmpty(request,"fromMs")){ %> value="<%= Util.escapeHtml(request.getParameter("fromMs")) %>" <% } %> > to <input type="text" name="toMs" size="10" <%                if(!isEmpty(request,"toMs")){ %> value="<%= Util.escapeHtml(request.getParameter("toMs")) %>" <% } %> ></td></tr>
 					<tr><td colspan="2">
 						<i>
 							Values separated by semicolon are logically combined: <br/>
@@ -138,7 +138,7 @@
 <%
 final String errorMsg = slowOpsDto.getErrorMessage(); 
 if(errorMsg!=null){%>
-	<div style="color:red; padding-top:5px;">An error occurred. <%=errorMsg.contains("\"code\" : 16389")?"Filter more and/or group less to decrease size of result document! " : ""%><br/><%=errorMsg%></div>
+	<div style="color:red; padding-top:5px;">An error occurred. <%=errorMsg.contains("\"code\" : 16389")?"Filter more and/or group less to decrease size of result document! " : ""%><br/><%=Util.escapeHtml(errorMsg)%></div>
 <%}else{%>
 
   <table><tr><td>
@@ -258,7 +258,7 @@ function drawLegend(){
                 var rDocs = g.getValue(row, seriesProps.column + currentYIndex[18]);
                 var wDocs = g.getValue(row, seriesProps.column + currentYIndex[19]);
                 var memSort = g.getValue(row, seriesProps.column + currentYIndex[20]);
-                if (pts[i].yval != 0 && count != 0) {//0-values are necessary to put into the data matrix (instead of empty values) but they are not shown in the legend
+                if (count != 0) {//padding entries (count==0) are not shown in the legend
                     legend.push([seriesProps.color, pts[i], avg, count, minSec, maxSec, sumSec, stdDevMs, nRet, minRet, maxRet, avgRet, stdDevRet, len, minLen, maxLen, avgLen, stdDevLen, rKeys, rDocs, wDocs, memSort]);
                 }
             }
@@ -386,6 +386,7 @@ g = new Dygraph(document.getElementById("graph"),
 		currentRow++;
 		var col = g.indexFromSetName(seriesName);
 		var count = g.getValue(currentRow, col+1);
+		if(count == 0) return;
 		ctx.strokeStyle = color;
 		ctx.lineWidth = 0.8;
 		ctx.beginPath();
