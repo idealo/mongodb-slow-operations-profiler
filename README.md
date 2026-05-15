@@ -317,7 +317,7 @@ The fields at root level define global or default properties:
 
 ## Version history
 * v3.3.1
-  + security: fix reflected XSS vulnerabilities ([Wiz SAST findings](/../../issues/49)) by escaping all request parameters in JSP expressions (`applicationStatus.jsp`, `gui.jsp`)
+  + security: fix reflected XSS vulnerabilities ([Wiz SAST findings](/../../issues/49)) by escaping all request parameters in JSP expressions (`applicationStatus.jsp`, `gui.jsp`, `slowop.jsp`)
   + improvement: pin `alpine/git` Docker image to version `2.47.2` to ensure reproducible builds
   + improvement: add `HEALTHCHECK` instruction to both Dockerfiles
   + bugfix: fix build failure caused by `jackson-annotations:2.21.1` not existing in Maven Central; pinned to `2.21` (the latest available 2.x release for this artifact)
