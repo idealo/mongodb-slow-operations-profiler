@@ -132,6 +132,40 @@ public class Util {
         return result;
     }
 
-   
-    
+    public static String escapeHtml(String input) {
+        if (input == null) return "";
+        StringBuilder sb = new StringBuilder(input.length());
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            switch (c) {
+                case '&':  sb.append("&amp;"); break;
+                case '<':  sb.append("&lt;"); break;
+                case '>':  sb.append("&gt;"); break;
+                case '"':  sb.append("&quot;"); break;
+                case '\'': sb.append("&#x27;"); break;
+                default:   sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
+    public static String escapeJs(String input) {
+        if (input == null) return "";
+        StringBuilder sb = new StringBuilder(input.length());
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            switch (c) {
+                case '\\': sb.append("\\\\"); break;
+                case '\'': sb.append("\\'"); break;
+                case '"':  sb.append("\\\""); break;
+                case '\n': sb.append("\\n"); break;
+                case '\r': sb.append("\\r"); break;
+                case '<':  sb.append("\\x3c"); break;
+                case '>':  sb.append("\\x3e"); break;
+                default:   sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
 }

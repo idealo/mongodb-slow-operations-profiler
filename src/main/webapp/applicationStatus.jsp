@@ -1,4 +1,4 @@
-<%@ page import="de.idealo.mongodb.slowops.util.Util" %>
+<%@ page import="de.idealo.mongodb.slowops.util.Util, java.net.URLEncoder" %>
 <!DOCTYPE html>
 <html>
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="ISO-8859-1" %>
@@ -59,7 +59,7 @@
 
 				mainTable = $('#main').DataTable({
 					"ajax": {
-						url: "<%=request.getContextPath()%>/rest/action?cmd=refresh&<%=Util.ADMIN_TOKEN + "=" + request.getParameter(Util.ADMIN_TOKEN)%>",
+						url: "<%=request.getContextPath()%>/rest/action?cmd=refresh&<%=Util.ADMIN_TOKEN + "=" + URLEncoder.encode(request.getParameter(Util.ADMIN_TOKEN) != null ? request.getParameter(Util.ADMIN_TOKEN) : "", "UTF-8")%>",
 						dataSrc: "collectorStatuses"
 					},
 					"columns": [
@@ -134,7 +134,7 @@
 						} );
 					},
                     "search": {
-                        "search": "<%=request.getParameter("lbl")!=null?request.getParameter("lbl"):""%>"
+                        "search": "<%=Util.escapeJs(request.getParameter("lbl"))%>"
                     }
 				});
 
@@ -622,8 +622,8 @@
                                  <li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">command</a>
                                     <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
                                         <li class="dropdown-no-item infoCommand"> run against: <img src='img/info.gif' alt='info' title='info'><br>
-                                            <input class="dropdown-no-item" type="radio" name="mode" value="dbs" <%=!"mongod".equals(request.getParameter("mode"))?"checked":""%>>DBS (e.g. router)<br>
-                                            <input class="dropdown-no-item" type="radio" name="mode" value="mongod" <%="mongod".equals(request.getParameter("mode"))?"checked":""%>>mongoD (e.g. secondary)
+                                            <input class="dropdown-no-item" type="radio" name="mode" value="dbs" <%=!"mongod".equals(request.getParameter("mode"))?"checked=\"checked\"":""%>>DBS (e.g. router)<br>
+                                            <input class="dropdown-no-item" type="radio" name="mode" value="mongod" <%="mongod".equals(request.getParameter("mode"))?"checked=\"checked\"":""%>>mongoD (e.g. secondary)
                                         </li>
                                         <li class="infoDBStat"><a class="dropdown-item" href="javascript:singleAction('dbstat');">db stats <img src='img/info.gif' alt='info' title='info'></a></li>
                                         <li class="infoCollStat"><a class="dropdown-item" href="javascript:singleAction('collstat');">collection stats <img src='img/info.gif' alt='info' title='info'></a></li>
