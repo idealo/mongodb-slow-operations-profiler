@@ -1,0 +1,10 @@
+wing: mongodb_slow_operations_profiler
+rooms:
+- name: img
+  description: Files from img/
+- name: src
+  description: Files from src/
+- name: testing
+  description: Files from test/
+- name: general
+  description: Files that don't fit other rooms
