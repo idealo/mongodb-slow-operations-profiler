@@ -131,7 +131,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>33.7.1-jre</version>
+			<version>33.7.2-android</version>
 		</dependency>
 		<!-- Jongo is required by the source; include it but exclude Jackson transitives so we use pinned Jackson 2.x versions. Pin bson4jackson explicitly. -->
 		<dependency>
