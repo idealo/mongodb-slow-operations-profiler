@@ -13,3 +13,7 @@ slowOpsGui*.png
 todo.txt
 src/main/resources/config.local.json
 src/main/resources/config.prod.json
+src/main/resources/config.docker.json
+.DS_Store
+.run/
+secrets-scanner-output/
